@@ -55,16 +55,16 @@ This is the main API entry point, you usually create an OGo context object
 alongside a WOContext in a Go web application.
 
 Sample:
-'''
-EODatabase db = OGoDatabase.databaseForURL(
-  "jdbc:postgresql://127.0.0.1/OGoDB?user=OGo&password=OGo",
-  "/var/lib/opengroupware.org/documents");
 
-LoginContext      lc = OGoLoginModule.jaasLogin(db, "joe", "user");
+    EODatabase db = OGoDatabase.databaseForURL(
+      "jdbc:postgresql://127.0.0.1/OGoDB?user=OGo&password=OGo",
+      "/var/lib/opengroupware.org/documents");
+    
+    LoginContext      lc = OGoLoginModule.jaasLogin(db, "joe", "user");
+    
+    EODatabaseContext dc = new EODatabaseContext(db);
+    OGoObjectContext  oc = new OGoObjectContext(dc, lc);
 
-EODatabaseContext dc = new EODatabaseContext(db);
-OGoObjectContext  oc = new OGoObjectContext(dc, lc);
-'''
 
 #### logic.blobs
 
