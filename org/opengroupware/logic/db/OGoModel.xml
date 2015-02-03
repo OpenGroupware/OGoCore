@@ -1,0 +1,2200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<model version="1.0">
+  <!--
+    Notes:
+    - isReadOnly is predefined in EOActiveRecord, hence isReadOnlyFlag
+    -->
+
+  <entity name="ACLEntries" table="object_acl" primarykey="id"
+          class="OGoACLEntry" datasource="OGoACLEntries"
+  >
+    <attribute name="id"          column="object_acl_id" type="INT" />
+    <attribute name="objectId"    column="object_id"     type="INT" />
+    <attribute name="principalId" column="auth_id"       type="INT" />
+    <attribute name="priority"    column="sort_key"      type="INT" />
+    <attribute name="action"      column="action"        type="VARCHAR" />
+    
+    <!-- eg 'r', 'w', 'rw', 'mdi' -->
+    <attribute name="permissions" column="permissions"
+               type="VARCHAR" width="50"  />
+    
+    <!-- relationships -->
+    <to-one  name="person" to="Persons" join="principalId,id" />
+    <to-one  name="team"   to="Teams"   join="principalId,id" />
+    
+    <!-- fetch specification -->
+    
+    <fetch name="authzCountFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        -->
+      <attributes>objectId</attributes>
+      <qualifier>objectId IN $ids</qualifier>
+      
+      <sql>
+        %(select)s %(columns)s FROM %(tables)s %(where)s GROUP BY object_id;
+      </sql>
+    </fetch>
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'authIds'
+        - 'ids'
+        -->
+      
+      <!--
+        Note: the principalId is irrelevant in the result because we already
+              specify ours in 'authIds'. In the result we just add up the
+              permissions for each objectId.
+              
+              It would be nice if PostgreSQL would support this, but it doesn't:
+                SELECT object_id, SUM(permissions)
+                FROM object_acl
+                GROUP BY object_id;
+        -->
+      <attributes>objectId,permissions</attributes>
+      
+      <qualifier>
+        (principalId IN $authIds) AND (objectId IN $ids)
+      </qualifier>
+    </fetch>
+  </entity>
+  
+
+  <entity name="ObjectLogs" table="log" primarykey="id"
+          class="OGoObjectLog" datasource="OGoObjectLogs"
+  >
+    <attribute name="id"        column="log_id"        type="INT" />
+    <attribute name="date"      column="creation_date" />
+    <attribute name="objectId"  column="object_id"     type="INT" />
+    <attribute name="logText"   column="log_text"      type="TEXT" />
+
+    <!-- can be NULL? -->
+    <attribute name="accountId" column="account_id"    type="INT" />
+    
+    <!-- eg: 00_created, 05_changed, 10_archived, created -->
+    <attribute name="action"  column="action"
+               type="VARCHAR" width="100"  />
+    
+    <!-- relationships -->
+    <to-one  name="person" to="Persons" join="accountId,id" />
+  </entity>
+  
+
+  <entity name="ObjectLinks" table="obj_link" primarykey="id"
+          class="OGoObjectLink" datasource="OGoObjectLinks"
+  >
+    <attribute name="id"         column="obj_link_id"   type="INT" />
+    <attribute name="type"       column="link_type"
+               type="VARCHAR"    width="50"  />
+    <attribute name="label"      column="label"
+               type="VARCHAR"    width="255"  />
+
+    <attribute name="sourceId"   column="source_id"    type="INT" />
+    <attribute name="sourceType" column="source_type"
+               type="VARCHAR"    width="50"  />
+
+    <!-- the ID is optional, its used for fast queries on internal objects -->
+    <attribute name="target"     column="target"
+               type="VARCHAR"    width="255"  />
+    <attribute name="targetId"   column="target_id"    type="INT" />
+    <attribute name="targetType" column="target_type"
+               type="VARCHAR"    width="50"  />
+    
+    <!-- fetch specifications -->
+    
+    <fetch name="default" limit="10000" flags="readonly,allbinds">
+      <!-- read only because links are never changed, they just get deleted 
+           and created -->
+    </fetch>
+  </entity>
+  
+
+  <entity name="SessionLogs" table="session_log" primarykey="id"
+          class="OGoSessionLog" datasource="OGoSessionLogs"
+  >
+    <attribute name="id"        column="session_log_id" type="INT" />
+    <attribute name="date"      column="log_date" />
+    <attribute name="accountId" column="account_id"     type="INT" />
+    
+    <!-- eg: login / logout / Account Changed -->
+    <attribute name="action"  column="action"
+               type="VARCHAR" width="255"  />
+    
+    <!-- relationships -->
+    <to-one  name="person" to="Persons" join="accountId,id" />
+  </entity>
+  
+
+  <entity name="LoginTokens" table="login_token" primarykey="token"
+          class="OGoLoginToken"
+  >
+    <attribute name="token"          column="token"        type="VARCHAR" />
+    <attribute name="accountId"      column="account_id"   type="INT" />
+    <attribute name="creationDate"   column="creation_date"   />
+    <attribute name="touchDate"      column="touch_date"      />
+    <attribute name="expirationDate" column="expiration_date" />
+    <attribute name="environment"    column="environment" type="TEXT" />
+    <attribute name="info"           column="info"        type="TEXT" />
+    
+    <!-- relationships -->
+    <to-one  name="account" to="Accounts" join="accountId,id" />
+  </entity>
+  
+
+  <entity name="Accounts" table="person" primarykey="id"
+          class="OGoAccount" datasource="OGoAccounts"
+          restrictingQualifier="isAccount = 1"
+  >
+    <attribute name="id"             column="company_id"     />
+    <attribute name="objectVersion" column="object_version" />
+    <attribute name="ownerId"        column="owner_id"       />
+
+    <attribute name="login"             column="login"     />
+    <attribute name="password"          column="password"  />
+    <attribute name="firstname"         column="firstname" />
+    <attribute name="lastname"          column="name"      />
+    <attribute name="email"             column="email"     />
+    <attribute name="canChangePassword" column="can_change_password" />
+
+    <attribute name="isPrivate"      column="is_private"  />
+    <attribute name="isReadOnlyFlag"     column="is_readonly" />
+    <attribute name="isAccount"      column="is_account" />
+    <attribute name="isLocked"       column="is_locked" />
+
+    <attribute name="isTemplateUser" column="is_template_user" />
+    <attribute name="templateUserId" column="template_user_id" />
+    
+    <!-- relationships -->
+
+    <to-one  name="person"          to="Persons"  join="id,id" />
+    <to-one  name="accountTemplate" to="Accounts" join="templateUserId,id" />
+    <to-many name="teamMemberships" to="TeamMemberships" join="id,personId" />
+    <to-many name="acl"             to="ACLEntries"   join="id,objectId" />
+    
+    <!-- fetch specifications -->
+    
+    <fetch name="login" requiresAllBindings="true">
+      <!-- TBD: consider failed login attempts and provide a timeframe -->
+      <qualifier> <!-- Note that isLocked must be checked for NULL -->
+        login = $login AND password = $password
+        AND ((NOT (isLocked = 1)) OR (isLocked IS NULL))
+      </qualifier>
+    </fetch>
+    
+    <fetch name="cryptedPassword" requiresAllBindings="true">
+      <qualifier>
+        login = $login
+        AND ((NOT (isLocked = 1)) OR (isLocked IS NULL))
+      </qualifier>
+      <attributes>id,password</attributes>
+    </fetch>
+    
+    <fetch name="accountsForTeamID" requiresAllBindings="true">
+      <sql pattern="true">
+        %%(select)s %%(columns)s
+        FROM %%(tables)s, company_assignment CA
+        WHERE BASE.sub_company_id = CA.company_id
+          AND CA.company_id = %(id)i
+      </sql>
+    </fetch>
+  </entity>
+  
+  
+  <entity name="Teams" table="team" primarykey="id"
+          class="OGoTeam" datasource="OGoTeams"
+          restrictingQualifier="isTeam = 1"
+  >
+    <attribute name="id"             column="company_id"     />
+    <attribute name="objectVersion"  column="object_version" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <attribute name="ownerId"        column="owner_id"       />
+
+    <!-- TBD: 'name' is already taken by Principal, we should remap that
+         (just use description? or maybe 'cn' [commonName]).
+      -->
+    <attribute name="name"           column="description" />
+    <attribute name="login"          column="login" />
+
+    <attribute name="email"          column="email" />
+
+    <attribute name="isPrivate"      column="is_private"  />
+    <attribute name="isReadOnlyFlag" column="is_readonly" />
+    <attribute name="isLocationTeam" column="is_location_team" />
+    <attribute name="isTeam"         column="is_team" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+    
+    <!-- relationships -->
+
+    <to-many name="acl"         to="ACLEntries"   join="id,objectId" />
+    <to-one  name="comment"     to="TeamComments" join="id,companyId" />
+
+    <to-many name="events"      to="Attendees"      join="id,companyId" />
+    
+    <!-- fetch specifications -->
+    
+    <fetch name="teamsForAccountID" requiresAllBindings="true">
+      <!-- Parameter: 'id' -->
+      <sql pattern="true">
+        %%(select)s %%(columns)s
+        FROM %%(tables)s, company_assignment CA
+        WHERE BASE.company_id = CA.company_id
+          AND CA.sub_company_id = %(id)i
+      </sql>
+    </fetch>
+
+    <fetch name="default" requiresAllBindings="true" limit="100">
+      <!--
+        Required Parameter: 'authIds'
+        
+        Note: isPrivate must be enable to make the ACL relevant!
+        Note: ownerId IN authIds is slightly inefficient because this includes
+              all teams (whole teams can never be 'owners' or 'contacts').
+              This is different for the object_acl part, which needs the teams.
+        Note: ::int conversion on ACL, doesn't work with string keys ...
+        -->
+      <qualifier>
+        (ownerId IN $authIds)
+        OR
+        (isPrivate IS NULL) OR (isPrivate = 0)
+        OR
+        SQL[
+          EXISTS ( SELECT 1 FROM object_acl WHERE
+            object_acl.auth_id::int IN $authIds
+            AND
+            object_acl.action = 'allowed'
+            AND
+            object_acl.object_id = BASE.company_id )
+        ]
+      </qualifier>
+    
+      <ordering key="name" />
+    </fetch>
+
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        - 'authIds'
+        -->
+      <attributes>id,ownerId,contactId,isPrivate,isReadOnlyFlag,isTeam</attributes>
+      <qualifier>
+        (id IN $ids) AND (
+          (ownerId IN $authIds) OR (contactId IN $authIds) OR
+          (isPrivate IS NULL) OR (isPrivate = 0)  OR
+          SQL[
+            EXISTS ( SELECT 1 FROM object_acl WHERE
+              object_acl.auth_id::int IN $authIds
+              AND object_acl.action = 'allowed'
+              AND object_acl.object_id = BASE.company_id )
+          ]
+        )
+      </qualifier>
+    </fetch>
+  </entity>
+  
+  <entity name="TeamComments" table="company_info" primarykey="id"
+          class="OGoContactComment">
+    <attribute name="id"        column="company_info_id" />
+    <attribute name="companyId" column="company_id"      />
+    <attribute name="value"     column="comment"         />
+    
+    <to-one name="person" to="Teams" join="companyId,id" />
+
+    <fetch name="default" limit="1000">
+    </fetch>
+  </entity>
+  
+
+  <entity name="Persons" table="person" primarykey="id"
+          class="OGoPerson" datasource="OGoPersons"
+          restrictingQualifier="isPerson = 1"
+  >
+    <attribute name="id"             column="company_id"     />
+    <attribute name="objectVersion"  column="object_version" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <attribute name="ownerId"        column="owner_id"       />
+
+    <attribute name="firstname"      column="firstname"   />
+    <attribute name="lastname"       column="name"        />
+    <attribute name="middlename"     column="middlename"  />
+    <attribute name="nickname"       column="description" />
+    <attribute name="nameTitle"      column="name_title" />
+    <attribute name="nameAffix"      column="name_affix" />
+    
+    <attribute name="email"          column="email"       />
+
+    <attribute name="login"          column="login"       />
+    <attribute name="number"         column="number"      />
+    <attribute name="type"           column="type"        />
+
+    <attribute name="contactId"      column="contact_id"  />
+
+    <attribute name="isPrivate"      column="is_private"  />
+    <attribute name="isReadOnlyFlag" column="is_readonly" />
+    <attribute name="isAccount"      column="is_account"  />
+    <attribute name="isPerson"       column="is_person"   />
+    <!-- TODO: add necessary attributes -->
+    
+    <attribute name="salutation"     column="salutation"  />
+    <attribute name="degree"         column="degree"      />
+    <attribute name="sex"            column="sex"         />
+    <!-- TBD: sensitivity (could be exposed as a red banner? :-) -->
+    <!-- TBD: priority -->
+
+    <!-- tag names separated by comma -->
+    <attribute name="keywords"       column="keywords"       />
+
+    <attribute name="birthday"       column="birthday"       />
+    <attribute name="birthplace"     column="birthplace"     />
+    <attribute name="birthname"      column="birthname"      />
+    <attribute name="citizenship"    column="citizenship"    />
+    <attribute name="anniversary"    column="anniversary"    />
+    <attribute name="dayofdeath"     column="dayofdeath"     />
+    <attribute name="familyStatus"   column="family_status"  />
+
+    <attribute name="bossName"       column="boss_name"      />
+    <attribute name="partnerName"    column="partner_name"   />
+    <attribute name="assistantName"  column="assistant_name" />
+    <attribute name="department"     column="department"     />
+    <attribute name="office"         column="office"         />
+    <attribute name="occupation"     column="occupation"     />
+
+    <attribute name="bankCode"       column="bank_code"      />
+    <attribute name="bankAccount"    column="account"        />
+
+    <!-- unstructured contact attachments -->
+    <attribute name="associatedContacts"  column="associated_contacts"
+               type="VARCHAR"             width="255"  />
+    <attribute name="associatedCompanies" column="associated_companies"
+               type="VARCHAR"             width="255"  />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+
+    <!-- relationships -->
+
+    <to-one  name="account"     to="Accounts"        join="id,id" />
+    <to-many name="employments" to="Employments"     join="id,personId" />
+
+    <to-one  name="comment"     to="PersonComments"  join="id,companyId" />
+
+    <to-many name="emails"      to="PersonEMails"    join="id,companyId" />
+    <to-many name="phones"      to="PersonPhones"    join="id,companyId" />
+    <to-many name="addresses"   to="PersonAddresses" join="id,companyId" />
+
+    <to-many name="extraValues" to="PersonExtraValues" join="id,companyId" />
+
+    <to-many name="teamMemberships" to="TeamMemberships" join="id,personId" />
+    <to-many name="acl"         to="ACLEntries"   join="id,objectId" />
+
+    <to-many name="projects"    to="ProjectPersons" join="id,companyId" />
+    <to-many name="notes"       to="Notes"          join="id,companyId" />
+    <to-many name="ownedNotes"  to="Notes"          join="id,ownerId" />
+    <to-many name="attachments" to="Documents"      join="id,companyId" />
+
+    <to-many name="events"      to="Attendees"      join="id,companyId" />
+    
+    <to-many name="ownedTasks"  to="Tasks"          join="id,ownerId" />
+    
+    <!-- fetch specifications -->    
+    
+    <fetch name="default" requiresAllBindings="true" limit="100">
+      <!--
+        Required Parameter: 'authIds'
+        
+        Note: isPrivate must be enabled to make the ACL relevant!
+         TBD: this clashes with OGo, which exposes the reverse behaviour
+              (MUST be public)
+         - but we cannot do this (cheaply) in SQL? (it would be an extra op
+           to check whether an ACL is set
+
+        Note: ownerId IN authIds is slightly inefficient because this includes
+              all teams (whole teams can never be 'owners' or 'contacts').
+              This is different for the object_acl part, which needs the teams.
+        Note: ::int conversion on ACL, doesn't work with string keys ...
+        -->
+      <qualifier>
+        (ownerId IN $authIds) <!-- owner always has full access -->
+        OR
+        (contactId IN $authIds) <!-- primary-contacts have 'l' access -->
+        OR
+        (isPrivate IS NULL) OR (isPrivate = 0) <!-- public, ACL not checked -->
+        OR
+        SQL[ <!-- search for one ACL entry which contains 'allowed' -->
+          EXISTS ( SELECT 1 FROM object_acl WHERE
+            object_acl.auth_id::int IN $authIds
+            AND
+            object_acl.action = 'allowed'
+            AND
+            object_acl.object_id = BASE.company_id )
+        ]
+      </qualifier>
+    
+      <ordering key="lastname" />
+      <ordering key="firstname" />
+    </fetch>
+
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        - 'authIds'
+        -->
+      <attributes>id,ownerId,contactId,isPrivate,isReadOnlyFlag,isPerson,isAccount</attributes>
+      <qualifier>
+        (id IN $ids) AND (
+          (ownerId IN $authIds) OR (contactId IN $authIds) OR
+          (isPrivate IS NULL) OR (isPrivate = 0)  OR
+          SQL[
+            EXISTS ( SELECT 1 FROM object_acl WHERE
+              object_acl.auth_id::int IN $authIds
+              AND object_acl.action = 'allowed'
+              AND object_acl.object_id = BASE.company_id )
+          ]
+        )
+      </qualifier>
+    </fetch>
+
+    <fetch name="allFirstNames" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>firstname</attributes>
+      <ordering key="firstname" />
+    </fetch>
+    <fetch name="allLastNames" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>lastname</attributes>
+      <ordering key="lastname" />
+    </fetch>
+    <fetch name="allKeywords" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>keywords</attributes>
+      <ordering key="keywords" />
+    </fetch>
+    
+    <fetch name="relatedToProject" flags="allbinds">
+      <!--
+        Required Parameters:
+          'authIds'
+          'id'
+        
+        Related persons are persons which are either associated to the project
+        using the 'project_persons' relationship or are the 'contactId' of
+        a connected note.
+        
+        Note: teams are *not* resolved.
+        Note: ACL entries (has_access) are *not* included.
+        -->
+      <qualifier>
+        (
+          SQL[
+            EXISTS ( SELECT 1 FROM project_persons
+                     WHERE project_id = $id AND company_id = BASE.company_id
+                           AND (has_access IS NULL OR has_access = 0))
+            OR
+            EXISTS ( SELECT 1 FROM note
+                     WHERE project_id = $id AND company_id = BASE.company_id )
+          ]
+        )
+        AND <!-- check basic permissions -->
+        ( (ownerId IN $authIds) OR (contactId IN $authIds) OR
+          (isPrivate IS NULL) OR (isPrivate = 0) OR
+          SQL[
+            EXISTS ( SELECT 1 FROM object_acl WHERE
+              object_acl.auth_id::int IN $authIds
+              AND
+              object_acl.action = 'allowed'
+              AND
+              object_acl.object_id = BASE.company_id )
+          ] )
+      </qualifier>
+    
+      <ordering key="lastname" />
+      <ordering key="firstname" />
+    </fetch>
+    
+    <fetch name="birthdaysInMonth" requiresAllBindings="true" limit="10000">
+      <!--
+        Required Parameter: 'authIds', 'month'
+        
+        Note: isPrivate must be enabled to make the ACL relevant!
+         TBD: this clashes with OGo, which exposes the reverse behaviour
+              (MUST be public)
+         - but we cannot do this (cheaply) in SQL? (it would be an extra op
+           to check whether an ACL is set
+
+        Note: ownerId IN authIds is slightly inefficient because this includes
+              all teams (whole teams can never be 'owners' or 'contacts').
+              This is different for the object_acl part, which needs the teams.
+        Note: ::int conversion on ACL, doesn't work with string keys ...
+        -->
+      <qualifier>
+        (
+        (ownerId IN $authIds) <!-- owner always has full access -->
+        OR
+        (contactId IN $authIds) <!-- primary-contacts have 'l' access -->
+        OR
+        (isPrivate IS NULL) OR (isPrivate = 0) <!-- public, ACL not checked -->
+        OR
+        SQL[ <!-- search for one ACL entry which contains 'allowed' -->
+          EXISTS ( SELECT 1 FROM object_acl WHERE
+            object_acl.auth_id::int IN $authIds
+            AND
+            object_acl.action = 'allowed'
+            AND
+            object_acl.object_id = BASE.company_id )
+        ]
+        )
+        AND
+        SQL[ EXTRACT(MONTH FROM BASE.birthday) = $month ]
+      </qualifier>
+      <sql>
+        %(select)s %(columns)s,
+          EXTRACT(DAY  FROM BASE.birthday) AS dayOfBirthday,
+          EXTRACT(YEAR FROM BASE.birthday) AS yearOfBirthday,
+          BASE.name
+        FROM %(tables)s
+        %(where)s
+        ORDER BY dayOfBirthday ASC, yearOfBirthday ASC
+          <!-- %(andOrderBy)s -->
+        %(limit)s
+      </sql>
+    
+      <ordering key="lastname" />
+      <ordering key="firstname" />
+    </fetch>
+  </entity>
+  
+  <entity name="PersonComments" table="company_info" primarykey="id"
+          class="OGoContactComment">
+    <attribute name="id"        column="company_info_id" />
+    <attribute name="companyId" column="company_id"      />
+    <attribute name="value"     column="comment"         />
+    
+    <to-one name="person" to="Persons" join="companyId,id" />
+
+    <fetch name="default" limit="1000">
+    </fetch>
+  </entity>
+  
+  <entity name="PersonEMails" table="company_value" primarykey="id"
+          class="OGoEMailAddress"
+          restrictingQualifier="key LIKE 'email*' AND type = 3">
+    <attribute name="id"        column="company_value_id" />
+    <attribute name="companyId" column="company_id"       />
+
+    <attribute name="key"       column="attribute"        />
+    <attribute name="value"     column="value_string"     />
+    <attribute name="label"     column="label"            />
+    
+    <!-- Types: always 3 for email -->
+    <attribute name="type"      column="type"             />
+
+    <to-one name="person" to="Persons" join="companyId,id" />
+
+    <fetch name="default" limit="50">
+      <ordering key="key" />
+    </fetch>
+  </entity>
+  
+  <entity name="PersonExtraValues" table="company_value"
+          restrictingQualifier=
+           "type IS NULL OR type != 3 OR (type = 3 AND NOT (key LIKE 'email*'))"
+          primarykey="id" class="OGoContactExtValue">
+    <attribute name="id"        column="company_value_id" />
+    <attribute name="companyId" column="company_id"       />
+    <attribute name="dbStatus"  column="db_status"
+               type="VARCHAR"   width="50"  />
+
+    <attribute name="key"       column="attribute"        />
+    <attribute name="vString"   column="value_string"     />
+    <attribute name="vDate"     column="value_date"       />
+    <attribute name="vInt"      column="value_int"        />
+    
+    <attribute name="label"     column="label"            />
+
+    <attribute name="startDate" column="start_date"       />
+    <attribute name="endDate"   column="end_date"         />
+
+    <attribute name="category"  column="category"         />
+    <attribute name="isEnum"    column="is_enum"          />
+    
+    <!-- 
+      Types:
+      1 - String
+      3 - EMail
+      -->
+    <attribute name="type"      column="type"             />
+    
+    <!-- 
+      category           | character varying(255)   | 
+      uid                | integer                  | 
+      is_label_localized | smallint                 | 
+      -->
+
+    <to-one name="person" to="Persons" join="companyId,id" />
+
+    <fetch name="default" limit="1000">
+    </fetch>
+  </entity>
+  
+  
+  <entity name="Companies" table="enterprise" primarykey="id"
+          class="OGoCompany" datasource="OGoCompanies"
+          restrictingQualifier="isCompany = 1"
+  >
+    <attribute name="id"             column="company_id"     />
+    <attribute name="objectVersion"  column="object_version" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <attribute name="ownerId"        column="owner_id"       />
+
+    <attribute name="name"           column="description" />
+    <attribute name="number"         column="number"      />
+    <attribute name="email"          column="email"       />
+
+    <attribute name="type"           column="type"        />
+
+    <attribute name="contactId"      column="contact_id"    />
+
+    <attribute name="isPrivate"      column="is_private"    />
+    <attribute name="isReadOnlyFlag" column="is_readonly"   />
+    <attribute name="isCompany"      column="is_enterprise" />
+    <!-- TODO: add necessary attributes -->
+
+    <!-- tag names separated by comma -->
+    <attribute name="keywords"       column="keywords" />
+
+    <attribute name="bankCode"       column="bank_code"      />
+    <attribute name="bankAccount"    column="account"        />
+
+    <!-- unstructured contact attachments -->
+    <attribute name="associatedContacts"  column="associated_contacts"
+               type="VARCHAR"             width="255"  />
+    <attribute name="associatedCompanies" column="associated_companies"
+               type="VARCHAR"             width="255"  />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    
+    <!-- relationships -->
+
+    <to-many name="employments" to="Employments"      join="id,companyId" />
+    <to-many name="phones"      to="CompanyPhones"    join="id,companyId" />
+    <to-many name="addresses"   to="CompanyAddresses" join="id,companyId" />
+    <to-many name="acl"         to="ACLEntries"       join="id,objectId" />
+    <to-one  name="comment"     to="CompanyComments"  join="id,companyId" />
+
+    <to-many name="extraValues" to="CompanyExtraValues" join="id,companyId" />
+
+    <to-many name="projects"    to="ProjectCompanies" join="id,companyId" />
+    <to-many name="notes"       to="Notes"            join="id,companyId" />
+    <to-many name="attachments" to="Documents"        join="id,companyId" />
+
+    <!-- fetch specifications -->
+    
+    <fetch name="default" requiresAllBindings="true" limit="100">
+      <!--
+        Required Parameter: 'authIds'
+        
+        Note: isPrivate must be enable to make the ACL relevant!
+        Note: ownerId IN authIds is slightly inefficient because this includes
+              all teams (whole teams can never be 'owners' or 'contacts').
+              This is different for the object_acl part, which needs the teams.
+        Note: ::int conversion on ACL, doesn't work with string keys ...
+        -->
+      <qualifier>
+        (ownerId IN $authIds)
+        OR
+        (contactId IN $authIds)
+        OR
+        (isPrivate IS NULL) OR (isPrivate = 0)
+        OR
+        SQL[
+          EXISTS ( SELECT 1 FROM object_acl WHERE
+            object_acl.auth_id::int IN $authIds
+            AND
+            object_acl.action = 'allowed'
+            AND
+            object_acl.object_id = BASE.company_id )
+        ]
+      </qualifier>
+      <ordering key="name" />
+    </fetch>
+
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        - 'authIds'
+        -->
+      <attributes>id,ownerId,contactId,isPrivate,isReadOnlyFlag,isCompany</attributes>
+      <qualifier>
+        (id IN $ids) AND (
+          (ownerId IN $authIds) OR (contactId IN $authIds) OR
+          (isPrivate IS NULL) OR (isPrivate = 0)  OR
+          SQL[
+            EXISTS ( SELECT 1 FROM object_acl WHERE
+              object_acl.auth_id::int IN $authIds
+              AND object_acl.action = 'allowed'
+              AND object_acl.object_id = BASE.company_id )
+          ]
+        )
+      </qualifier>
+    </fetch>
+
+    <fetch name="allCompanyNames" flags="readonly,rawrows,allbinds,distinct">
+      <!-- fetch all company names, ignoring permissions -->
+      <attributes>name</attributes>
+      <ordering key="name" />
+    </fetch>
+    <fetch name="allKeywords" flags="readonly,rawrows,allbinds,distinct">
+      <!-- fetch all keywords (tag strings), ignoring permissions -->
+      <attributes>keywords</attributes>
+      <ordering key="keywords" />
+    </fetch>
+    
+    <fetch name="relatedToProject">
+      <!--
+        Required Parameters:
+          'authIds'
+          'id'
+        
+        Related persons are persons which are either associated to the project
+        using the 'project_persons' relationship or are the 'contactId' of
+        a connected note.
+        
+        Note: teams are *not* resolved.
+        Note: ACL entries (has_access) are *not* included.
+        -->
+      <qualifier>
+        (
+          SQL[
+            EXISTS ( SELECT 1 FROM project_companies
+                     WHERE project_id = $id AND company_id = BASE.company_id )
+            OR
+            EXISTS ( SELECT 1 FROM note
+                     WHERE project_id = $id AND company_id = BASE.company_id )
+          ]
+        )
+        AND <!-- check basic permissions -->
+        ( (ownerId IN $authIds) OR (contactId IN $authIds) OR
+          (isPrivate IS NULL) OR (isPrivate = 0) OR
+          SQL[
+            EXISTS ( SELECT 1 FROM object_acl WHERE
+              object_acl.auth_id::int IN $authIds
+              AND
+              object_acl.action = 'allowed'
+              AND
+              object_acl.object_id = BASE.company_id )
+          ] )
+      </qualifier>
+    
+      <ordering key="name" />
+    </fetch>
+  </entity>
+  
+  <entity name="CompanyComments" table="company_info" primarykey="id"
+          class="OGoContactComment">
+    <attribute name="id"        column="company_info_id" />
+    <attribute name="companyId" column="company_id"      />
+    <attribute name="value"     column="comment"         />
+    
+    <to-one name="company" to="Companies" join="companyId,id" />
+
+    <fetch name="default" limit="1000">
+    </fetch>
+  </entity>
+  
+  <entity name="CompanyExtraValues" table="company_value"
+          primarykey="id" class="OGoContactExtValue">
+    <attribute name="id"        column="company_value_id" />
+    <attribute name="companyId" column="company_id"       />
+    <attribute name="dbStatus"  column="db_status"
+               type="VARCHAR"   width="50"  />
+    
+    <attribute name="key"       column="attribute"        />
+    <attribute name="vString"   column="value_string"     />
+    <attribute name="vDate"     column="value_date"       />
+    <attribute name="vInt"      column="value_int"        />
+    
+    <attribute name="label"     column="label"            />
+
+    <attribute name="startDate" column="start_date"       />
+    <attribute name="endDate"   column="end_date"         />
+
+    <attribute name="category"  column="category"         />
+    <attribute name="isEnum"    column="is_enum"          />
+    
+    <!-- 
+      Types:
+      1 - String
+      3 - EMail
+      -->
+    <attribute name="type"      column="type"             />
+    
+    <!-- 
+      category           | character varying(255)   | 
+      uid                | integer                  | 
+      label              | character varying(255)   | 
+      is_label_localized | smallint                 | 
+      -->
+
+    <to-one name="company" to="Companies" join="companyId,id" />
+
+    <fetch name="default" limit="1000">
+    </fetch>
+  </entity>
+  
+  
+  <entity name="Projects" table="project" primarykey="id"
+          class="OGoProject" datasource="OGoProjects"
+  >
+    <!-- Do not use:
+           restrictingQualifier="isCompanyProject != 1"
+         This can break permission fetches.
+      -->
+    <attribute name="id"             column="project_id" />
+    <attribute name="objectVersion"  column="object_version" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <attribute name="code"           column="number"     />
+    <attribute name="ownerId"        column="owner_id"   />
+    <attribute name="teamId"         column="team_id"    />
+    
+    <attribute name="name"           column="name" />
+
+    <attribute name="startDate"      column="start_date" />
+    <attribute name="endDate"        column="end_date"   />
+
+    <!-- 00_sleeping, 05_processing, 10_out_of_date, 30_archived -->
+    <attribute name="status"         column="status"     />
+    <attribute name="type"           column="kind"       />
+
+    <attribute name="isCompanyProject" column="is_fake" />
+
+    <!-- eg: skyrix://move/, file:///home/helge/OGoRoot/SkyFileSystem/10990 -->
+    <attribute name="blobStorageUrl" column="url" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+
+    <to-one  name="comment"    to="ProjectComments"  join="id,objectId" />
+
+    <to-many name="documents"  to="Documents" join="id,projectId" />
+    <to-many name="notes"      to="Notes"     join="id,projectId" />
+    <to-many name="tasks"      to="Tasks"     join="id,projectId" />
+    
+    <to-one  name="owner"      to="Persons"   join="ownerId,id" />
+    <to-one  name="team"       to="Teams"     join="teamId,id"  />
+
+    <to-many name="teams"      to="ProjectTeams"     join="id,projectId" />
+    <to-many name="persons"    to="ProjectPersons"   join="id,projectId" />
+    <to-many name="companies"  to="ProjectCompanies" join="id,projectId" />
+    
+    <!-- fetches -->
+    
+    <fetch name="default" limit="10000" flags="allbinds">
+      <!-- required: 'authIds'
+           TBD: would be good to have the person-auth-ids separately
+        -->
+      <qualifier>
+        ( NOT (isCompanyProject = 1) OR isCompanyProject IS NULL )
+        AND
+        ( status = null OR status != '30_archived' )
+        AND
+        ( ownerId IN $authIds OR teamId IN $authIds OR
+          (SQL[ EXISTS (
+             SELECT 1 FROM project_company_assignment PA WHERE
+             PA.project_id = BASE.project_id AND PA.company_id IN $authIds
+          ) ])
+        )
+      </qualifier>
+    
+      <ordering key="name" />
+    </fetch>
+
+    <fetch name="projectsForAccountId" limit="10000" flags="allbinds">
+      <!-- required: 'authIds'
+                     'contactId'
+           TBD: would be good to have the person-auth-ids separately
+        -->
+      <qualifier>
+        ( NOT (isCompanyProject = 1) OR isCompanyProject IS NULL )
+        AND
+        ( status = null OR status != '30_archived' )
+        AND
+        ( ownerId IN $authIds OR teamId IN $authIds OR
+          (SQL[ EXISTS (
+             SELECT 1 FROM project_company_assignment PA WHERE
+             PA.project_id = BASE.project_id AND PA.company_id IN $authIds
+          ) ])
+        )
+        AND
+        ( ownerId = $contactId
+          OR
+          <!-- TBD: explain this SQL qualifier -->
+          SQL[ team_id IN
+               ( SELECT team_id FROM team_membership 
+                 WHERE person_id = $contactId ) ]
+          OR
+          (SQL[ EXISTS (
+             SELECT 1 FROM project_company_assignment PA WHERE
+             PA.project_id = BASE.project_id AND 
+             ( PA.company_id = $contactId 
+               OR (PA.company_id IN 
+                 (SELECT team_id FROM team_membership 
+                  WHERE person_id = $contactId )))
+          ) ])
+        )
+      </qualifier>
+    
+      <ordering key="name" />
+    </fetch>
+    
+    <fetch name="projectsForCompanyId" limit="10000" flags="allbinds">
+      <!-- required: 'authIds'
+                     'contactId'
+           TBD: would be good to have the person-auth-ids separately
+        -->
+      <qualifier>
+        ( NOT (isCompanyProject = 1) OR isCompanyProject IS NULL )
+        AND
+        ( status = null OR status != '30_archived' )
+        AND
+        ( ownerId IN $authIds OR teamId IN $authIds OR
+          (SQL[ EXISTS (
+             SELECT 1 FROM project_company_assignment PA WHERE
+             PA.project_id = BASE.project_id AND PA.company_id IN $authIds
+          ) ])
+        )
+        AND
+        ( SQL[ EXISTS (
+            SELECT 1 FROM project_company_assignment PA WHERE
+            PA.project_id = BASE.project_id AND PA.company_id = $contactId  )])
+      </qualifier>
+    
+      <ordering key="name" />
+    </fetch>
+    
+    <fetch name="projectWithCode">
+      <qualifier>code = $code</qualifier>
+    </fetch>
+    
+    <fetch name="packBackMyProjectsNames">
+      <qualifier>
+        ownerId = $loginId 
+        AND (NOT code LIKE "PackBack-*")
+        AND (NOT status = "30_archived" OR status = null)
+        AND (NOT (isCompanyProject = 1) OR isCompanyProject = null)
+      </qualifier>
+      <ordering key="name" op="ASC" />
+      <attributes>id,name</attributes>
+    </fetch>
+    
+    <!--  TODO: does not work yet, we need replacements inside the SQL .. -->
+    <fetch name="packBackFriendsProjectsNames">
+      <attributes>id,name</attributes>
+      <qualifier>NOT (ownerId = $loginId)</qualifier>
+      <ordering key="name" op="ASC" />
+      <sql pattern="true">
+        %%(select)s  
+          BASE.name, BASE.number, BASE.owner_id
+        FROM
+          %%(tables)s, project_company_assignment A
+        WHERE (NOT (is_fake = 1) OR is_fake IS NULL ) AND
+          %%(qualifier)s AND
+          (BASE.project_id = A.project_id AND A.company_id = %(loginId)s)
+      </sql>
+    </fetch>
+    
+    <fetch name="myProjectIds" flags="distinct,readonly,rawrows,allbinds">
+      <!-- 
+        Parameter for this fetch is 'authIds' which must contain the list of
+        the accounts *and* teams the user is authenticated for. (the resolved
+        list of authentication parameters.
+        -->
+      
+      <attributes>id</attributes>
+      
+      <!-- OK, this means the owner and all teams have access. And if this
+           does not work out, the ACL is checked for 'r' and 'm' permissions -->
+      <qualifier>
+        ( NOT (isCompanyProject = 1) OR isCompanyProject = null )
+        AND
+        ( status = null OR status != '30_archived' )
+        AND
+        ( ownerId IN $authIds OR teamId IN $authIds OR
+          (SQL[PA.company_id IN $authIds
+            AND (PA.access_right LIKE '%m%' OR PA.access_right LIKE '%r%')])
+        )
+      </qualifier>
+      
+      <sql>
+        %(select)s %(columns)s
+        FROM %(tables)s
+        LEFT JOIN project_company_assignment PA
+          ON ( PA.has_access = 1 AND BASE.project_id = PA.project_id )
+        %(where)s
+        %(orderby)s
+        %(limit)s
+      </sql>
+    </fetch>
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        - 'authIds'
+        -->
+      <attributes>id,ownerId,teamId</attributes>
+
+      <!-- OK, this means the owner and all teams have access. And if this
+           does not work out, the ACL is checked for 'r' and 'm' permissions
+           Bug in JOPE: 'IN $authIds])' isn't parsed properly (as 'authIds])')
+        -->
+      <qualifier>
+        (id IN $ids)
+        AND
+        ( NOT (isCompanyProject = 1) OR isCompanyProject = null)
+        AND
+        ( status = null OR status != '30_archived' )
+        AND
+        ( ownerId IN $authIds OR teamId IN $authIds OR
+          (SQL[ PA.company_id IN $authIds ]) <!-- space needed! -->
+        )
+      </qualifier>
+
+      <sql>
+        %(select)s %(columns)s
+        FROM %(tables)s
+        LEFT JOIN project_company_assignment PA
+          ON ( PA.has_access = 1 AND BASE.project_id = PA.project_id )
+        %(where)s
+      </sql>
+    </fetch>
+  </entity>
+  
+  <entity name="ProjectComments" table="project_info" primarykey="id"
+          class="OGoObjectComment">
+    <attribute name="id"       column="project_info_id" />
+    <attribute name="objectId" column="project_id"      />
+    <attribute name="value"    column="comment"         />
+    
+    <to-one name="object" to="Projects" join="objectId,id" />
+
+    <fetch name="default" limit="1000">
+    </fetch>
+  </entity>
+  
+  <entity name="ProjectsToCompany" table="project_company_assignment"
+          class="OGoProjectMembership" primarykey="id"
+          datasource="OGoDataSource">
+    <attribute name="id"             column="project_company_assignment_id" />
+    <attribute name="companyId"      column="company_id" />
+    <attribute name="projectId"      column="project_id" />
+
+    <!-- this specifies whether the companyId has access to the project or
+         whether its an 'informational' attachment (eg associated company)
+         Hm, but this is already tracked by permissions != ''?!
+      -->
+    <attribute name="hasAccess"      column="has_access" />
+    <attribute name="permissions"    column="access_right" /> <!-- eg 'iwdr' -->
+
+    <attribute name="info"           column="info" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+
+    <to-one name="project" to="Projects" join="projectId,id" />
+    
+    <to-one name="team"    to="Teams"     join="companyId,id" />
+    <to-one name="company" to="Companies" join="companyId,id" />
+    <to-one name="person"  to="Persons"   join="companyId,id" />
+    
+    <!-- fetch specifications -->
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'authIds'
+        - 'ids'
+        -->
+      <!-- fetching quite a few attributes. those values are rechecked in the
+           code. better be sure ;-) -->
+      <attributes>projectId,permissions,hasAccess,companyId</attributes>
+      <qualifier>
+        (hasAccess = 1) AND (projectId IN $ids) AND (companyId IN $authIds)
+      </qualifier>
+    </fetch>
+  </entity>
+  <entity name="ProjectTeams" table="project_teams" readonly="true"
+          class="OGoProjectMembership" primarykey="id"
+          datasource="OGoDataSource">
+    <attribute name="id"             column="project_company_assignment_id" />
+    <attribute name="companyId"      column="company_id" />
+    <attribute name="projectId"      column="project_id" />
+
+    <!-- this specifies whether the companyId has access to the project or
+         whether its an 'informational' attachment (eg associated company)
+         Hm, but this is already tracked by permissions != ''?!
+      -->
+    <attribute name="hasAccess"      column="has_access" />
+    <attribute name="permissions"    column="access_right" /> <!-- eg 'iwdr' -->
+
+    <attribute name="info"           column="info" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+
+    <to-one name="project" to="Projects" join="projectId,id" />
+    <to-one name="team"    to="Teams"    join="companyId,id" />
+    
+    <!-- fetch specifications -->
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'authIds'
+        - 'ids'
+        -->
+      <attributes>projectId,permissions</attributes>
+      <qualifier>
+        (hasAccess = 1) AND (projectId IN $ids) AND (companyId IN $authIds)
+      </qualifier>
+    </fetch>
+  </entity>
+  <entity name="ProjectPersons" table="project_persons" readonly="true"
+          class="OGoProjectMembership" primarykey="id"
+          datasource="OGoDataSource">
+    <attribute name="id"             column="project_company_assignment_id" />
+    <attribute name="companyId"      column="company_id" />
+    <attribute name="projectId"      column="project_id" />
+
+    <!-- this specifies whether the companyId has access to the project or
+         whether its an 'informational' attachment (eg associated company)
+         Hm, but this is already tracked by permissions != ''?!
+      -->
+    <attribute name="hasAccess"      column="has_access" />
+    <attribute name="permissions"    column="access_right" /> <!-- eg 'iwdr' -->
+
+    <attribute name="info"           column="info" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+
+    <to-one name="project" to="Projects" join="projectId,id" />
+    <to-one name="person"  to="Persons"  join="companyId,id" />
+    
+    <!-- fetch specifications -->
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'authIds'
+        - 'ids'
+        -->
+      <attributes>projectId,permissions</attributes>
+      <qualifier>
+        (hasAccess = 1) AND (projectId IN $ids) AND (companyId IN $authIds)
+      </qualifier>
+    </fetch>
+  </entity>
+  <entity name="ProjectCompanies" table="project_companies" readonly="true"
+          class="OGoProjectMembership" primarykey="id"
+          datasource="OGoDataSource">
+    <attribute name="id"             column="project_company_assignment_id" />
+    <attribute name="companyId"      column="company_id" />
+    <attribute name="projectId"      column="project_id" />
+
+    <!-- this specifies whether the companyId has access to the project or
+         whether its an 'informational' attachment (eg associated company)
+         Hm, but this is already tracked by permissions != ''?!
+      -->
+    <attribute name="hasAccess"      column="has_access" />
+    <attribute name="permissions"    column="access_right" /> <!-- eg 'iwdr' -->
+
+    <attribute name="info"           column="info" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+
+    <to-one name="project" to="Projects"  join="projectId,id" />
+    <to-one name="company" to="Companies" join="companyId,id" />
+    
+    <!-- fetch specifications -->
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'authIds'
+        - 'ids'
+        -->
+      <attributes>projectId,permissions</attributes>
+      <qualifier>
+        (hasAccess = 1) AND (projectId IN $ids) AND (companyId IN $authIds)
+      </qualifier>
+    </fetch>
+  </entity>
+
+
+
+  <!-- Contact Relationships -->  
+  
+  <entity name="TeamMemberships" table="team_membership"
+          primarykey="id" flags="readonly" 
+          class="OGoTeamMembership" datasource="OGoDataSource">
+    <attribute name="id"        column="company_assignment_id" />
+    <attribute name="teamId"    column="team_id"   />
+    <attribute name="personId"  column="person_id" />
+    <attribute name="function"  column="function"  />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+    
+    <to-one name="team"    to="Teams"    join="companyId,id" />
+    <to-one name="person"  to="Persons"  join="personId,id" />
+    <to-one name="account" to="Accounts" join="personId,id" />
+
+    <!-- fetch specifications -->
+    
+    <fetch name="default" requiresAllBindings="true" limit="10000">
+      <!--
+        For now we fetch everything. We might want to restrict results by
+        checking permissions on person/team.
+        -->
+    </fetch>
+  </entity>
+
+  <entity name="Employments" table="employment" primarykey="id"
+          class="OGoEmployment" datasource="OGoDataSource">
+    <attribute name="id"        column="company_assignment_id" />
+    <attribute name="companyId" column="enterprise_id" />
+    <attribute name="personId"  column="person_id"     />
+    <attribute name="function"  column="function"      />
+    <attribute name="isChief"   column="is_chief"      />
+    
+    <attribute name="startDate"    column="start_date"   />
+    <attribute name="endDate"      column="end_date"     />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+    
+    <!-- 
+        If only one attribute is given, a natural join is being
+      done. Which might not be what we want. We might want to
+      fallback to the primary key of the source/dest
+         
+      We could add something like this for natural joins:
+        to="Persons" using="companyId"
+        (if Persons would have a companyId property ..., we use 'id')
+      or:
+        <to-one to="Companies" on="companyId" />
+        <to-one to="Persons"   on="personId" />
+      -->
+    <to-one name="company" to="Companies" join="companyId,id" />
+    <to-one name="person"  to="Persons"   join="personId,id" />
+
+
+    <!-- fetch specifications -->
+    
+    <fetch name="default" requiresAllBindings="true" limit="10000">
+      <!--
+        For now we fetch everything. We might want to restrict results by
+        checking permissions on person/company.
+        -->
+    </fetch>
+  </entity>
+  
+  <entity name="CompanyRelationships" table="company_hierarchy" primarykey="id"
+          class="OGoCompanyRelationship" datasource="OGoDataSource">
+    <attribute name="id"           column="company_assignment_id" />
+    <attribute name="parentId"     column="parent_id" />
+    <attribute name="companyId"    column="company_id"     />
+    <attribute name="function"     column="function"      />
+    
+    <attribute name="startDate"    column="start_date"    />
+    <attribute name="endDate"      column="end_date"      />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+    
+    <to-one name="parent"  to="Companies" join="parentId,id"  />
+    <to-one name="company" to="Companies" join="companyId,id" />
+    
+
+    <!-- fetch specifications -->
+    
+    <fetch name="default" requiresAllBindings="true" limit="1000">
+      <!--
+        For now we fetch everything. We might want to restrict results by
+        checking permissions on the companies.
+        -->
+    </fetch>
+  </entity>
+
+
+  <entity name="PersonPhones" table="telephone" primarykey="id"
+          class="OGoPhoneNumber" datasource="OGoDataSource">
+    <!-- Note: we map key/value to be consistent with emails -->
+    
+    <attribute name="id"             column="telephone_id" />
+    <attribute name="objectVersion"  column="object_version" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <attribute name="companyId"      column="company_id"     />
+
+    <attribute name="value"      column="number"      />
+    <attribute name="realNumber" column="real_number" />
+    <attribute name="info"       column="info"        />
+    <attribute column="url"         />
+
+    <!-- 01_tel, 02_tel, 03_tel_funk, 15_fax_private, 10_fax, 05_tel_private -->
+    <attribute name="key" column="type" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!--
+      db_status      | character varying(50)
+      -->
+
+    <to-one name="person" to="Persons" join="companyId,id" />
+
+    <fetch name="default" limit="50">
+      <ordering key="key" />
+    </fetch>
+  </entity>
+
+  <entity name="CompanyPhones" table="telephone" primarykey="id"
+          class="OGoPhoneNumber" datasource="OGoDataSource">
+    <!-- Note: we map key/value to be consistent with emails -->
+    
+    <attribute name="id"             column="telephone_id" />
+    <attribute name="objectVersion"  column="object_version" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <attribute name="companyId"      column="company_id"     />
+
+    <attribute name="value"      column="number"      />
+    <attribute name="realNumber" column="real_number" />
+    <attribute name="info"       column="info"        />
+    <attribute column="url"         />
+
+    <!-- 01_tel, 02_tel, 03_tel_funk, 15_fax_private, 10_fax, 05_tel_private -->
+    <attribute name="key" column="type" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!--
+      db_status      | character varying(50)
+      -->
+
+    <!-- relationships -->
+
+    <to-one name="person" to="Companies" join="companyId,id" />
+    
+    <!-- fetch specifications -->
+
+    <fetch name="default" limit="50">
+      <ordering key="key" />
+    </fetch>
+  </entity>
+
+
+  <entity name="PersonAddresses" table="address" primarykey="id"
+          class="OGoAddress" datasource="OGoDataSource">
+    <!-- Note: we map key to type to be consistent with emails/phones -->
+    
+    <attribute name="id"             column="address_id" />
+    <attribute name="objectVersion"  column="object_version" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+    
+    <attribute name="companyId"      column="company_id"     />
+
+    <!-- bill, location, mailing, private, ship
+         vCard: V:DOM,HOME,INTL,PARCEL,POSTAL,PREF,WORK
+         vCard: V:POSTAL
+      -->
+    <attribute name="key" column="type" type="VARCHAR" width="50" />
+
+    <attribute name="name1"    type="VARCHAR" width="255" />
+    <attribute name="name2"    type="VARCHAR" width="255" />
+    <attribute name="name3"    type="VARCHAR" width="255" />
+    <attribute name="street"   type="VARCHAR" width="255" />
+    <attribute name="zip"      type="VARCHAR" width="50" />
+    <attribute name="city"     column="zipcity" type="VARCHAR" width="255" />
+    <attribute name="country"  type="VARCHAR" width="100" />
+    <attribute name="state"    type="VARCHAR" width="100" />
+    <attribute name="district" type="VARCHAR" width="100" />
+    <!-- db_status, source_url -->
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+    
+    <!-- relationships -->
+
+    <to-one name="person" to="Persons" join="companyId,id" />
+    
+    <!-- fetch specifications -->
+
+    <fetch name="default" limit="50">
+      <ordering key="key" />
+    </fetch>
+    
+    <fetch name="allCities" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>city</attributes>
+      <ordering key="city" />
+    </fetch>
+    <fetch name="allStates" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>state</attributes>
+      <ordering key="state" />
+    </fetch>
+    <fetch name="allCountries" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>country</attributes>
+      <ordering key="country" />
+    </fetch>
+  </entity>
+
+  <entity name="CompanyAddresses" table="address" primarykey="id"
+          class="OGoAddress">
+    <!-- Note: we map key to type to be consistent with emails/phones -->
+    
+    <attribute name="id"             column="address_id" />
+    <attribute name="objectVersion"  column="object_version" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+               
+    <attribute name="companyId"      column="company_id"     />
+
+    <!-- bill, location, mailing, private, ship
+         vCard: V:DOM,HOME,INTL,PARCEL,POSTAL,PREF,WORK
+         vCard: V:POSTAL
+      -->
+    <attribute name="key" column="type" type="VARCHAR" width="50" />
+
+    <attribute name="name1"   type="VARCHAR" width="255" />
+    <attribute name="name2"   type="VARCHAR" width="255" />
+    <attribute name="name3"   type="VARCHAR" width="255" />
+    <attribute name="street"  type="VARCHAR" width="255" />
+    <attribute name="zip"     type="VARCHAR" width="50" />
+    <attribute name="city"    column="zipcity" type="VARCHAR" width="255" />
+    <attribute name="country" type="VARCHAR" width="100" />
+    <attribute name="state"   type="VARCHAR" width="100" />
+    <!-- db_status, source_url -->
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+    
+    <!-- relationships -->
+
+    <to-one name="company" to="Companies" join="companyId,id" />
+    
+    <!-- fetch specifications -->
+
+    <fetch name="default" limit="50">
+      <ordering key="key" />
+    </fetch>
+    
+    <fetch name="allCities" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>city</attributes>
+      <ordering key="city" />
+    </fetch>
+    <fetch name="allStates" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>state</attributes>
+      <ordering key="state" />
+    </fetch>
+    <fetch name="allCountries" flags="readonly,rawrows,allbinds,distinct">
+      <attributes>country</attributes>
+      <ordering key="country" />
+    </fetch>
+  </entity>
+
+
+  
+  <entity name="Events" table="date_x" primarykey="id"
+          class="OGoEvent" datasource="OGoEvents"
+  >
+    <attribute name="id"             column="date_id"        type="INT" />
+    <attribute name="objectVersion" column="object_version" type="INT" />
+    <attribute name="lastModified"   column="last_modified"  type="INT" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+    
+    <!-- core data -->
+    <attribute name="startDate"     column="start_date"
+               type="TIMESTAMP WITH TIMEZONE" null="false" />
+    <attribute name="endDate"       column="end_date"
+               type="TIMESTAMP WITH TIMEZONE" null="false" />
+               
+    <attribute name="title"         column="title"
+               type="VARCHAR"       width="255"  />
+    <attribute name="location"      column="location"
+               type="VARCHAR"       width="255"  />
+    <attribute name="type"          column="apt_type"
+               type="VARCHAR"       width="100"  />
+    <attribute name="keywords"      column="keywords"
+               type="VARCHAR"       width="255"  />
+
+    <attribute name="travelDurationBefore" column="travel_duration_before"
+               type="INT" />
+    <attribute name="travelDurationAfter"  column="travel_duration_after"
+               type="INT" />
+
+    <attribute name="sensitivity"  column="sensitivity" type="SMALLINT" />
+    <attribute name="priority"     column="importance"  type="SMALLINT" />
+               
+    <!-- resources -->
+    <attribute name="resourceNames" column="resource_names"
+               type="VARCHAR"       width="255"  />
+               
+    <!-- notifications -->
+    <attribute name="notificationTime" column="notification_time" type="INT" />
+    
+    <!-- conflicts -->
+    <attribute name="isConflictDisabled" column="is_conflict_disabled"
+               type="SMALLINT" values="0,1,2" />
+    <attribute name="freebusyType"  column="fbtype"
+               type="VARCHAR"       width="50"  />
+    
+    <!-- unstructured contact attachments -->
+    <attribute name="associatedContacts" column="associated_contacts"
+               type="VARCHAR"            width="255"  />
+    
+    <!-- recurrences -->
+    <attribute name="cycleRule"     column="type"
+               type="VARCHAR"       width="255"  />
+    <attribute name="cycleEventId"  column="parent_date_id"
+               type="INT" />
+    <attribute name="cycleUntil"    column="cycle_end_date"
+               type="TIMESTAMP WITH TIMEZONE" />
+    
+    <!-- access control -->
+    <attribute name="ownerId"         column="owner_id"       type="INT" />
+    <attribute name="accessTeamId"    column="access_team_id" type="INT" />
+    <attribute name="writeAccessList" column="write_access_list"
+               type="VARCHAR"         width="255"  />
+
+    <!-- 
+      unused:
+        absence
+        is_absence
+        is_attendance
+                                calendar_name  VARCHAR(255)
+                                source_url     VARCHAR(255)
+                                busy_type      smallint
+                                evo_reminder   VARCHAR(255)
+                                ol_reminder    VARCHAR(255)
+        online_meeting VARCHAR(255)
+      -->
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+    <to-one  name="owner"       to="Persons"      join="ownerId,id"      />
+    <to-one  name="accessTeam"  to="Teams"        join="accessTeamId,id" />
+    
+    <to-many name="attendees"   to="Attendees"    join="id,eventId" />
+    
+    <to-one  name="cycleEvent"  to="Events"       join="cycleEventId,id" />
+    <to-many name="occurrences" to="Events"       join="id,cycleEventId" />
+    
+    <to-many name="notes"       to="Notes"        join="id,eventId" />
+    <to-many name="attachments" to="Documents"    join="id,eventId" />
+    
+    <!-- fetch specifications -->
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        - 'authIds'
+        
+        We need to be either the owner or be in the access team to have
+        any access at all.
+        TBD: would be good to get account-ids and team-ids separately
+        -->
+      <attributes>id,ownerId,accessTeamId,writeAccessList</attributes>
+      <qualifier>
+        (id IN $ids) OR (ownerId IN $authIds) OR (accessTeamId IN $authIds)
+        </qualifier>
+    </fetch>
+
+    <fetch name="upcomingEvents" requiresAllBindings="true" limit="4">
+      <ordering>startDate</ordering>
+      <sql pattern="true">
+        %%(select)s %%(columns)s
+        FROM %%(tables)s, date_company_assignment A
+        WHERE BASE.date_id = A.date_id
+          AND A.company_id IN ( %(authIdsAsStringList)s )
+          AND BASE.start_date > (CURRENT_TIMESTAMP - INTERVAL '30 minutes')
+        %%(orderby)s
+        %%(limit)s
+      </sql>
+    </fetch>
+  </entity>
+
+  <entity name="Attendees" table="date_company_assignment" primarykey="id"
+          class="OGoAttendee" datasource="OGoAttendees"
+  >
+    <attribute name="id"       column="date_company_assignment_id"
+               type="INT"      null="false"/>
+    <attribute name="dbStatus" column="db_status" type="VARCHAR" width="50"  />
+    
+    <!-- core data -->
+    <attribute name="status"  column="partstatus" type="VARCHAR" width="50"  />
+    <attribute name="role"    column="role"       type="VARCHAR" width="50"  />
+    <attribute name="comment" column="comment"    type="VARCHAR" width="255" />
+    <attribute name="rsvp"    column="rsvp"       type="SMALLINT "/>
+    
+    <!-- join -->
+    <attribute name="companyId"      column="company_id" type="INT"      />
+    <attribute name="isTeamAttendee" column="is_staff"   type="SMALLINT" />
+    <attribute name="eventId"        column="date_id"    type="INT"      />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+    <to-one name="event" to="Events" join="eventId,id" />
+
+    <!--
+      unused:
+        is_new      SMALLINT
+        outlook_key VARCHAR(255)
+      -->
+  </entity>
+  
+  
+  <entity name="Tasks" table="job" primarykey="id"
+          class="OGoTask" datasource="OGoTasks"
+  >
+    <attribute name="id"             column="job_id"         type="INT" />
+    <attribute name="objectVersion" column="object_version" type="INT" />
+    <attribute name="lastModified"   column="last_modified"  type="INT" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <!-- core data -->
+
+    <attribute name="startDate"      column="start_date"
+               type="TIMESTAMP WITH TIMEZONE" null="false" />
+    <attribute name="endDate"        column="end_date"
+               type="TIMESTAMP WITH TIMEZONE" null="false" />
+    <attribute name="completionDate" column="completion_date"
+               type="TIMESTAMP WITH TIMEZONE" />
+
+    <attribute name="title"          column="name"
+               type="VARCHAR"        width="255" null="false" />
+    <attribute name="keywords"       column="keywords"
+               type="VARCHAR"        width="255"  />
+    <attribute name="category"       column="category"
+               type="VARCHAR"        width="255"  />
+    <!-- TBD: kind | character varying(50) -->
+
+    <!-- 00_created, 02_rejected, 20_processing, 25_done, 30_archived -->
+    <attribute name="status"         column="job_status"
+               type="VARCHAR"        width="255" null="false" />
+
+    <attribute name="percentComplete"
+               column="percent_complete" type="SMALLINT" />
+    <attribute name="actualWorkInMinutes"
+               column="actual_work"      type="SMALLINT" />
+    <attribute name="totalWorkInMinutes"
+               column="total_work"       type="SMALLINT" />
+    <attribute name="kilometers"         column="kilometers"
+               type="VARCHAR"            width="255" />
+    <attribute name="accountingInfo"     column="accounting_info"
+               type="VARCHAR"            width="255" />
+
+    <attribute name="sensitivity"    column="sensitivity" type="SMALLINT" />
+    <attribute name="priority"       column="priority"    type="SMALLINT" />
+               
+    <!-- notification -->
+    <!--  TODO: notify_x INT 
+      0-no notify
+      1-always notify
+      2-notify-on-done/accept
+    -->
+    
+    <!-- contact references -->
+    <attribute name="creatorId"      column="creator_id"       type="INT" />
+    <attribute name="ownerId"        column="executant_id"     type="INT" />
+    <attribute name="isOwnerTeam"    column="is_team_job"      type="INT" />
+    
+    <!-- projects -->
+    <attribute name="projectId"      column="project_id"       type="INT" />
+    
+    <!-- inline 'main' comment -->
+    <attribute name="comment"        column="job_comment"      type="TEXT" />
+
+    <!-- unstructured contact attachments -->
+    <attribute name="associatedContacts"  column="associated_contacts"
+               type="VARCHAR"             width="255"  />
+    <attribute name="associatedCompanies" column="associated_companies"
+               type="VARCHAR"             width="255"  />
+               
+    <!-- timer -->
+    <attribute name="timerStartDate" column="timer_date"
+               type="TIMESTAMP WITH TIMEZONE" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!--
+      unused:
+                                parent_job_id  INT
+                                is_control_job SMALLINT
+                                is_new         SMALLINT
+        source_url     VARCHAR(255)
+      -->
+
+                <!-- relationships -->
+                
+    <to-one  name="project"     to="Projects" join="projectId,id" />
+    <to-one  name="creator"     to="Persons"  join="creatorId,id" />
+    <to-one  name="ownerPerson" to="Persons"  join="ownerId,id" />
+    <to-one  name="ownerTeam"   to="Teams"    join="ownerId,id" />
+
+                <!-- fetch specifications -->
+
+    <fetch name="default" requiresAllBindings="true" limit="10000">
+      <!-- 
+        Parameters:
+        - authIds
+        
+        Notes:
+        - must be the creator or executant (can be a team) or
+          have access to the project
+        -->
+      <qualifier>
+        <!-- we could probably optimize this with a proper join -->
+        creatorId IN $authIds OR ownerId IN $authIds OR
+        SQL[
+          (BASE.project_id IN (SELECT P.project_id FROM project P
+           WHERE P.owner_id IN $authIds OR P.team_id IN $authIds
+           OR EXISTS (
+             SELECT 1 FROM project_company_assignment PA WHERE
+             PA.project_id = P.project_id AND PA.company_id IN $authIds
+           )))
+        ]
+      </qualifier>
+      
+      <ordering key="endDate"  />
+      <ordering key="priority" />
+      <ordering key="status"   />
+    </fetch>
+    
+    <fetch name="inReplyToId" requiresAllBindings="true" limit="10000">
+      <!-- 
+        Parameters:
+        - authIds
+        - id
+        
+        Notes:
+        - must be the creator or executant (can be a team) or
+          have access to the project
+        -->
+      <qualifier>
+        <!-- we could probably optimize this with a proper join -->
+        SQL[ BASE.job_id IN (SELECT source_id FROM obj_link
+             WHERE target_id = $id AND link_type = 'InReply') ]
+        AND
+        (creatorId IN $authIds
+         OR
+         ownerId IN $authIds
+         OR
+         SQL[
+          (BASE.project_id IN (SELECT P.project_id FROM project P
+           WHERE P.owner_id IN $authIds OR P.team_id IN $authIds
+           OR EXISTS (
+             SELECT 1 FROM project_company_assignment PA WHERE
+             PA.project_id = P.project_id AND PA.company_id IN $authIds
+           )))
+        ])
+      </qualifier>
+      
+      <ordering key="endDate"  />
+      <ordering key="priority" />
+      <ordering key="status"   />
+    </fetch>
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        -->
+      <attributes>id,creatorId,ownerId,projectId,isOwnerTeam</attributes>
+      <qualifier>
+        id IN $ids
+        </qualifier>
+    </fetch>
+  </entity>
+  
+
+  <entity name="TaskNotes" table="job_history" primarykey="id"
+          class="OGoTaskNote" datasource="OGoDataSource">
+    <attribute name="id"             column="job_history_id" type="INT" />
+    <attribute name="objectVersion" column="object_version" type="INT" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <attribute name="status"         column="job_status"
+               type="VARCHAR"        width="50"  />
+    <attribute name="action"         column="action"
+               type="VARCHAR"        width="50"  />
+    <attribute name="actionDate"     column="action_date"
+               type="TIMESTAMP WITH TIME ZONE" />
+
+    <attribute name="taskId"         column="job_id"   type="INT" />
+    <attribute name="ownerId"        column="actor_id" type="INT" />
+
+    <!-- relationships -->
+
+    <to-one name="owner"   to="Persons"          join="ownerId,id" />
+    <to-one name="task"    to="Tasks"            join="taskId,id"  />
+    <to-one name="comment" to="TaskNoteComments" join="id,noteId"  />
+    
+    <!-- fetch specification -->
+  </entity>
+  
+  <entity name="TaskNoteComments" table="job_history_info" primarykey="id"
+          class="OGoObject" datasource="OGoDataSource">
+    <attribute name="id"       column="job_history_info_id" type="INT" />
+    <attribute name="noteId"   column="job_history_id" type="INT" />
+    <attribute name="dbStatus" column="db_status"
+               type="VARCHAR"  width="50"  />
+    <attribute name="comment"  column="comment" type="TEXT" />
+
+    <!-- relationships -->
+
+    <to-one name="note" to="TaskNotes" join="noteId,id" />
+  </entity>
+  
+  <entity name="Documents" table="doc" primarykey="id"
+          class="OGoDocument" datasource="OGoDocuments">
+    <attribute name="id"            column="document_id"    type="INT" />
+    <attribute name="objectVersion" column="object_version" type="INT" />
+    <attribute name="versionCount"  column="version_count"  type="INT" />
+
+    <attribute name="creationDate"  column="creation_date"
+               type="TIMESTAMP WITH TIME ZONE" />
+    <attribute name="lastModified"  column="lastmodified_date"
+               type="TIMESTAMP WITH TIME ZONE" />
+
+    <attribute name="dbStatus"      column="db_status"
+               type="VARCHAR"       width="50"  />
+
+    <attribute name="isFolder" column="is_folder"      type="INT" />
+    <attribute name="isLink"   column="is_object_link" type="INT" />
+    <attribute name="isIndex"  column="is_index_doc"   type="INT" />
+
+    <attribute name="filename" column="title"     type="VARCHAR" />
+    <attribute name="fileext"  column="file_type" type="VARCHAR" />
+    <attribute name="subject"  column="abstract"  type="VARCHAR" />
+    <attribute name="size"     column="file_size" type="VARCHAR" />
+
+    <!-- the parent-id is not necessarily a folder. If the parent is not a
+         folder, the subdoc is an attachment -->
+    <attribute name="parentId"  column="parent_document_id" type="INT" />
+    
+    <attribute name="creatorId" column="first_owner_id"     type="INT" />
+    <attribute name="ownerId"   column="current_owner_id"   type="INT" />
+    <attribute name="projectId" column="project_id"         type="INT" />
+    <attribute name="eventId"   column="date_id"            type="INT" />
+    <attribute name="companyId" column="company_id"         type="INT" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+
+    <!-- relationships -->
+    <to-one  name="owner"    to="Persons"          join="ownerId,id" />
+    <to-one  name="creator"  to="Persons"          join="creatorId,id" />
+    <to-one  name="project"  to="Projects"         join="projectId,id" />
+    <to-one  name="editing"  to="DocumentEditings" join="id,documentId" />
+    <to-many name="versions" to="DocumentVersions" join="id,documentId" />
+
+    <to-one  name="event"    to="Events"           join="eventId,id" />
+    <to-one  name="person"   to="Persons"          join="companyId,id" />
+    <to-one  name="company"  to="Companies"        join="companyId,id" />
+
+    <to-one  name="parentDocument" to="Documents"  join="parentId,id" />
+    <to-one  name="parentNote"     to="Notes"      join="parentId,id" />
+    <to-one  name="childDocuments" to="Documents"  join="id,parentId" />
+    <to-one  name="notes"          to="Notes"      join="id,parentId" />
+
+    <to-many name="acl"      to="ACLEntries"       join="id,objectId" />
+
+
+    <!-- fetch specifications -->
+
+    <fetch name="default" limit="100000"> <!-- just apply *some* limit -->
+    </fetch>
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        -->
+      <attributes>id,ownerId,projectId,eventId,companyId</attributes>
+      <qualifier>
+        id IN $ids
+        </qualifier>
+    </fetch>
+  </entity>
+  
+  <entity name="DocumentEditings" table="document_editing" primarykey="id"
+          class="OGoDocumentEditing"
+  >
+    <attribute name="id"             column="document_editing_id" type="INT" />
+    <attribute name="documentId"     column="document_id"      type="INT" />
+    <attribute name="objectVersion" column="object_version"   type="INT" />
+
+    <attribute name="filename" column="title"     type="VARCHAR" />
+    <attribute name="fileext"  column="file_type" type="VARCHAR" />
+    <attribute name="subject"  column="abstract"  type="VARCHAR" />
+    <attribute name="size"     column="file_size" type="VARCHAR" />
+
+    <attribute name="ownerId" column="current_owner_id" type="INT" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+    <to-one  name="owner"    to="Persons"   join="ownerId,id" />
+    <to-one  name="document" to="Documents" join="documentId,id" />
+
+    <to-many name="acl"      to="ACLEntries" join="documentId,objectId" />
+
+    <!-- fetch specifications -->
+
+    <fetch name="default" limit="100000"> <!-- just apply *some* limit -->
+    </fetch>
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        -->
+      <attributes>id,documentId,ownerId</attributes>
+      <qualifier>
+        id IN $ids
+        </qualifier>
+    </fetch>
+  </entity>
+
+  <entity name="DocumentVersions" table="document_version" primarykey="id"
+          class="OGoDocumentEditing"
+  >
+    <attribute name="id"             column="document_version_id" type="INT" />
+    <attribute name="documentId"     column="document_id"         type="INT" />
+
+    <attribute name="filename" column="title"     type="VARCHAR" />
+    <attribute name="fileext"  column="file_type" type="VARCHAR" />
+    <attribute name="subject"  column="abstract"  type="VARCHAR" />
+    <attribute name="size"     column="file_size" type="VARCHAR" />
+
+    <attribute name="ownerId" column="last_owner_id" type="INT" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+    
+    <!-- relationships -->
+    <to-one  name="owner"    to="Persons"    join="ownerId,id" />
+    <to-one  name="document" to="Documents"  join="documentId,id" />
+    <to-many name="acl"      to="ACLEntries" join="documentId,objectId" />
+
+    <!-- fetch specifications -->
+
+    <fetch name="default" limit="100000"> <!-- just apply *some* limit -->
+    </fetch>
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        -->
+      <attributes>id,documentId,ownerId</attributes>
+      <qualifier>
+        id IN $ids
+        </qualifier>
+    </fetch>
+  </entity>
+
+  
+  <entity name="Notes" table="note" primarykey="id"
+          class="OGoNote" datasource="OGoNotes"
+  >
+    <attribute name="id"             column="document_id"       type="INT" />
+    <attribute name="objectVersion"  column="object_version"    type="INT" />
+    <attribute name="versionCount"   column="version_count"     type="INT" />
+
+    <attribute name="creationDate"   column="creation_date"
+               type="TIMESTAMP WITH TIME ZONE" />
+    <attribute name="lastModified"   column="lastmodified_date"
+               type="TIMESTAMP WITH TIME ZONE" />
+
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
+
+    <attribute name="filename" column="title"     type="VARCHAR" />
+    <attribute name="fileext"  column="file_type" type="VARCHAR" />
+    <attribute name="subject"  column="abstract"  type="VARCHAR" />
+    <attribute name="size"     column="file_size" type="VARCHAR" />
+    
+    <!-- the parent-id is not necessarily a folder. If the parent is a
+         regular file or a note, the note becomes a 'comment'. -->
+    <attribute name="parentId"  column="parent_document_id" type="INT" />
+
+    <attribute name="creatorId" column="first_owner_id"   type="INT" />
+    <attribute name="ownerId"   column="current_owner_id" type="INT" />
+    
+    <attribute name="projectId" column="project_id"       type="INT" />
+    <attribute name="eventId"   column="date_id"          type="INT" />
+    <attribute name="companyId" column="company_id"       type="INT" />
+    
+    <!-- derived other columns from the information schema -->
+    <attribute columnNameLike="*" />
+
+    <!-- relationships -->
+    <to-one  name="creator"  to="Persons"          join="creatorId,id"  />
+    <to-one  name="owner"    to="Persons"          join="ownerId,id"    />
+    <to-one  name="project"  to="Projects"         join="projectId,id"  />
+    <to-one  name="editing"  to="DocumentEditings" join="id,documentId" />
+    <to-many name="versions" to="DocumentVersions" join="id,documentId" />
+
+    <to-one  name="event"    to="Events"           join="eventId,id" />
+    <to-one  name="person"   to="Persons"          join="companyId,id" />
+    <to-one  name="company"  to="Companies"        join="companyId,id" />
+
+    <to-many name="acl"      to="ACLEntries"       join="id,objectId" />
+
+    <!-- TBD: this is buggy, somehow it does not work -->
+    <to-one  name="parentDocument" to="Documents"  join="parentId,id" />
+    <to-one  name="parentNote"     to="Notes"      join="parentId,id" />
+    <to-one  name="attachments"    to="Documents"  join="id,parentId" />
+    <to-one  name="comments"       to="Notes"      join="id,parentId" />
+    <!-- childNodes aka 'replies' -->
+
+    <!-- fetch specifications -->
+
+    <fetch name="default" flags="allbinds" limit="100000">
+      <!--
+        Parameters:
+        - authIds
+      
+        Notes:
+        - if it has a project, limit to account projects
+        - any other efficient operations we can check?
+        
+        TBD: would be nice to have an if-qualifier, ala:
+          if authenticatedProjects != null
+            projectId IN $authenticatedProjects
+          else
+            SQL[ ... ]
+        -->
+      <qualifier>
+        <!-- we could probably optimize this with a proper join -->
+        projectId = null
+        OR
+        SQL[
+          (BASE.project_id IN (SELECT P.project_id FROM project P
+           WHERE P.owner_id IN $authIds OR P.team_id IN $authIds
+           OR EXISTS (
+             SELECT 1 FROM project_company_assignment PA WHERE
+             PA.project_id = P.project_id AND PA.company_id IN $authIds
+           )))
+        ]
+      </qualifier>
+    </fetch>
+    
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids'
+        -->
+      <attributes>id,ownerId,projectId,eventId,companyId</attributes>
+      <qualifier>
+        id IN $ids
+        </qualifier>
+    </fetch>
+
+    <fetch name="notesForContact" flags="allbinds" limit="100000">
+      <!-- arguments:
+                         id                    - id of contact to fetch documents for
+                         authenticatedProjects - list of projects for login user
+        -->
+      <qualifier>
+        companyId = $id
+        AND (projectId = null OR projectId IN $authenticatedProjects)
+      </qualifier>
+      
+      <ordering key="lastModified" order="DESC" />
+      <ordering key="creationDate" order="DESC"  />
+    </fetch>
+
+    <fetch name="notesForCompanyAndItsEmployees"
+           flags="allbinds" limit="100000">
+      <!-- arguments:
+                         id      - id of company to fetch documents for
+                         authIds - list of projects for login user
+        -->
+      <qualifier>
+        (companyId = $id
+         OR 
+         SQL[ company_id IN (
+           SELECT person_id FROM Employment WHERE enterprise_id = $id ) ]
+        )
+        AND (
+          projectId = null
+          OR
+          SQL[
+          (BASE.project_id IN (SELECT P.project_id FROM project P
+           WHERE P.owner_id IN $authIds OR P.team_id IN $authIds
+           OR EXISTS (
+             SELECT 1 FROM project_company_assignment PA WHERE
+             PA.project_id = P.project_id AND PA.company_id IN $authIds
+           )))
+          ]
+        )
+      </qualifier>
+      
+      <ordering key="lastModified" order="DESC" />
+      <ordering key="creationDate" order="DESC"  />
+    </fetch>
+  </entity>
+
+
+  <!-- use by OGo to quickly find the type for an arbitary OID. OIDs are
+       unique in OGo -->
+  <entity name="PrimaryKeyTypes" table="obj_info"
+	  primarykeys="objectId,objectType">
+    <attribute name="objectId"   column="obj_id"   type="INT" />
+    <attribute name="objectType" column="obj_type" type="TEXT" />
+  </entity>
+</model>
