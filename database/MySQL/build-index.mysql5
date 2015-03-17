@@ -1,0 +1,206 @@
+-- OpenGroupware.org database schema creation script
+-- (C) 2000-2005 SKYRIX Software AG
+
+USE OGo;
+
+-- TODO: those do not work?
+
+CREATE INDEX action_idx             ON log(action);
+CREATE INDEX log_object_idx         ON log(object_id);
+CREATE INDEX log_account_id_idx     ON log(account_id);
+CREATE INDEX account_id_idx         ON session_log(account_id);
+CREATE INDEX session_log_action_idx ON session_log(action);
+CREATE INDEX staff__is_team         ON staff(is_team);
+CREATE INDEX staff__is_account      ON staff(is_account);
+
+CREATE INDEX company_is_team_idx           ON company(is_team);
+CREATE INDEX company_is_enterprise_idx     ON company(is_enterprise);
+CREATE INDEX company_is_trust_idx          ON company(is_trust);
+CREATE INDEX company_is_person_idx         ON company(is_person);
+
+CREATE INDEX person_name_idx               ON company(name);
+CREATE INDEX person_firstname_idx          ON company(firstname);
+CREATE INDEX person_keywords_idx           ON company(keywords);
+CREATE INDEX person_private_idx            ON company(is_private);
+CREATE INDEX person_is_account_idx         ON company(is_account);
+CREATE INDEX person_is_intra_account_idx   ON company(is_intra_account);
+CREATE INDEX person_is_extra_account_idx   ON company(is_extra_account);
+CREATE INDEX person_is_template_user_idx   ON company(is_template_user);
+CREATE INDEX person_company_db_status_idx  ON company(db_status);
+
+CREATE INDEX enterprise_keywords_idx       ON company(keywords);
+CREATE INDEX enterprise_description_idx    ON company(description);
+CREATE INDEX enterprise_email_idx          ON company(email);
+
+CREATE INDEX team_description_idx          ON company(description);
+CREATE INDEX team_is_location_idx          ON company(is_location_team);
+
+CREATE INDEX attribute_idx                 ON company_value(attribute);
+CREATE INDEX company_value_type_idx        ON company_value(type);
+CREATE INDEX is_absence_idx           ON appointment(is_absence);
+CREATE INDEX is_attendance_idx        ON appointment(is_attendance);
+CREATE INDEX is_conflict_disabled_idx ON appointment(is_conflict_disabled);
+CREATE INDEX resource_names_ind       ON appointment(resource_names);
+CREATE INDEX is_fake_idx           ON project(is_fake);
+CREATE INDEX project_kind_idx      ON project(kind);
+CREATE INDEX project_status_idx    ON project(status);
+CREATE INDEX project_db_status_idx ON project(db_status);
+CREATE INDEX has_access_idx   ON project_company_assignment(has_access);
+CREATE INDEX access_right_idx ON project_company_assignment(access_right);
+CREATE INDEX doc_is_note_idx     ON document(is_note);
+CREATE INDEX is_folder_idx       ON doc(is_folder);
+CREATE INDEX is_object_link_idx  ON doc(is_object_link);
+CREATE INDEX is_index_doc_idx    ON doc(is_index_doc);
+CREATE INDEX object_link_idx     ON doc(object_link);
+CREATE INDEX document_status_idx ON doc(status);
+CREATE INDEX doc_title_id_idx    ON doc(title);
+CREATE INDEX doc_v_obj_version_idx    ON document_version(object_version);
+CREATE INDEX document_editing_status_idx ON document_editing(status);
+CREATE INDEX address__name1      ON address(name1);
+CREATE INDEX address__name2      ON address(name2);
+CREATE INDEX address__name3      ON address(name3);
+CREATE INDEX address__street     ON address(street);
+CREATE INDEX address__zip        ON address(zip);
+CREATE INDEX address__zipcity    ON address(zipcity);
+CREATE INDEX address_type_idx    ON address(type);
+CREATE INDEX telephone__fnumber     ON telephone(number);
+CREATE INDEX telephone__ftype       ON telephone(type);
+CREATE INDEX telephone__real_number ON telephone(real_number);
+CREATE INDEX job__keywords      ON job(keywords);
+CREATE INDEX is_control_job_idx ON job(is_control_job);
+CREATE INDEX is_team_job_idx    ON job(is_team_job);
+CREATE INDEX is_new_idx         ON job(is_new);
+CREATE INDEX priority_idx       ON job(priority);
+CREATE INDEX job_kind_idx       ON job(kind);
+CREATE INDEX job_status_idx     ON job(job_status);
+CREATE INDEX job_db_status_idx  ON job(db_status);
+CREATE INDEX is_index_article_idx ON news_article(is_index_article);
+CREATE INDEX assignment_kind_idx ON job_assignment(assignment_kind);
+CREATE INDEX obj_p_obj_id_idx           ON obj_property(obj_id);
+CREATE INDEX obj_p_value_key_idx        ON obj_property(value_key);
+CREATE INDEX obj_p_value_string_idx     ON obj_property(value_string);
+CREATE INDEX obj_p_namespace_prefix_idx ON obj_property(namespace_prefix);
+CREATE INDEX obj_p_access_key_idx       ON obj_property(access_key);
+
+CREATE INDEX obj_l_obj_id_idx        ON obj_link(obj_link_id);
+CREATE INDEX obj_l_source_id_idx     ON obj_link(source_id);
+CREATE INDEX obj_l_target_id_idx     ON obj_link(target);
+CREATE INDEX obj_l_source_type_idx   ON obj_link(source_type);
+CREATE INDEX obj_l_target_type_idx   ON obj_link(target_type);
+CREATE INDEX obj_l_target_idx        ON obj_link(target_id);
+CREATE INDEX obj_l_label_idx         ON obj_link(label);
+CREATE INDEX obj_l_type_idx          ON obj_link(link_type);
+
+CREATE INDEX obj_p_obj_type_idx         ON obj_property(obj_type);
+CREATE INDEX obj_acl_sort_key_idx    ON object_acl(sort_key);
+CREATE INDEX obj_acl_object_id_idx   ON object_acl(object_id);
+CREATE INDEX obj_acl_action_idx     ON object_acl(action);
+CREATE INDEX obj_acl_auth_id_idx     ON object_acl(auth_id);
+CREATE INDEX obj_acl_permissions_idx ON object_acl(permissions);
+
+CREATE INDEX log_creation_date_idx ON log(creation_date);
+CREATE INDEX log_date_idx ON session_log(log_date);
+CREATE INDEX start_date_ind           ON appointment(start_date);
+CREATE INDEX end_date_ind             ON appointment(end_date);
+
+CREATE INDEX company_contact_idx ON company(contact_id);
+CREATE INDEX company_owner_idx   ON company(owner_id);
+
+CREATE INDEX cinfo_company_idx   ON company_info(company_id);
+CREATE INDEX cvalue_company_idx  ON company_value(company_id);
+
+CREATE INDEX cassignment_company_idx    ON company_assignment(company_id);
+CREATE INDEX cassignment_subcompany_idx ON company_assignment(sub_company_id);
+
+CREATE INDEX apt_parent_idx ON appointment (parent_date_id);
+CREATE INDEX apt_owner_idx  ON appointment (owner_id);
+CREATE INDEX apt_team_idx   ON appointment (access_team_id);
+
+CREATE INDEX date_info_apt_idx ON date_info (date_id);
+
+CREATE INDEX date_assign_company_idx ON date_company_assignment(company_id);
+CREATE INDEX date_assign_apt_idx ON date_company_assignment(date_id);
+
+CREATE INDEX project_owner_idx  ON project (owner_id);
+CREATE INDEX project_team_idx   ON project (team_id);
+
+CREATE INDEX project_assign_company_idx 
+  ON project_company_assignment(company_id);
+CREATE INDEX project_assign_project_idx 
+  ON project_company_assignment(project_id);
+
+CREATE INDEX doc_parent_idx        ON doc(parent_document_id);
+CREATE INDEX doc_project_idx       ON doc(project_id);
+CREATE INDEX note_project_idx      ON note(project_id);
+CREATE INDEX note_date_idx         ON note(date_id);
+CREATE INDEX doc_first_owner_idx   ON doc(first_owner_id);
+CREATE INDEX doc_current_owner_idx ON doc(current_owner_id);
+
+CREATE INDEX dversion_doc_idx        ON document_version(document_id);
+CREATE INDEX dversion_last_owner_idx ON document_version(last_owner_id);
+ 
+CREATE INDEX dediting_doc_idx           ON document_editing(document_id);
+CREATE INDEX dediting_current_owner_idx ON document_editing(current_owner_id);
+
+CREATE INDEX tel_company_idx     ON telephone(company_id);
+CREATE INDEX address_company_idx ON address(company_id);
+
+CREATE INDEX job_project_idx   ON job(project_id);
+CREATE INDEX job_creator_idx   ON job(creator_id);
+CREATE INDEX job_executant_idx ON job(executant_id);
+
+CREATE INDEX jobh_job_idx   ON job_history(job_id);
+CREATE INDEX jobh_actor_idx ON job_history(actor_id);
+
+CREATE INDEX jobhi_jobh_idx ON job_history_info(job_history_id);
+
+CREATE INDEX newsa_news_idx    ON news_article_link(news_article_id);
+CREATE INDEX newsa_subnews_idx ON news_article_link(sub_news_article_id);
+
+CREATE UNIQUE INDEX unique_person_login on person (login);
+CREATE UNIQUE INDEX unique_person_number on person (number);
+CREATE UNIQUE INDEX unique_enterprise_login on enterprise (login);
+CREATE UNIQUE INDEX unique_enterprise_number on enterprise (number);
+CREATE UNIQUE INDEX unique_team_login on team (login);
+CREATE UNIQUE INDEX unique_team_number on team (number);
+
+CREATE INDEX palmaddr_company_idx ON palm_address (company_id);
+CREATE INDEX palmaddr_device_idx ON palm_address (device_id);
+CREATE INDEX palmaddr_palm_idx ON palm_address (palm_id);
+CREATE INDEX palmaddr_md5hash_idx ON palm_address (md5hash);
+CREATE INDEX palmaddr_skyrix_idx ON palm_address (skyrix_id);
+CREATE INDEX palmaddr_cat_idx ON palm_address(category_index);
+CREATE INDEX palmaddr_is_del_idx ON palm_address(is_deleted);
+CREATE INDEX palmaddr_is_mod_idx ON palm_address(is_modified);
+CREATE INDEX palmaddr_is_arch_idx ON palm_address(is_archived);
+CREATE INDEX palmaddr_is_new_idx ON palm_address(is_new);
+CREATE INDEX palmaddr_is_priv_idx ON palm_address(is_private);
+CREATE INDEX palmaddr_sky_sync_idx ON palm_address(skyrix_sync);
+CREATE INDEX palmaddr_sky_vers_idx ON palm_address(skyrix_version);
+CREATE INDEX palmaddr_sky_type_idx ON palm_address(skyrix_type);
+
+CREATE INDEX palmmemo_company_idx ON palm_memo (company_id);
+CREATE INDEX palmmemo_device_idx ON palm_memo (device_id);
+CREATE INDEX palmmemo_palm_idx ON palm_memo (palm_id);
+CREATE INDEX palmmemo_md5hash_idx ON palm_memo (md5hash);
+CREATE INDEX palmmemo_skyrix_idx ON palm_memo (skyrix_id);
+
+CREATE INDEX palmcat_company_idx ON palm_category (company_id);
+CREATE INDEX palmcat_device_idx ON palm_category (device_id);
+CREATE INDEX palmcat_palm_idx ON palm_category (palm_id);
+CREATE INDEX palmcat_md5hash_idx ON palm_category (md5hash);
+CREATE INDEX palmcat_table_idx ON palm_category (palm_table);
+
+CREATE INDEX palmdate_company_idx ON palm_date (company_id);
+CREATE INDEX palmdate_device_idx ON palm_date (device_id);
+CREATE INDEX palmdate_palm_idx ON palm_date (palm_id);
+CREATE INDEX palmdate_md5hash_idx ON palm_date (md5hash);
+CREATE INDEX palmdate_skyrix_idx ON palm_date (skyrix_id);
+CREATE INDEX palmdate_startdate_idx ON palm_date (startdate);
+CREATE INDEX palmdate_enddate_idx ON palm_date (enddate);
+
+CREATE INDEX palmtodo_company_idx ON palm_todo (company_id);
+CREATE INDEX palmtodo_device_idx ON palm_todo (device_id);
+CREATE INDEX palmtodo_palm_idx ON palm_todo (palm_id);
+CREATE INDEX palmtodo_md5hash_idx ON palm_todo (md5hash);
+CREATE INDEX palmtodo_skyrix_idx ON palm_todo (skyrix_id);

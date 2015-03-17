@@ -1,0 +1,10 @@
+2005-12-01  Helge Hess  <helge.hess@skyrix.com>
+
+	* build-schema.sqlite: bumped length of appointment type field to 255
+
+2004-12-05  Helge Hess  <helge.hess@opengroupware.org>
+
+	* Database/SQLite/build-schema.sqlite: tweaked to load successfully
+	  into a SQlite 3 database
+
+	* created ChangeLog

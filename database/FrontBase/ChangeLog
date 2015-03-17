@@ -1,0 +1,15 @@
+Fri Dec  5 17:20:22 2003  Martin Hoerning  <mh@skyrix.com>
+
+	* fb-build-schema.psql, fb-update-schema.psql: added columns
+	  'object_version', 'skyrix_palm_version' to palm tables.
+	  palm table version increased to 43.
+
+2003-11-11  Helge Hess  <helge.hess@skyrix.com>
+
+	* fb-build-schema.sql92: added type of password field to t_string
+	  (related to OGo bug 364)
+
+Wed Oct 15 17:15:46 2003  Jan Reichmann  <jan@skyrix.com>
+
+	* fb*: obj_link table
+

@@ -1,0 +1,134 @@
+-- OpenGroupware.org obj-info update script
+-- (C) 2000-2005 SKYRIX Software AG
+
+-- print old count
+SELECT COUNT(*) FROM obj_info;
+
+
+-- delete old table contents
+DROP INDEX obj_info_objectid;
+DELETE FROM obj_info;
+
+
+-- fill with new contents
+
+INSERT INTO obj_info(obj_type, obj_id) 
+  SELECT 'Address', address_id FROM address;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'AppointmentResource', appointment_resource_id
+  FROM appointment_resource;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'CompanyAssignment', company_assignment_id FROM company_assignment;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'CompanyCategory', company_category_id FROM company_category;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'CompanyInfo', company_info_id FROM company_info;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'CompanyValue', company_value_id FROM company_value;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'DateCompanyAssignment', date_company_assignment_id
+  FROM date_company_assignment;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'DateInfo', date_info_id FROM date_info;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Date', date_id FROM date_x;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Doc', document_id FROM doc;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'DocumentEditing', document_editing_id FROM document_editing;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'DocumentVersion', document_version_id FROM document_version;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Enterprise', company_id FROM enterprise;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Job', job_id FROM job;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'JobAssignment', job_assignment_id FROM job_assignment;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'JobHistory', job_history_id FROM job_history;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'JobResourceAssignment', job_resource_assignment_id
+  FROM job_resource_assignment;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'NewsArticle', news_article_id FROM news_article;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'NewsArticleLink', news_article_link_id FROM news_article_link;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Note', document_id FROM note;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'palm_address', palm_address_id FROM palm_address;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'palm_category', palm_category_id FROM palm_category;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'palm_date', palm_date_id FROM palm_date;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'palm_memo', palm_memo_id FROM palm_memo;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'palm_todo', palm_todo_id FROM palm_todo;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Person', company_id FROM person;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Project', project_id FROM project;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'ProjectCompanyAssignment', project_company_assignment_id
+  FROM project_company_assignment;
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'ProjectInfo', project_info_id FROM project_info;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Resource', resource_id FROM resource;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Team', company_id FROM team;
+
+
+INSERT INTO obj_info(obj_type, obj_id)
+  SELECT 'Telephone', telephone_id FROM telephone;
+
+
+-- recreate index
+CREATE INDEX obj_info_objectid ON obj_info(obj_id);
+
+
+-- print new count
+SELECT COUNT(*) FROM obj_info;

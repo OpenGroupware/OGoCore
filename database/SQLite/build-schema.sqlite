@@ -1,0 +1,1562 @@
+/*
+  OpenGroupware.org database schema creation script
+  (C) 2000-2004 SKYRIX Software AG
+
+  Creating a DB:
+    sqlite3 ogo.db <build-schema.sqlite
+*/
+
+/* Sybase emulation types */
+/* CREATE DOMAIN text            AS VARCHAR(2000000000); */ /* 2GB */
+/* CREATE DOMAIN money           AS REAL; */
+/* CREATE DOMAIN image           AS BLOB; */
+/* CREATE DOMAIN datetime        AS TIMESTAMP WITH TIME ZONE; */
+
+
+CREATE TABLE object_model (
+  db_version INTEGER /* t_int */,
+  model_name VARCHAR(255) /* t_string */
+  ,
+  CHECK(db_version IS NOT NULL),
+  CHECK(model_name IS NOT NULL)
+);
+INSERT INTO object_model(db_version, model_name) VALUES ( 1, 'fb_sky41' );
+
+CREATE TABLE log (
+  log_id        INTEGER     /* t_id */,
+  creation_date TIMESTAMP   /* t_datetime */,
+  object_id     INTEGER     /* t_id */,      
+  log_text      VARCHAR(2000000000) /* t_text */,
+  faction       VARCHAR(50) /* t_smallstring */,
+  account_id    INTEGER     /* t_id */
+  ,
+  PRIMARY KEY(log_id),
+  CHECK(log_id        IS NOT NULL),
+  CHECK(creation_date IS NOT NULL),
+  CHECK(object_id     IS NOT NULL),
+  CHECK(log_text      IS NOT NULL)
+);
+CREATE INDEX action_idx ON log(faction);
+CREATE INDEX log_object_idx        ON log(object_id);
+CREATE INDEX log_creation_date_idx ON log(creation_date);
+CREATE INDEX log_account_id_idx    ON log(account_id);
+
+CREATE TABLE session_log (
+  session_log_id          INTEGER /* t_id */,
+  account_id              INTEGER /* t_id */,
+  log_date                TIMESTAMP /* t_datetime */,
+  faction                 VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(session_log_id),
+  CHECK(session_log_id IS NOT NULL),
+  CHECK(account_id     IS NOT NULL),
+  CHECK(log_date       IS NOT NULL),
+  CHECK(faction        IS NOT NULL)
+);
+CREATE INDEX account_id_idx ON session_log(account_id);
+CREATE INDEX log_date_idx ON session_log(log_date);
+CREATE INDEX session_log_action_idx ON session_log(faction);
+
+CREATE TABLE table_version (
+  table_version INTEGER      /* t_int */,
+  fname         VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(fname),
+  CHECK(fname         IS NOT NULL),
+  CHECK(table_version IS NOT NULL)
+);
+
+CREATE TABLE staff (
+  staff_id      INTEGER /* t_id */,
+  company_id    INTEGER /* t_id */,
+  description   VARCHAR(255) /* t_string */,
+  login         VARCHAR(255) /* t_string */,
+  is_team       BOOLEAN /* t_bool */,
+  is_account    BOOLEAN /* t_bool */,
+  db_status     VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(staff_id),
+  CHECK(staff_id   IS NOT NULL),
+  CHECK(company_id IS NOT NULL)
+);
+CREATE UNIQUE INDEX unique_company_id ON staff(company_id);
+CREATE INDEX staff__is_team    ON staff(is_team);
+CREATE INDEX staff__is_account ON staff(is_account);
+
+/* table company */
+
+CREATE TABLE company (
+  company_id        INTEGER /* t_id */,
+
+/* all companies */
+
+  owner_id          INTEGER /* t_id */,
+  object_version    INTEGER /* t_int */,
+  contact_id        INTEGER /* t_id */,   
+  template_user_id  INTEGER /* t_id */,   
+  is_private        BOOLEAN /* t_bool */,
+  is_person         BOOLEAN /* t_bool */,
+  is_readonly       BOOLEAN /* t_bool */,      
+  is_enterprise     BOOLEAN /* t_bool */,
+  is_account        BOOLEAN /* t_bool */,
+  is_intra_account  BOOLEAN /* t_bool */,
+  is_extra_account  BOOLEAN /* t_bool */,
+  is_trust          BOOLEAN /* t_bool */,
+  is_team           BOOLEAN /* t_bool */,
+  is_location_team  BOOLEAN /* t_bool */,
+  is_customer       BOOLEAN /* t_bool */,
+  
+  fnumber           VARCHAR(50)  /* t_tinystring */, /* Sybase:number */
+  description       VARCHAR(255) /* t_string */,
+  priority          VARCHAR(50)  /* t_tinystring */,
+  keywords          VARCHAR(255) /* t_string */,
+
+/* person, enterprise, customer, team or trust */
+
+  url               VARCHAR(255) /* t_string */,
+  email             VARCHAR(50)  /* t_tinystring */, 
+  ftype             VARCHAR(50)  /* t_tinystring */, /* Sybase:type */
+  bank              VARCHAR(50)  /* t_tinystring */,
+  bank_code         VARCHAR(50)  /* t_tinystring */,
+  account           VARCHAR(50)  /* t_tinystring */,
+  payment           VARCHAR(50)  /* t_tinystring */,
+
+/* account */
+
+  is_locked           BOOLEAN     /* t_bool */,
+  is_template_user    BOOLEAN     /* t_bool */,
+  can_change_password BOOLEAN     /* t_bool */,
+  login               VARCHAR(50) /* t_tinystring */,
+  password            VARCHAR(50) /* t_tinystring */,
+  pop3_account        VARCHAR(50) /* t_tinystring */,
+
+/* person */
+
+  fname             VARCHAR(50) /* t_tinystring */, /* Sybase:name */
+  middlename        VARCHAR(50) /* t_tinystring */, 
+  firstname         VARCHAR(50) /* t_tinystring */,
+  salutation        VARCHAR(50) /* t_tinystring */,
+  degree            VARCHAR(50) /* t_tinystring */,
+  birthday          TIMESTAMP   /* t_datetime */,
+  sex               VARCHAR(10) /* t_tinieststring */,
+
+  source_url        varchar(255),
+
+  db_status         VARCHAR(50) /* t_tinystring */,
+
+/* ZideStore additions */
+
+  sensitivity       INTEGER      /* smallint */, /* sensitivity      */
+  boss_name         VARCHAR(255) /* t_string */, /* boss' name       */
+  partner_name      VARCHAR(255) /* t_string */, /* partners' name   */
+  assistant_name    VARCHAR(255) /* t_string */, /* assistants' name */
+  department        VARCHAR(255) /* t_string */, /* department       */
+  office            VARCHAR(255) /* t_string */, /* office (office number) */
+  occupation        VARCHAR(255) /* t_string */, /* occupation       */
+  anniversary       TIMESTAMP    /* t_datetime */, /* anniversary */
+  dir_server        VARCHAR(255) /* t_string */,   /* dirserver (NetMeeting) */
+  email_alias       VARCHAR(255) /* t_string */,   /* emailalias (NetMeeting)*/
+  freebusy_url      VARCHAR(255) /* t_string */,   /* free/busy URL */
+
+  fileas              VARCHAR(255) /* t_string */, /* file as/save as */
+  name_title          VARCHAR(255) /* t_string */, /* name title (Prof.) */
+  name_affix          VARCHAR(255) /* t_string */, /* name affix (jun.) */
+  im_address          VARCHAR(255) /* t_string */, /* IM address */
+  associated_contacts VARCHAR(255)   /* t_string */, /* assoc. contacts */
+  associated_categories VARCHAR(255) /* t_string */, /* assoc. categories */
+  associated_company  VARCHAR(255) /* t_string */,   /* assoc. company */
+  show_email_as       VARCHAR(255) /* t_string */,   /* email show as attr */
+  show_email2_as      VARCHAR(255) /* t_string */,   /* email 2 show as attr */
+  show_email3_as      VARCHAR(255) /* t_string */    /* email 3 show as attr */
+  ,
+  PRIMARY KEY(company_id),
+  CHECK (company_id IS NOT NULL),
+  CHECK (NOT(is_person IS NULL AND is_enterprise IS NULL AND 
+             is_trust IS NULL AND is_team IS NULL))
+);
+
+CREATE UNIQUE INDEX unique_company_number ON company(fnumber);
+CREATE UNIQUE INDEX unique_company_login  ON company(login);
+
+/* TODO: constraints
+ALTER TABLE company ADD CONSTRAINT company2owner
+        FOREIGN KEY (owner_id) REFERENCES staff(company_id);
+ALTER TABLE company ADD CONSTRAINT company2contact 
+        FOREIGN KEY (contact_id) REFERENCES staff(company_id);
+
+ALTER TABLE staff ADD CONSTRAINT staff2company 
+        FOREIGN KEY (company_id) REFERENCES company(company_id);
+*/
+
+CREATE INDEX company__is_team       ON company(is_team);
+CREATE INDEX company__is_enterprise ON company(is_enterprise);
+CREATE INDEX company__is_trust      ON company(is_trust);
+CREATE INDEX company__is_person     ON company(is_person);
+CREATE INDEX company__email         ON company(email);
+CREATE INDEX company__name          ON company(fname);
+CREATE INDEX company__firstname     ON company(firstname);
+CREATE INDEX company__keywords      ON company(keywords);
+CREATE INDEX is_private_idx         ON company(is_private);
+CREATE INDEX is_account_idx         ON company(is_account);
+CREATE INDEX is_intra_account_idx   ON company(is_intra_account);
+CREATE INDEX is_extra_account_idx   ON company(is_extra_account);
+CREATE INDEX is_location_team_idx   ON company(is_location_team);
+CREATE INDEX is_template_user_idx   ON company(is_template_user);
+CREATE INDEX company_db_status_idx  ON company(db_status);
+
+CREATE TABLE company_info (
+  company_info_id INTEGER /* t_id */,
+  company_id      INTEGER /* t_id */, 
+  comment         VARCHAR(2000000000) /* t_text */,
+  db_status       VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(company_info_id),
+  CHECK(company_id      IS NOT NULL),
+  CHECK(company_info_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE company_info ADD CONSTRAINT company_info2company 
+        FOREIGN KEY (company_id) REFERENCES company(company_id);
+*/
+
+CREATE TABLE company_value (
+  company_value_id   INTEGER       /* t_id */,
+  company_id         INTEGER       /* t_id */,
+  attribute          VARCHAR(255)  /* t_string */,
+  attribute_type     VARCHAR(50)   /* t_tinystring */,
+  value_string       VARCHAR(255)  /* t_string */,
+  value_date         TIMESTAMP     /* t_datetime */,
+  value_int          INTEGER       /* t_int */,
+  is_enum            BOOLEAN       /* t_bool */,
+  category           VARCHAR(255)  /* t_string */,
+  uid                INTEGER       /* t_id */, 
+  label              VARCHAR(255)  /* t_string */,
+  ftype              INTEGER       /* t_int */,
+  is_label_localized BOOLEAN       /* t_bool */,
+  db_status          VARCHAR(50)   /* t_tinystring */
+  ,
+  PRIMARY KEY(company_value_id),
+  CHECK(company_value_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE company_value ADD CONSTRAINT company_value 
+        FOREIGN KEY (company_id) REFERENCES company(company_id);
+*/
+CREATE INDEX attribute_idx ON company_value(attribute);
+CREATE INDEX company_value_type_idx      ON company_value(ftype);
+
+CREATE TABLE company_category (
+  company_category_id INTEGER /* t_id */,
+  object_version      INTEGER /* t_int */,
+  category            VARCHAR(255) /* t_string */,
+  db_status           VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(company_category_id),
+  CHECK(company_category_id IS NOT NULL)
+);
+
+CREATE TABLE company_assignment (
+  company_assignment_id INTEGER      /* t_id */,
+  company_id            INTEGER      /* t_id */,
+  sub_company_id        INTEGER      /* t_id */,
+  is_headquarter        BOOLEAN      /* t_bool */,
+  is_chief              BOOLEAN      /* t_bool */,
+  ffunction             VARCHAR(255) /* t_string */, /* sybase: function */
+  db_status             VARCHAR(50)  /* t_tinystring */
+  ,
+  PRIMARY KEY(company_assignment_id),
+  CHECK(company_assignment_id IS NOT NULL)
+);
+/* TODO: add constraints
+ALTER TABLE company_assignment ADD CONSTRAINT company_assignment2company
+        FOREIGN KEY (company_id) REFERENCES company(company_id);         
+ALTER TABLE company_assignment ADD CONSTRAINT company_assignment2sub_company
+        FOREIGN KEY (sub_company_id) REFERENCES company(company_id);
+*/
+
+/* -------------------- appointments -------------------- */
+
+CREATE TABLE appointment_resource (
+  appointment_resource_id INTEGER /* t_id */,
+  object_version          INTEGER /* t_int */,
+  fname                   VARCHAR(255) /* t_string */, /* Sybase: name */
+  email                   VARCHAR(255) /* t_string */,
+  email_subject           VARCHAR(255) /* t_string */,
+  category                VARCHAR(255) /* t_string */,
+  notification_time       INTEGER /* t_int */,
+  db_status               VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(appointment_resource_id),
+  CHECK(appointment_resource_id IS NOT NULL),
+  CHECK(fname IS NOT NULL)
+);
+CREATE UNIQUE INDEX unique_aptresname_idx ON appointment_resource(fname);
+
+CREATE TABLE appointment ( /* Sybase: date */
+  date_id                INTEGER /* t_id */, /* primary key */
+  object_version         INTEGER /* t_int */,
+  owner_id               INTEGER /* t_id */, /* owner - staff entry */
+  access_team_id         INTEGER /* t_id */,    
+  parent_date_id         INTEGER /* t_id */, /* foreign key to parent date in cyclic dates */
+  start_date             TIMESTAMP /* t_datetime */,
+  end_date               TIMESTAMP /* t_datetime */,
+  cycle_end_date         TIMESTAMP /* t_datetime */,
+  ftype                  VARCHAR(255) /* t_tinystring */, /* Sybase: type:weekday daily weekly monthly yearly */
+  title                  VARCHAR(255) /* t_string */,
+  location               VARCHAR(255) /* t_string */,
+  absence                VARCHAR(255) /* t_string */,
+  resource_names         VARCHAR(255) /* t_string */,
+  write_access_list      VARCHAR(255) /* t_string */,
+  is_absence             BOOLEAN /* t_bool */,
+  is_attendance          BOOLEAN /* t_bool */,
+  is_conflict_disabled   BOOLEAN /* t_bool */,
+  travel_duration_before INTEGER /* t_int */,
+  travel_duration_after  INTEGER /* t_int */,
+  notification_time      INTEGER /* t_int */,
+  db_status              VARCHAR(50) /* t_tinystring */,
+  apt_type               VARCHAR(50) /* t_smallstring */,
+  calendar_name          VARCHAR(255) /* t_string */,
+  source_url             VARCHAR(255) /* t_string */,
+  fbtype                 VARCHAR(50) /* t_tinystring */,
+
+  sensitivity            INTEGER /* smallint */,        /* sensitivity */
+  busy_type              INTEGER /* smallint */,        /* busy type */
+  importance             INTEGER /* smallint */,        /* importance */
+  last_modified          INTEGER /* t_int */,           /* timestamp of last modification */
+
+  evo_reminder           VARCHAR(255) /* t_string */,   /* Evolution reminder settings */
+  ol_reminder            VARCHAR(255) /* t_string */,   /* Outlook reminder settings */
+  online_meeting         VARCHAR(255) /* t_string */,   /* CSV for online meeting values */
+  associated_contacts    VARCHAR(255) /* t_string */,   /* Outlook associated contacts */
+  keywords               VARCHAR(255) /* t_string */    /* Outlook keywords */
+  ,
+  PRIMARY KEY(date_id),
+  CHECK(date_id    IS NOT NULL),
+  CHECK(start_date IS NOT NULL),
+  CHECK(end_date   IS NOT NULL),
+  CHECK(title      IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE appointment ADD CONSTRAINT date2date 
+        FOREIGN KEY (parent_date_id) REFERENCES appointment(date_id);
+ALTER TABLE appointment ADD CONSTRAINT date2owner 
+        FOREIGN KEY (owner_id) REFERENCES staff(company_id);
+ALTER TABLE appointment ADD CONSTRAINT date2access_team 
+        FOREIGN KEY (access_team_id) REFERENCES staff(company_id);
+*/
+CREATE INDEX is_absence_idx           ON appointment(is_absence);
+CREATE INDEX is_attendance_idx        ON appointment(is_attendance);
+CREATE INDEX is_conflict_disabled_idx ON appointment(is_conflict_disabled);
+CREATE INDEX start_date_ind           ON appointment(start_date);
+CREATE INDEX end_date_ind             ON appointment(end_date);
+CREATE INDEX resource_names_ind       ON appointment(resource_names);
+
+CREATE TABLE date_info (
+  date_info_id INTEGER /* t_id */,
+  date_id      INTEGER /* t_id */,
+  comment      VARCHAR(100000), /* Sybase: TEXT */
+  db_status    VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(date_info_id),
+  CHECK(date_id      IS NOT NULL),
+  CHECK(date_info_id IS NOT NULL)
+);
+/* TODO: contraints
+ALTER TABLE date_info ADD CONSTRAINT date_info2date 
+        FOREIGN KEY (date_id) REFERENCES appointment(date_id);
+*/
+
+CREATE TABLE date_company_assignment (
+  date_company_assignment_id INTEGER      /* t_id */,
+  company_id                 INTEGER      /* t_id */,
+  date_id                    INTEGER      /* t_id */,
+  is_staff                   BOOLEAN      /* t_bool */,
+  is_new                     BOOLEAN      /* t_bool */,
+  partstatus                 VARCHAR(50)  /* t_tinystring */,
+  role                       VARCHAR(50)  /* t_tinystring */,
+  comment                    VARCHAR(255) /* t_string */,
+  rsvp                       BOOLEAN      /* t_bool */,
+  db_status                  VARCHAR(50)  /* t_tinystring */,
+  outlook_key                VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(date_company_assignment_id),
+  CHECK(date_company_assignment_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE date_company_assignment ADD CONSTRAINT date_company_assign2company 
+  FOREIGN KEY (company_id) REFERENCES company(company_id);
+ALTER TABLE date_company_assignment ADD CONSTRAINT date_company_assign2date 
+  FOREIGN KEY (date_id) REFERENCES appointment(date_id);
+*/
+
+/* -------------------- projects -------------------- */
+
+CREATE TABLE project (
+  project_id     INTEGER /* t_id */,
+  object_version INTEGER /* t_int */,
+  owner_id       INTEGER /* t_id */,
+  team_id        INTEGER /* t_id */,
+  fnumber        VARCHAR(50) /* t_tinystring */,  /*Sybase: number */
+  fname          VARCHAR(255) /* t_string */,  /*Sybase: name */
+  start_date     TIMESTAMP /* t_datetime */,
+  end_date       TIMESTAMP /* t_datetime */,
+  status         VARCHAR(255) /* t_string */,
+  is_fake        BOOLEAN /* t_bool */,
+  db_status      VARCHAR(50) /* t_tinystring */,
+  kind           VARCHAR(50) /* t_tinystring */,
+  url            VARCHAR(50) /* t_smallstring */
+  ,
+  PRIMARY KEY(project_id),
+  CHECK(project_id IS NOT NULL),
+  CHECK(owner_id   IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE project ADD CONSTRAINT project2owner FOREIGN KEY (owner_id)
+  REFERENCES staff(company_id);
+ALTER TABLE project ADD CONSTRAINT project2team FOREIGN KEY (team_id)
+  REFERENCES staff(company_id);
+*/
+CREATE UNIQUE INDEX unique_project_number ON project(fnumber);
+CREATE INDEX is_fake_idx           ON project(is_fake);
+CREATE INDEX project_kind_idx      ON project(kind);
+CREATE INDEX project_status_idx    ON project(status);
+CREATE INDEX project_db_status_idx ON project(db_status);
+
+CREATE TABLE project_company_assignment (
+  project_company_assignment_id INTEGER /* t_id */,
+  company_id                    INTEGER /* t_id */,
+  project_id                    INTEGER /* t_id */,
+  info                          VARCHAR(255) /* t_string */,
+  has_access                    BOOLEAN /* t_bool */,
+  access_right                  VARCHAR(50) /* t_tinystring */,
+  db_status                     VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(project_company_assignment_id),
+  CHECK(project_company_assignment_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE project_company_assignment 
+  ADD CONSTRAINT project_company_assign2company
+  FOREIGN KEY (company_id) REFERENCES company(company_id);
+ALTER TABLE project_company_assignment 
+  ADD CONSTRAINT project_company_assign2project
+  FOREIGN KEY (project_id) REFERENCES project(project_id);
+*/
+CREATE INDEX has_access_idx   ON project_company_assignment(has_access);
+CREATE INDEX access_right_idx ON project_company_assignment(access_right);
+
+CREATE TABLE document (
+  document_id        INTEGER /* t_id */,
+  object_version     INTEGER /* t_int */,
+  parent_document_id INTEGER /* t_id */,
+  project_id         INTEGER /* t_id */,
+  date_id            INTEGER /* t_id */,
+  first_owner_id     INTEGER /* t_id */,
+  current_owner_id   INTEGER /* t_id */,
+  version_count      INTEGER /* t_int */,
+  file_size          INTEGER /* t_int */,
+  is_note            BOOLEAN /* t_bool */,
+  is_folder          BOOLEAN /* t_bool */,
+  is_object_link     BOOLEAN /* t_bool */,
+  is_index_doc       BOOLEAN /* t_bool */,
+  title              VARCHAR(255) /* t_string */,
+  abstract           VARCHAR(255) /* t_string */,
+  file_type          VARCHAR(255) /* t_string */,
+  object_link        VARCHAR(255) /* t_string */,
+  creation_date      TIMESTAMP    /* t_datetime */,
+  lastmodified_date  TIMESTAMP    /* t_datetime */,
+  status             VARCHAR(50)  /* t_tinystring */,
+  db_status          VARCHAR(50)  /* t_tinystring */,
+  contact            VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(document_id),
+  CHECK(document_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE document ADD CONSTRAINT document2document 
+  FOREIGN KEY (parent_document_id) REFERENCES document(document_id);
+ALTER TABLE document ADD CONSTRAINT document2project FOREIGN KEY (project_id)
+  REFERENCES project(project_id);
+ALTER TABLE document ADD CONSTRAINT document2date FOREIGN KEY (date_id)
+  REFERENCES appointment(date_id);
+ALTER TABLE document ADD CONSTRAINT document2first_owner 
+  FOREIGN KEY (first_owner_id)
+  REFERENCES staff(company_id);
+ALTER TABLE document ADD CONSTRAINT document2current_owner 
+  FOREIGN KEY (current_owner_id) REFERENCES staff(company_id);
+*/
+CREATE INDEX is_note_idx        ON document(is_note);
+CREATE INDEX is_folder_idx      ON document(is_folder);
+CREATE INDEX is_object_link_idx ON document(is_object_link);
+CREATE INDEX is_index_doc_idx   ON document(is_index_doc);
+CREATE INDEX object_link_idx    ON document(object_link);
+CREATE INDEX document_status_idx ON document(status);
+CREATE INDEX doc_title_id_idx    ON document(title);
+
+
+CREATE TABLE document_version (
+  document_version_id INTEGER      /* t_id */,
+  object_version      INTEGER      /* t_int */,
+  document_id         INTEGER      /* t_id */,
+  last_owner_id       INTEGER      /* t_id */,
+  title               VARCHAR(255) /* t_string */,
+  abstract            VARCHAR(255) /* t_string */,
+  file_type           VARCHAR(255) /* t_string */,
+  version             INTEGER      /* t_int */,
+  file_size           INTEGER      /* t_int */,
+  creation_date       TIMESTAMP    /* t_datetime */,
+  archive_date        TIMESTAMP    /* t_datetime */,
+  is_packed           BOOLEAN      /* t_bool */,
+  change_text         VARCHAR(2000000000) /* t_text */,
+  db_status           VARCHAR(50)  /* t_tinystring */,
+  contact             VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(document_version_id),
+  CHECK(document_version_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE document_version ADD CONSTRAINT document_version2document
+  FOREIGN KEY (document_id) REFERENCES document(document_id);
+ALTER TABLE document_version ADD CONSTRAINT document_version2last_owner
+  FOREIGN KEY (last_owner_id) REFERENCES staff(company_id);
+*/
+CREATE INDEX doc_v_obj_version_idx    ON document_version(object_version);
+
+
+CREATE TABLE document_editing (
+  document_editing_id INTEGER      /* t_id */,
+  object_version      INTEGER      /* t_int */,
+  document_id         INTEGER      /* t_id */,
+  current_owner_id    INTEGER      /* t_id */,
+  title               VARCHAR(255) /* t_string */,
+  abstract            VARCHAR(255) /* t_string */,
+  file_type           VARCHAR(255) /* t_string */,
+  file_size           INTEGER      /* t_int */,
+  version             INTEGER      /* t_int */,
+  is_attach_changed   BOOLEAN      /* t_bool */,
+  checkout_date       TIMESTAMP    /* t_datetime */,
+  status              VARCHAR(50)  /* t_tinystring */,
+  db_status           VARCHAR(50)  /* t_tinystring */,
+  contact             VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(document_editing_id),
+  CHECK(document_editing_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE document_editing ADD CONSTRAINT document_editing2current_owner
+  FOREIGN KEY (current_owner_id) REFERENCES staff(company_id);
+ALTER TABLE document_editing ADD CONSTRAINT document_editing2document 
+  FOREIGN KEY (document_id) REFERENCES document(document_id);
+*/
+CREATE INDEX document_editing_status_idx ON document_editing(status);
+
+
+/* -------------------- address -------------------- */
+
+CREATE TABLE address (
+  address_id        INTEGER /* t_id */,
+  object_version    INTEGER /* t_int */,
+  company_id        INTEGER /* t_id */,
+  name1             VARCHAR(255) /* t_string */,
+  name2             VARCHAR(255) /* t_string */,
+  name3             VARCHAR(255) /* t_string */,
+  street            VARCHAR(255) /* t_string */,
+  zip               VARCHAR(50) /* t_tinystring */,
+  zipcity           VARCHAR(255) /* t_string */,
+  country           VARCHAR(50) /* t_tinystring */,
+  state             VARCHAR(50) /* t_tinystring */,
+  ftype             VARCHAR(50) /* t_tinystring */, /*Sybase: type */
+  db_status         VARCHAR(50) /* t_tinystring */,
+  source_url        VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(address_id),
+  CHECK(address_id IS NOT NULL),
+  CHECK(ftype      IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE address ADD CONSTRAINT address2company FOREIGN KEY (company_id)
+  REFERENCES company(company_id);
+*/
+CREATE INDEX address__name1      ON address(name1);
+CREATE INDEX address__name2      ON address(name2);
+CREATE INDEX address__name3      ON address(name3);
+CREATE INDEX address__street     ON address(street);
+CREATE INDEX address__zip        ON address(zip);
+CREATE INDEX address__zipcity    ON address(zipcity);
+CREATE INDEX address_type_idx    ON address(ftype);
+ 
+CREATE TABLE telephone (
+  telephone_id      INTEGER /* t_id */,
+  object_version    INTEGER /* t_int */,
+  company_id        INTEGER /* t_id */,
+  fnumber           VARCHAR(255) /* t_string */, /*Sybase: number */
+  real_number       VARCHAR(255) /* t_string */,
+  ftype             VARCHAR(50)  /* t_tinystring */, /*Sybase: type */
+  info              VARCHAR(255) /* t_string */,
+  url               VARCHAR(255) /* t_string */,
+  db_status         VARCHAR(50)  /* t_tinystring */
+  ,
+  PRIMARY KEY(telephone_id),
+  CHECK(telephone_id IS NOT NULL)
+  CHECK(ftype IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE telephone ADD CONSTRAINT telephone2company FOREIGN KEY (company_id)
+ REFERENCES company(company_id);
+*/
+
+CREATE INDEX telephone__fnumber     ON telephone(fnumber);
+CREATE INDEX telephone__ftype       ON telephone(ftype);
+CREATE INDEX telephone__real_number ON telephone(real_number);
+
+/* -------------------- job -------------------- */
+
+CREATE TABLE job (
+  job_id               INTEGER /* t_id */,
+  object_version       INTEGER /* t_int */,
+  parent_job_id        INTEGER /* t_id */,
+  project_id           INTEGER /* t_id */,
+  creator_id           INTEGER /* t_id */,
+  executant_id         INTEGER /* t_id */,
+  fname                VARCHAR(255) /* t_string */,    /* Sybase: name */
+  start_date           TIMESTAMP /* t_datetime */,
+  end_date             TIMESTAMP /* t_datetime */,
+  notify               INTEGER /* t_int */,
+  is_control_job       BOOLEAN /* t_bool */,
+  is_team_job          BOOLEAN /* t_bool */,
+  is_new               BOOLEAN /* t_bool */,
+  job_status           VARCHAR(255) /* t_string */,
+  category             VARCHAR(255) /* t_string */,
+  priority             INTEGER /* t_int */,
+  db_status            VARCHAR(50) /* t_tinystring */,
+  kind                 VARCHAR(50) /* t_tinystring */,
+  keywords             VARCHAR(255) /* t_string */,
+  source_url           VARCHAR(255) /* t_string */,
+  sensitivity          INTEGER /* smallint */,
+  job_comment          VARCHAR(2000000000) /* t_text */,
+  completion_date      TIMESTAMP /* t_datetime */,
+  percent_complete     INTEGER /* smallint */,
+  actual_work          INTEGER /* smallint */,
+  total_work           INTEGER /* smallint */,
+  last_modified        INTEGER /* t_int */,
+  accounting_info      VARCHAR(255) /* t_string */,
+  kilometers           VARCHAR(255) /* t_string */,
+  associated_companies VARCHAR(255) /* t_string */,
+  associated_contacts  VARCHAR(255) /* t_string */,
+  timer_date           TIMESTAMP /* t_datetime */
+  ,
+  PRIMARY KEY(job_id),
+  CHECK(job_id     IS NOT NULL),
+  CHECK(fname      IS NOT NULL),
+  CHECK(start_date IS NOT NULL),
+  CHECK(end_date   IS NOT NULL)
+);
+
+/* TODO: constraints
+ALTER TABLE job ADD CONSTRAINT job2project FOREIGN KEY (project_id)
+  REFERENCES project(project_id);
+ALTER TABLE job ADD CONSTRAINT job2creator FOREIGN KEY (creator_id)
+  REFERENCES staff(company_id);
+ALTER TABLE job ADD CONSTRAINT job2executant FOREIGN KEY (executant_id)
+  REFERENCES staff(company_id);
+ALTER TABLE job ADD CONSTRAINT job2job FOREIGN KEY (parent_job_id)
+  REFERENCES job(job_id);
+*/
+CREATE INDEX job__keywords      ON job(keywords);
+CREATE INDEX is_control_job_idx ON job(is_control_job);
+CREATE INDEX is_team_job_idx    ON job(is_team_job);
+CREATE INDEX is_new_idx         ON job(is_new);
+CREATE INDEX priority_idx       ON job(priority);
+CREATE INDEX job_kind_idx       ON job(kind);
+CREATE INDEX job_status_idx     ON job(job_status);
+CREATE INDEX job_db_status_idx  ON job(db_status);
+
+CREATE TABLE job_history (
+  job_history_id INTEGER /* t_id */,
+  object_version INTEGER /* t_int */,
+  job_id         INTEGER /* t_id */,
+  actor_id       INTEGER /* t_id */,
+  faction        VARCHAR(50) /* t_tinystring */, /* Sybase : action */
+  action_date    TIMESTAMP   /* t_datetime */,
+  job_status     VARCHAR(50) /* t_tinystring */,
+  db_status      VARCHAR(50) /* t_tinystring */ 
+  ,
+  PRIMARY KEY(job_history_id),
+  CHECK(job_history_id IS NOT NULL),
+  CHECK(job_id         IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE job_history ADD CONSTRAINT job_history2job FOREIGN KEY (job_id)
+  REFERENCES job(job_id);
+ALTER TABLE job_history ADD CONSTRAINT job_history2actor FOREIGN KEY (actor_id)
+  REFERENCES staff(company_id);
+*/
+
+CREATE TABLE job_history_info (
+  job_history_info_id INTEGER /* t_id */,
+  job_history_id      INTEGER /* t_id */,
+  comment             VARCHAR(1000000), /* Sybase: TEXT */
+  db_status           VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(job_history_info_id),
+  CHECK(job_history_info_id IS NOT NULL),
+  CHECK(job_history_id      IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE job_history_info ADD CONSTRAINT job_history_info2job_history
+  FOREIGN KEY (job_history_id) REFERENCES job_history(job_history_id);
+*/
+
+/* -------------------- job_resource_assignment ------------------------- */
+
+CREATE TABLE job_resource_assignment (
+  job_resource_assignment_id INTEGER /* t_id */,
+  resource_id                INTEGER /* t_id */,
+  job_id                     INTEGER /* t_id */,
+  operative_part             INTEGER /* t_int */,
+  db_status                  VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(job_resource_assignment_id),
+  CHECK(job_resource_assignment_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE job_resource_assignment ADD CONSTRAINT job_resource2job
+               FOREIGN KEY (job_id) REFERENCES job(job_id);
+*/
+
+/* -------------------- news -------------------- */
+
+CREATE TABLE news_article (
+  news_article_id       INTEGER /* t_id */,
+  object_version        INTEGER /* t_int */,
+  fname                 VARCHAR(255) /* t_string */, /* Sybase: name */
+  caption               VARCHAR(255) /* t_string */,
+  is_index_article      BOOLEAN /* t_bool */,
+  db_status             VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(news_article_id),
+  CHECK(news_article_id IS NOT NULL)
+);
+CREATE INDEX is_index_article_idx ON news_article(is_index_article);
+
+CREATE TABLE news_article_link (
+  news_article_link_id  INTEGER /* t_id */,
+  object_version        INTEGER /* t_int */,
+  news_article_id       INTEGER /* t_id */,
+  sub_news_article_id   INTEGER /* t_id */
+  ,
+  PRIMARY KEY(news_article_link_id),
+  CHECK(news_article_link_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE news_article_link ADD CONSTRAINT n_article_link2news_article 
+  FOREIGN KEY (news_article_id) REFERENCES news_article(news_article_id);
+ALTER TABLE news_article_link ADD CONSTRAINT n_article_link2news_article2
+  FOREIGN KEY (sub_news_article_id) REFERENCES news_article(news_article_id);
+*/
+
+-- --------------------------- invoice  -----------------------------
+
+CREATE TABLE invoice (
+  invoice_id         INTEGER /* t_id */,
+  debitor_id         INTEGER /* t_id */,
+  object_version     INTEGER /* t_int */,
+  parent_invoice_id  INTEGER /* t_id */,
+  invoice_nr         VARCHAR(255) /* t_string */,
+  invoice_date       TIMESTAMP /* t_datetime */,
+  kind               VARCHAR(50) /* t_smallstring */,
+  status             VARCHAR(50) /* t_smallstring */,
+  net_amount         NUMERIC(19,2) /* t_float */,
+  gross_amount       NUMERIC(19,2) /* t_float */,
+  paid               NUMERIC(19,2) /* t_float */,
+  comment            VARCHAR(2000000000) /* t_text */,
+  db_status          VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(invoice_id),
+  CHECK(invoice_id IS NOT NULL),
+  CHECK(debitor_id IS NOT NULL),
+  CHECK(invoice_nr IS NOT NULL),
+  CHECK(status     IS NOT NULL)
+);
+CREATE INDEX invoice_kind_idx   ON invoice(kind);
+CREATE INDEX invoice_status_idx ON invoice(status);
+CREATE INDEX invoice_date_idx   ON invoice(invoice_date);
+
+CREATE TABLE invoice_account (
+  invoice_account_id    INTEGER       /* t_id */,
+  enterprise_id         INTEGER       /* t_id */,
+  account_nr            VARCHAR(50)   /* t_tinystring */,
+  balance               NUMERIC(19,2) /* t_money */,
+  object_version        INTEGER       /* t_int */,
+  db_status             VARCHAR(50)   /* t_tinystring */
+  ,
+  PRIMARY KEY(invoice_account_id),
+  CHECK(invoice_account_id IS NOT NULL),
+  CHECK(enterprise_id IS NOT NULL),
+  CHECK(account_nr IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE invoice_account ADD CONSTRAINT invoice_account2company 
+  FOREIGN KEY (enterprise_id)
+  REFERENCES company(company_id);
+*/
+
+CREATE TABLE invoice_action (
+  invoice_action_id     INTEGER /* t_id */,
+  account_id            INTEGER /* t_id */,
+  invoice_id            INTEGER /* t_id */,
+  document_id           INTEGER /* t_id */,
+  action_date           TIMESTAMP /* t_datetime */,
+  action_kind           VARCHAR(50) /* t_smallstring */,
+  log_text              VARCHAR(2000000000) /* t_text */,
+  object_version        INTEGER /* t_int */,
+  db_status             VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY (invoice_action_id),
+  CHECK(invoice_action_id IS NOT NULL),
+  CHECK(account_id IS NOT NULL),
+  CHECK(action_kind IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE invoice_action ADD CONSTRAINT invoice_action2invoice_account 
+  FOREIGN KEY (account_id)
+  REFERENCES invoice_account(invoice_account_id);
+ALTER TABLE invoice_action ADD CONSTRAINT invoice_action2invoice 
+  FOREIGN KEY (invoice_id)
+  REFERENCES invoice(invoice_id);
+*/
+CREATE INDEX action_kind_idx on invoice_action(action_kind);
+
+CREATE TABLE invoice_accounting (
+  invoice_accounting_id         INTEGER /* t_id */,
+  action_id                     INTEGER /* t_id */,
+  debit                         NUMERIC(19,2) /* t_money */,
+  balance                       NUMERIC(19,2) /* t_money */,
+  object_version                INTEGER /* t_int */,
+  db_status                     VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(invoice_accounting_id),
+  CHECK(invoice_accounting_id IS NOT NULL),
+  CHECK(action_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE invoice_accounting ADD CONSTRAINT invoice_acc2invoice_action 
+  FOREIGN KEY (action_id)
+  REFERENCES invoice_action(invoice_action_id);
+*/
+
+CREATE TABLE article_category (
+  article_category_id INTEGER      /* t_id */,
+  category_name       VARCHAR(255) /* t_string */,
+  category_abbrev     VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(article_category_id),
+  CHECK(article_category_id IS NOT NULL),
+  CHECK(category_name       IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE article_category 
+  ADD CONSTRAINT unique_category_abbrev UNIQUE(category_abbrev);
+*/
+
+CREATE TABLE article_unit (
+  article_unit_id    INTEGER /* t_id */,        
+  format             VARCHAR(50) /* t_tinystring */,
+  singular_unit      VARCHAR(255) /* t_string */,
+  plural_unit        VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(article_unit_id),
+  CHECK(article_unit_id IS NOT NULL)
+);
+
+CREATE TABLE article (
+  article_id          INTEGER /* t_id */,
+  article_unit_id     INTEGER /* t_id */,
+  article_category_id INTEGER /* t_id */,
+  object_version      INTEGER /* t_int */,
+  article_name        VARCHAR(255) /* t_string */,
+  article_nr          VARCHAR(255) /* t_string */,
+  article_text        VARCHAR(2000000000) /* t_text */,      
+  status              VARCHAR(50) /* t_tinystring */,
+  price               NUMERIC(19,2) /* t_float */,
+  vat                 NUMERIC(19,2) /* t_float */,
+  vat_group           VARCHAR(50) /* t_tinystring */,
+  db_status           VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(article_id),
+  CHECK(article_id   IS NOT NULL),
+  CHECK(article_name IS NOT NULL),
+  CHECK(article_nr   IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE article ADD
+  CONSTRAINT article2article_unit FOREIGN KEY (article_unit_id) 
+  REFERENCES article_unit(article_unit_id);
+ALTER TABLE article ADD
+  CONSTRAINT article2article_category FOREIGN KEY (article_category_id) 
+  REFERENCES article_category(article_category_id);
+*/
+CREATE INDEX article_status_idx ON article(status);
+
+CREATE TABLE invoice_article_assignment (
+  invoice_article_assignment_id INTEGER /* t_id */,
+  invoice_id                    INTEGER /* t_id */,
+  article_id                    INTEGER /* t_id */,
+  article_count                 INTEGER /* t_id */,
+  object_version                INTEGER /* t_int */,  
+  net_amount                    NUMERIC(19,2) /* t_float */,
+  vat                           NUMERIC(19,2) /* t_float */,
+  comment                       VARCHAR(2000000000) /* t_text */,
+  db_status                     VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY(invoice_article_assignment_id),
+  CHECK(invoice_article_assignment_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE invoice_article_assignment 
+  ADD CONSTRAINT invoice_article_assign2article FOREIGN KEY (article_id) 
+  REFERENCES article(article_id);
+ALTER TABLE invoice_article_assignment      
+  ADD CONSTRAINT invoice_article_assign2invoice FOREIGN KEY (invoice_id) 
+  REFERENCES invoice(invoice_id);                 
+*/
+
+/* -------------------- resource ------------------------- */
+
+CREATE TABLE resource (
+  resource_id         INTEGER /* t_id */,
+  resource_name       VARCHAR(255) /* t_string */,
+  token               VARCHAR(255) /* t_string */,
+  object_id           INTEGER /* t_id */,
+  quantity            INTEGER /* t_int */,
+  comment             VARCHAR(2000000000) /* t_text */, /*(oracle: ocomment)*/
+  standard_costs      NUMERIC(19,2) /* t_price */,
+  ftype               INTEGER /* t_int */,
+  db_status           VARCHAR(50) /* t_tinystring */,
+  object_version      INTEGER /* t_int */
+  ,
+  PRIMARY KEY(resource_id),
+  CHECK(resource_id IS NOT NULL),
+  CHECK(resource_name IS NOT NULL),
+  CHECK(ftype IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE job_resource_assignment ADD CONSTRAINT job_resource2resource
+               FOREIGN KEY (resource_id) REFERENCES resource(resource_id);
+*/
+
+CREATE TABLE resource_assignment (
+  resource_assignment_id INTEGER     /* t_id */,
+  super_resource_id      INTEGER     /* t_id */,
+  sub_resource_id        INTEGER     /* t_id */,
+  db_status              VARCHAR(50) /* t_tinystring */
+  ,
+  PRIMARY KEY (resource_assignment_id),
+  CHECK(resource_assignment_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE resource_assignment ADD CONSTRAINT resource2super_resource
+               FOREIGN KEY (super_resource_id) REFERENCES resource(resource_id);
+ALTER TABLE resource_assignment ADD CONSTRAINT resource2sub_resource
+               FOREIGN KEY (sub_resource_id) REFERENCES resource(resource_id);
+*/
+
+
+/* --- job_assignment: used as milestone dependencies */
+
+CREATE TABLE job_assignment (
+  job_assignment_id     INTEGER /* t_id */,
+  parent_job_id         INTEGER     /* t_id */,
+  child_job_id          INTEGER     /* t_id */,
+  db_status             VARCHAR(50) /* t_tinystring */,
+  assignment_kind       VARCHAR(50) /* t_tinystring */,
+  fposition             INTEGER     /* t_int */
+  ,
+  PRIMARY KEY(job_assignment_id),
+  CHECK(job_assignment_id IS NOT NULL),
+  CHECK(parent_job_id     IS NOT NULL),
+  CHECK(child_job_id      IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE job_assignment ADD CONSTRAINT parent_job_assignment2job
+        FOREIGN KEY (parent_job_id) REFERENCES job(job_id);         
+ALTER TABLE job_assignment ADD CONSTRAINT child_job_assignment2job
+        FOREIGN KEY (child_job_id) REFERENCES job(job_id);         
+*/
+CREATE INDEX assignment_kind_idx ON job_assignment(assignment_kind);
+
+CREATE TABLE project_info (
+  project_info_id INTEGER             /* t_id */,
+  project_id      INTEGER             /* t_id */, 
+  comment         VARCHAR(2000000000) /* t_text */,
+  db_status       VARCHAR(50)         /* t_tinystring */
+  ,
+  PRIMARY KEY(project_info_id),
+  CHECK(project_id IS NOT NULL),
+  CHECK(project_info_id IS NOT NULL)
+);
+/* TODO: constraints
+ALTER TABLE project_info ADD CONSTRAINT project_info2company 
+        FOREIGN KEY (project_id) REFERENCES project(project_id);
+*/
+
+/* -------------------- ObjectProperties -------------------- */
+
+CREATE TABLE obj_property (
+  obj_property_id    INTEGER      /* t_id */,
+  obj_id             INTEGER      /* t_id */,
+  obj_type           VARCHAR(255) /* t_string */,
+  access_key         INTEGER      /* t_id */,
+  value_key          VARCHAR(255) /* t_string */,
+  namespace_prefix   VARCHAR(255) /* t_string */,
+  preferred_type     VARCHAR(255) /* t_string */,
+  value_string       VARCHAR(2000000),
+  value_int          INTEGER       /* t_int */,
+  value_float        NUMERIC(19,2) /* t_float */,
+  value_date         TIMESTAMP     /* t_datetime */,
+  value_oid          VARCHAR(255)  /* t_string */,
+  blob_size          INTEGER       /* t_int */,
+  value_blob         BLOB          /* t_image */
+  ,
+  PRIMARY KEY (obj_property_id),
+  CHECK(obj_property_id IS NOT NULL),
+  CHECK(obj_id          IS NOT NULL),
+  CHECK(value_key       IS NOT NULL),
+  CHECK(preferred_type  IS NOT NULL)
+);
+/*ALTER TABLE obj_property */
+/*  ADD CONSTRAINT unique_key_prefix_obj  */
+/*        UNIQUE(value_key, namespace_prefix, obj_id); */
+/*COMMIT; */
+
+CREATE INDEX obj_p_obj_id_idx           ON obj_property(obj_id);
+CREATE INDEX obj_p_value_key_idx        ON obj_property(value_key);
+CREATE INDEX obj_p_value_string_idx     ON obj_property(value_string);
+CREATE INDEX obj_p_namespace_prefix_idx ON obj_property(namespace_prefix);
+CREATE INDEX obj_p_access_key_idx       ON obj_property(access_key);
+CREATE INDEX obj_p_obj_type_idx         ON obj_property(obj_type);
+
+/* -------------------- ObjectInfo  -------------------- */
+CREATE TABLE obj_info (
+  obj_id             INTEGER      /* t_id */,
+  obj_type           VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY (obj_id),
+  CHECK(obj_id   IS NOT NULL),
+  CHECK(obj_type IS NOT NULL)
+);
+
+/* -------------------- ObjectAcl  -------------------- */
+
+CREATE TABLE object_acl (
+  object_acl_id INTEGER      /* t_id */,
+  sort_key      INTEGER      /* t_int */,
+  faction       VARCHAR(10)  /* t_tinieststring */,
+  object_id     VARCHAR(255) /* t_string */,
+  auth_id       VARCHAR(255) /* t_string */,
+  permissions   VARCHAR(50)  /* t_tinystring */
+  ,
+  PRIMARY KEY (object_acl_id),
+  CHECK(sort_key IS NOT NULL),
+  CHECK(faction IS NOT NULL),
+  CHECK(object_id IS NOT NULL)
+);
+
+CREATE INDEX obj_acl_sort_key_idx    ON object_acl(sort_key);
+CREATE INDEX obj_acl_object_id_idx   ON object_acl(object_id);
+CREATE INDEX obj_acl_faction_idx     ON object_acl(faction);
+CREATE INDEX obj_acl_auth_id_idx     ON object_acl(auth_id);
+CREATE INDEX obj_acl_permissions_idx ON object_acl(permissions);
+
+/* -------------------- PDA ---------- -------------------- */
+
+/* palm_address table */
+
+CREATE TABLE palm_address (
+  company_id                    INTEGER /* t_id */,
+  device_id                     VARCHAR(50) /* t_smallstring */,
+  palm_address_id               INTEGER /* t_id */,
+  palm_id                       INTEGER /* t_id */,
+  category_index                INTEGER /* t_int */,
+  is_deleted                    BOOLEAN /* t_bool */,
+  is_modified                   BOOLEAN /* t_bool */,
+  is_archived                   BOOLEAN /* t_bool */,
+  is_new                        BOOLEAN /* t_bool */,
+  is_private                    BOOLEAN /* t_bool */,
+  md5hash                       VARCHAR(50) /* t_tinystring */,
+  address                       VARCHAR(255) /* t_string */,
+  city                          VARCHAR(255) /* t_string */,
+  company                       VARCHAR(255) /* t_string */,
+  country                       VARCHAR(255) /* t_string */,
+  display_phone                 INTEGER      /* t_int */,
+  firstname                     VARCHAR(255) /* t_string */,
+  lastname                      VARCHAR(255) /* t_string */,
+  note                          VARCHAR(2000000000) /* t_text */,
+  phone0                        VARCHAR(255) /* t_string */,
+  phone1                        VARCHAR(255) /* t_string */,
+  phone2                        VARCHAR(255) /* t_string */,
+  phone3                        VARCHAR(255) /* t_string */,
+  phone4                        VARCHAR(255) /* t_string */,
+  phone_label_id0               INTEGER      /* t_int */,
+  phone_label_id1               INTEGER      /* t_int */,
+  phone_label_id2               INTEGER      /* t_int */,
+  phone_label_id3               INTEGER      /* t_int */,
+  phone_label_id4               INTEGER      /* t_int */,
+  state                         VARCHAR(255) /* t_string */,
+  title                         VARCHAR(255) /* t_string */,
+  zipcode                       VARCHAR(255) /* t_string */,
+  custom1                       VARCHAR(255) /* t_string */,
+  custom2                       VARCHAR(255) /* t_string */,
+  custom3                       VARCHAR(255) /* t_string */,
+  custom4                       VARCHAR(255) /* t_string */,
+  skyrix_id                     INTEGER      /* t_id */,
+  skyrix_sync                   INTEGER      /* t_int */,
+  skyrix_version                INTEGER      /* t_int */,
+  skyrix_type                   VARCHAR(50)  /* t_tinystring */
+  ,
+  PRIMARY KEY (palm_address_id),
+  CHECK(company_id           IS NOT NULL),
+  CHECK(device_id            IS NOT NULL),
+  CHECK(palm_address_id      IS NOT NULL),
+  CHECK(is_deleted           IS NOT NULL),
+  CHECK(is_modified          IS NOT NULL),
+  CHECK(is_archived          IS NOT NULL),
+  CHECK(is_new               IS NOT NULL),
+  CHECK(is_private           IS NOT NULL),
+  CHECK(md5hash              IS NOT NULL),
+  CHECK(display_phone        IS NOT NULL),
+  CHECK(phone_label_id0      IS NOT NULL),
+  CHECK(phone_label_id1      IS NOT NULL),
+  CHECK(phone_label_id2      IS NOT NULL),
+  CHECK(phone_label_id3      IS NOT NULL),
+  CHECK(phone_label_id4      IS NOT NULL)
+);
+
+
+/* palm_date table */
+
+CREATE TABLE palm_date (
+  company_id                    INTEGER /* t_id */,
+  device_id                     VARCHAR(50) /* t_smallstring */,
+  palm_date_id                  INTEGER /* t_id */,
+  palm_id                       INTEGER /* t_id */,
+  category_index                INTEGER /* t_int */,
+  is_deleted                    BOOLEAN /* t_bool */,
+  is_modified                   BOOLEAN /* t_bool */,
+  is_archived                   BOOLEAN /* t_bool */,
+  is_new                        BOOLEAN /* t_bool */,
+  is_private                    BOOLEAN /* t_bool */,
+  md5hash                       VARCHAR(50) /* t_tinystring */,
+  alarm_advance_time            INTEGER /* t_int */,
+  alarm_advance_unit            INTEGER /* t_int */,
+  description                   VARCHAR(255) /* t_string */,
+  enddate                       TIMESTAMP /* t_datetime */,
+  is_alarmed                    BOOLEAN /* t_bool */,
+  is_untimed                    BOOLEAN /* t_bool */,
+  note                          VARCHAR(2000000000) /* t_text */,
+  repeat_enddate                TIMESTAMP /* t_datetime */,
+  repeat_frequency              INTEGER /* t_int */,
+  repeat_on                     INTEGER /* t_int */,
+  repeat_start_week             INTEGER /* t_int */,
+  repeat_type                   INTEGER /* t_int */,
+  startdate                     TIMESTAMP /* t_datetime */,
+  exceptions                    VARCHAR(2000000000) /* t_text */,
+  skyrix_id                     INTEGER /* t_id */,
+  skyrix_sync                   INTEGER /* t_int */,
+  skyrix_version                INTEGER /* t_int */
+  ,
+  PRIMARY KEY(palm_date_id),
+  CHECK(company_id              IS NOT NULL),
+  CHECK(device_id               IS NOT NULL),
+  CHECK(palm_date_id            IS NOT NULL),
+  CHECK(is_deleted              IS NOT NULL),
+  CHECK(is_modified             IS NOT NULL),
+  CHECK(is_archived             IS NOT NULL),
+  CHECK(is_new                  IS NOT NULL),
+  CHECK(is_private              IS NOT NULL),
+  CHECK(md5hash                 IS NOT NULL),
+  CHECK(alarm_advance_time      IS NOT NULL),
+  CHECK(alarm_advance_unit      IS NOT NULL),
+  CHECK(description             IS NOT NULL),
+  CHECK(is_alarmed              IS NOT NULL),
+  CHECK(is_untimed              IS NOT NULL)
+);
+
+
+/* palm_memo table */
+
+CREATE TABLE palm_memo (
+  company_id                    INTEGER /* t_id */,
+  device_id                     VARCHAR(50) /* t_smallstring */,
+  palm_memo_id                  INTEGER /* t_id */,
+  palm_id                       INTEGER /* t_id */,
+  category_index                INTEGER /* t_int */,
+  is_deleted                    BOOLEAN /* t_bool */,
+  is_modified                   BOOLEAN /* t_bool */,
+  is_archived                   BOOLEAN /* t_bool */,
+  is_new                        BOOLEAN /* t_bool */,
+  is_private                    BOOLEAN /* t_bool */,
+  md5hash                       VARCHAR(50) /* t_tinystring */,
+  memo                          VARCHAR(2000000000) /* t_text */,
+  skyrix_id                     INTEGER /* t_id */,
+  skyrix_sync                   INTEGER /* t_int */,
+  skyrix_version                INTEGER /* t_int */
+  ,
+  PRIMARY KEY(palm_memo_id),
+  CHECK(company_id              IS NOT NULL),
+  CHECK(device_id               IS NOT NULL),
+  CHECK(palm_memo_id            IS NOT NULL),
+  CHECK(is_deleted              IS NOT NULL),
+  CHECK(is_modified             IS NOT NULL),
+  CHECK(is_archived             IS NOT NULL),
+  CHECK(is_new                  IS NOT NULL),
+  CHECK(is_private              IS NOT NULL),
+  CHECK(md5hash                 IS NOT NULL),
+  CHECK(memo                    IS NOT NULL)
+);
+
+/* palm_todo table */
+
+CREATE TABLE palm_todo (
+  company_id                    INTEGER /* t_id */,
+  device_id                     VARCHAR(50) /* t_smallstring */,
+  palm_todo_id                  INTEGER /* t_id */,
+  palm_id                       INTEGER /* t_id */,
+  category_index                INTEGER /* t_int */,
+  is_deleted                    BOOLEAN /* t_bool */,
+  is_modified                   BOOLEAN /* t_bool */,
+  is_archived                   BOOLEAN /* t_bool */,
+  is_new                        BOOLEAN /* t_bool */,
+  is_private                    BOOLEAN /* t_bool */,
+  md5hash                       VARCHAR(50) /* t_tinystring */,
+  description                   VARCHAR(255) /* t_string */,
+  duedate                       TIMESTAMP /* t_datetime */,
+  note                          VARCHAR(2000000000) /* t_text */,
+  priority                      INTEGER /* t_int */,
+  is_completed                  BOOLEAN /* t_bool */,
+  skyrix_id                     INTEGER /* t_id */,
+  skyrix_sync                   INTEGER /* t_int */,
+  skyrix_version                INTEGER /* t_int */
+  ,
+  PRIMARY KEY(palm_todo_id),
+  CHECK(company_id              IS NOT NULL),
+  CHECK(device_id               IS NOT NULL),
+  CHECK(palm_todo_id            IS NOT NULL),
+  CHECK(is_deleted              IS NOT NULL),
+  CHECK(is_modified             IS NOT NULL),
+  CHECK(is_archived             IS NOT NULL),
+  CHECK(is_new                  IS NOT NULL),
+  CHECK(is_private              IS NOT NULL),
+  CHECK(md5hash                 IS NOT NULL),
+  CHECK(description             IS NOT NULL),
+  CHECK(priority                IS NOT NULL),
+  CHECK(is_completed            IS NOT NULL)
+);
+
+/* palm_category table */
+
+CREATE TABLE palm_category (
+  company_id                    INTEGER      /* t_id */,
+  device_id                     VARCHAR(50)  /* t_smallstring */,
+  palm_category_id              INTEGER      /* t_id */,
+  palm_id                       INTEGER      /* t_id */,
+  palm_table                    VARCHAR(50)  /* t_tinystring */,
+  is_modified                   BOOLEAN      /* t_bool */,
+  md5hash                       VARCHAR(50)  /* t_tinystring */,
+  category_index                INTEGER      /* t_int */,
+  category_name                 VARCHAR(255) /* t_string */
+  ,
+  PRIMARY KEY(palm_category_id),
+  CHECK(company_id          IS NOT NULL),
+  CHECK(palm_category_id    IS NOT NULL),
+  CHECK(palm_table          IS NOT NULL),
+  CHECK(is_modified         IS NOT NULL),
+  CHECK(md5hash             IS NOT NULL),
+  CHECK(category_index      IS NOT NULL),
+  CHECK(category_name       IS NOT NULL)
+);
+
+CREATE INDEX palmaddr_company_idx ON palm_address (company_id);
+CREATE INDEX palmaddr_device_idx  ON palm_address (device_id);
+CREATE INDEX palmaddr_palm_idx    ON palm_address (palm_id);
+CREATE INDEX palmaddr_md5hash_idx ON palm_address (md5hash);
+CREATE INDEX palmaddr_skyrix_idx  ON palm_address (skyrix_id);
+CREATE INDEX palmaddr_cat_idxx    ON palm_address(category_index);
+CREATE INDEX palmaddr_is_del_idx  ON palm_address(is_deleted);
+CREATE INDEX palmaddr_is_mod_idx  ON palm_address(is_modified);
+CREATE INDEX palmaddr_is_arch_idx ON palm_address(is_archived);
+CREATE INDEX palmaddr_is_new_idx  ON palm_address(is_new);
+CREATE INDEX palmaddr_is_priv_idx ON palm_address(is_private);
+CREATE INDEX palmaddr_sky_sync_idx ON palm_address(skyrix_sync);
+CREATE INDEX palmaddr_sky_vers_idx ON palm_address(skyrix_version);
+CREATE INDEX palmaddr_sky_type_idx ON palm_address(skyrix_type);
+
+CREATE INDEX palmmemo_company_idx ON palm_memo (company_id);
+CREATE INDEX palmmemo_device_idx  ON palm_memo (device_id);
+CREATE INDEX palmmemo_palm_idx    ON palm_memo (palm_id);
+CREATE INDEX palmmemo_md5hash_idx ON palm_memo (md5hash);
+CREATE INDEX palmmemo_skyrix_idx  ON palm_memo (skyrix_id);
+
+CREATE INDEX palmcat_company_idx ON palm_category (company_id);
+CREATE INDEX palmcat_device_idx  ON palm_category (device_id);
+CREATE INDEX palmcat_palm_idx    ON palm_category (palm_id);
+CREATE INDEX palmcat_md5hash_idx ON palm_category (md5hash);
+CREATE INDEX palmcat_table_idx   ON palm_category (palm_table);
+
+CREATE INDEX palmdate_company_idx   ON palm_date (company_id);
+CREATE INDEX palmdate_device_idx    ON palm_date (device_id);
+CREATE INDEX palmdate_palm_idx      ON palm_date (palm_id);
+CREATE INDEX palmdate_md5hash_idx   ON palm_date (md5hash);
+CREATE INDEX palmdate_skyrix_idx    ON palm_date (skyrix_id);
+CREATE INDEX palmdate_startdate_idx ON palm_date (startdate);
+CREATE INDEX palmdate_enddate_idx   ON palm_date (enddate);
+
+CREATE INDEX palmtodo_company_idx ON palm_todo (company_id);
+CREATE INDEX palmtodo_device_idx  ON palm_todo (device_id);
+CREATE INDEX palmtodo_palm_idx    ON palm_todo (palm_id);
+CREATE INDEX palmtodo_md5hash_idx ON palm_todo (md5hash);
+CREATE INDEX palmtodo_skyrix_idx  ON palm_todo (skyrix_id);
+
+
+/* PDA end */
+
+/* -------------------- key generation -------------------- */
+/*
+   In FrontBase using 'SELECT UNIQUE FROM key_generator'
+*/
+/* TODO: need a solution for the key generator
+CREATE TABLE key_generator ( key_generator_id int );
+ALTER TABLE key_generator ADD CHECK(key_generator_id IS NOT NULL);
+ALTER TABLE key_generator ADD CONSTRAINT pk_key_generator
+  PRIMARY KEY (key_generator_id);
+SET UNIQUE = 10100 FOR key_generator;
+*/
+
+CREATE VIEW person AS 
+  SELECT company_id, owner_id, contact_id, template_user_id, 
+         fnumber, description, priority, keywords, fname,
+         middlename, firstname, salutation, degree, is_private, is_readonly,
+         birthday, url, sex, is_person, login, password, is_locked, 
+         pop3_account, is_account, is_intra_account, is_extra_account, 
+         is_customer, db_status, object_version, is_template_user, 
+         can_change_password, source_url, sensitivity, boss_name, partner_name,
+         assistant_name, department, office, occupation, anniversary,
+         dir_server, email_alias, freebusy_url, fileas, name_title,
+         name_affix, im_address, associated_contacts, associated_categories,
+         associated_company, show_email_as, show_email2_as, show_email3_as
+  FROM company
+  WHERE is_person     =  1    AND 
+        is_enterprise IS NULL AND 
+        is_trust      IS NULL AND 
+        is_team       IS NULL;
+
+CREATE VIEW enterprise AS 
+  SELECT company_id, owner_id, contact_id, fnumber, description, priority, 
+         keywords, url, email, login, bank, bank_code, account,
+         is_enterprise, db_status, is_customer, is_private, is_readonly,
+         object_version, source_url, sensitivity, boss_name, partner_name,
+         assistant_name, department, office, occupation, anniversary,
+         dir_server, email_alias, freebusy_url, fileas, name_title,
+         name_affix, im_address, associated_contacts, associated_categories,
+         associated_company, show_email_as, show_email2_as, show_email3_as,
+         birthday, firstname
+  FROM company 
+  WHERE is_person     IS NULL AND 
+        is_enterprise =  1    AND
+        is_trust      IS NULL AND
+        is_team       IS NULL;
+
+CREATE VIEW trust AS 
+  SELECT company_id, owner_id, contact_id, fnumber, is_private, is_readonly,
+         description, priority, keywords, url, email, is_trust, db_status,
+         object_version
+  FROM company 
+  WHERE is_person     IS NULL AND 
+        is_enterprise IS NULL AND
+        is_trust      =  1    AND
+        is_team       IS NULL;
+
+CREATE VIEW team AS 
+  SELECT company_id, owner_id, contact_id, fnumber, login, email,
+         description, is_team, is_location_team, db_status, object_version,
+         sensitivity, boss_name, partner_name, assistant_name, department, 
+         office, occupation, anniversary, dir_server, email_alias, 
+         freebusy_url, fileas, name_title,
+         name_affix, im_address, associated_contacts, associated_categories,
+         associated_company
+
+  FROM company 
+  WHERE is_person     IS NULL AND
+        is_enterprise IS NULL AND
+        is_trust      IS NULL AND
+        is_team       =  1;
+
+CREATE VIEW note AS SELECT * FROM document WHERE is_note = 1;
+CREATE VIEW doc  AS SELECT * FROM document WHERE is_note = 0;
+
+
+INSERT INTO company (company_id, login, fname, description, is_account, 
+                    is_intra_account, is_extra_account, is_person, fnumber, 
+                    is_private, is_readonly, db_status, object_version) 
+  VALUES (10000, 'root', 'root', 'Administrator', 1, 1, 0, 1, 'LS10000', 0, 1,
+         'inserted', 1);
+
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+INSERT INTO staff (staff_id, company_id, is_account) VALUES (10001, 10000, 1);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+INSERT INTO company_info (company_info_id, company_id)
+  VALUES (10002, 10000);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+/* insert template account */
+
+INSERT INTO company (company_id, owner_id, login, fname, description, 
+                    is_account, is_intra_account, is_extra_account, 
+                    is_person, fnumber, is_private, is_readonly, is_locked, 
+                    is_template_user, db_status, object_version)
+  VALUES (9999, 10000, 'template', 'template', 'Template', 1, 1, 0, 1, 
+          'LS9999', 1, 1, 1, 1, 'inserted', 1);
+
+INSERT INTO staff (staff_id, company_id, is_account) VALUES (9998, 9999, 1);
+
+INSERT INTO company_info (company_info_id, company_id) VALUES (9997, 9999);
+
+INSERT INTO company (company_id, description, is_team, fnumber, login, 
+ 		     db_status, object_version) 
+  VALUES (10003, 'all intranet', 1, 'LS10003', 'all intranet', 'inserted', 1);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+INSERT INTO staff (staff_id, company_id, is_team) VALUES (10004, 10003, 1);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+INSERT INTO company_info (company_info_id, company_id)  VALUES (10005, 10003);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+INSERT INTO company (company_id, description, is_team, fnumber, login, 
+                     db_status, object_version) 
+  VALUES (9991, 'news editors', 1, 'LS9991', 'newseditors', 'inserted', 1);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+INSERT INTO staff (staff_id, company_id, is_team) VALUES (9992, 9991, 1);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+INSERT INTO company_info (company_info_id, company_id)  VALUES (9993, 9991);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+INSERT INTO news_article (news_article_id, fname, caption, is_index_article,
+                          object_version)
+  VALUES (10006, 'index', 'Index', 1, 1);
+/* TODO: keygen SELECT UNIQUE FROM key_generator; */
+
+UPDATE project_company_assignment SET access_right = 'r' 
+  WHERE has_access = 1 AND access_right IS NULL;
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('_model', 41);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('staff', 41);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('company', 45);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('company_info', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('company_value', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('company_category', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('company_assignment', 41);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('appointment_resource', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('appointment', 47);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('date', 47);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('date_info', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('date_company_assignment', 43);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('project', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('project_info', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('project_company_assignment', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('document', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('document_version', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('document_editing', 41);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('address', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('telephone', 41);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('job', 46);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('job_history', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('job_history_info', 42);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('news_article', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('news_article_link', 41);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('key_generator', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('key_lock', 41);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('person', 45);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('enterprise', 46);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('trust', 45);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('team', 45);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('note', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('doc', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('log', 42);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('invoice', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('invoice_action', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('article_category', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('article_unit', 41);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('article', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('invoice_article_assignment', 42);
+
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('palm_address', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('palm_date', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('palm_memo', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('palm_todo', 42);
+INSERT INTO table_version (fname, table_version) 
+  VALUES ('palm_category', 41);
+
+INSERT INTO table_version (fname, table_version)
+  VALUES ('resource', 42);
+INSERT INTO table_version (fname, table_version)
+  VALUES ('obj_property', 42);

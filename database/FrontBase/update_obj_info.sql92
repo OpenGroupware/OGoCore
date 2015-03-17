@@ -1,0 +1,87 @@
+/* 
+ * OpenGroupware.org database schema creation script
+ * (C) 2000-2003 SKYRIX Software AG 
+ * $Id: update_obj_info.sql92,v 1.1.1.1 2003/07/09 22:57:26 cvs Exp $
+ */
+
+DELETE FROM obj_info;
+
+INSERT INTO obj_info (obj_type, obj_id) 
+  SELECT 'Address', address_id FROM address;
+
+INSERT INTO obj_info (obj_type, obj_id) 
+  SELECT 'AppointmentResource', appointment_resource_id FROM appointment_resource;
+
+INSERT INTO obj_info (obj_type, obj_id)
+   SELECT 'Article', article_id FROM article;
+
+INSERT INTO obj_info (obj_type, obj_id) 
+  SELECT 'ArticleCategory', article_category_id FROM article_category;
+;
+INSERT INTO obj_info (obj_type, obj_id) 
+  SELECT 'ArticleUnit', article_unit_id FROM article_unit
+;
+INSERT INTO obj_info (obj_type, obj_id) 
+  SELECT 'CompanyCategory', company_category_id FROM company_category;
+
+INSERT INTO obj_info (obj_type, obj_id) 
+  SELECT 'Date', date_id FROM appointment;
+
+INSERT INTO obj_info (obj_type, obj_id) 
+  SELECT 'Doc', document_id FROM doc
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'DocumentVersion', document_version_id FROM document_version
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'Enterprise', company_id FROM enterprise
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'Invoice', invoice_id FROM invoice
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'InvoiceAccount', invoice_account_id FROM invoice_account
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'InvoiceAccounting', invoice_accounting_id FROM invoice_accounting
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'InvoiceAction', invoice_action_id FROM invoice_action
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'Job', job_id FROM job
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'JobHistory', job_history_id FROM job_history
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'JobHistoryInfo', job_history_info_id FROM job_history_info
+;
+INSERT INTO obj_info (obj_type, obj_id)
+  SELECT 'Log', log_id FROM log
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'NewsArticle', news_article_id FROM news_article
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'NewsArticleLink', news_article_link_id FROM news_article_link
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'Note', document_id FROM note
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'Person', company_id FROM person
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'Project', project_id FROM project
+;
+
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'SessionLog', session_log_id FROM session_log
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'Team', company_id FROM team
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'Telephone', telephone_id FROM telephone
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'Trust', company_id FROM trust
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'Url', url_id FROM url
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'UrlCriterion', criterion_id FROM url_criterion
+;
+INSERT INTO obj_info (obj_type, obj_id) SELECT 'UrlRating', rating_id FROM url_rating
+;

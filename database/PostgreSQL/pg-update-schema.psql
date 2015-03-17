@@ -1,0 +1,47 @@
+-- OpenGroupware.org database schema creation script
+-- (C) 2000-2004 SKYRIX Software AG
+-- $Id: pg-update-schema.psql,v 1.5 2004/01/26 15:12:41 helge Exp $
+
+CREATE TABLE obj_link (
+  obj_link_id int          not null,
+  source_id   int          not null,
+  source_type varchar(50)  null,
+  target      varchar(255) not null,
+  target_id   int          null,
+  target_type varchar(50)  null,
+  link_type   varchar(50)  null,
+  label       varchar(255) null);
+
+CREATE INDEX obj_l_obj_id_idx        ON obj_link(obj_link_id);
+CREATE INDEX obj_l_source_id_idx     ON obj_link(source_id);
+CREATE INDEX obj_l_target_id_idx     ON obj_link(target);
+CREATE INDEX obj_l_source_type_idx   ON obj_link(source_type);
+CREATE INDEX obj_l_target_type_idx   ON obj_link(target_type);
+CREATE INDEX obj_l_target_idx        ON obj_link(target_id);
+CREATE INDEX obj_l_label_idx         ON obj_link(label);
+CREATE INDEX obj_l_type_idx          ON obj_link(link_type);
+
+update object_model set db_version=3;
+
+ALTER TABLE palm_address ADD COLUMN object_version int;
+ALTER TABLE palm_date    ADD COLUMN object_version int;
+ALTER TABLE palm_memo    ADD COLUMN object_version int;
+ALTER TABLE palm_todo    ADD COLUMN object_version int;
+
+ALTER TABLE palm_address ADD COLUMN skyrix_palm_version int;
+ALTER TABLE palm_date    ADD COLUMN skyrix_palm_version int;
+ALTER TABLE palm_memo    ADD COLUMN skyrix_palm_version int;
+ALTER TABLE palm_todo    ADD COLUMN skyrix_palm_version int;
+
+UPDATE table_version 
+  SET table_version = 43 
+  WHERE table_name = 'palm_address';
+UPDATE table_version 
+  SET table_version = 43 
+  WHERE table_name = 'palm_date';
+UPDATE table_version 
+  SET table_version = 43 
+  WHERE table_name = 'palm_memo';
+UPDATE table_version 
+  SET table_version = 43 
+  WHERE table_name = 'palm_todo';

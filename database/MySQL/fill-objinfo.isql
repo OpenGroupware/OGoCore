@@ -1,0 +1,93 @@
+use skyrix
+go
+print "count of objects"
+go
+select count(*) from obj_info
+go
+print ""
+print "count per table"
+go
+select convert(char(25),obj_type), count(*) from obj_info group by obj_type
+go
+print ""
+print "max id"
+go
+select key_generator_value from key_generator where key_generator_id = 10
+go
+use skyrix
+go
+
+drop table obj_info
+go
+
+dump tran skyrix with no_log
+go
+
+CREATE TABLE obj_info (
+obj_id             t_id         not null,
+obj_type           t_string     not null,
+constraint pk_obj_info primary key (obj_id, obj_type)
+)
+go
+CREATE INDEX obj_id_idx ON obj_info(obj_id)
+go
+CREATE INDEX obj_type_idx ON obj_info(obj_type)
+go
+INSERT into obj_info (obj_type, obj_id) select "Address", address_id from address
+go
+INSERT into obj_info (obj_type, obj_id) select "AppointmentResource", appointment_resource_id from appointment_resource
+go
+INSERT into obj_info (obj_type, obj_id) select "Article", article_id from article
+go
+INSERT into obj_info (obj_type, obj_id) select "ArticleCategory", article_category_id from article_category
+go
+INSERT into obj_info (obj_type, obj_id) select "ArticleUnit", article_unit_id from article_unit
+go
+INSERT into obj_info (obj_type, obj_id) select "CompanyCategory", company_category_id from company_category
+go
+INSERT into obj_info (obj_type, obj_id) select "Date", date_id from date
+go
+INSERT into obj_info (obj_type, obj_id) select "Doc", document_id from doc
+go
+INSERT into obj_info (obj_type, obj_id) select "DocumentVersion", document_version_id from document_version
+go
+INSERT into obj_info (obj_type, obj_id) select "Enterprise", company_id from enterprise
+go
+INSERT into obj_info (obj_type, obj_id) select "Invoice", invoice_id from invoice
+go
+INSERT into obj_info (obj_type, obj_id) select "InvoiceAccount", invoice_account_id from invoice_account
+go
+INSERT into obj_info (obj_type, obj_id) select "InvoiceAccounting", invoice_accounting_id from invoice_accounting
+go
+INSERT into obj_info (obj_type, obj_id) select "InvoiceAction", invoice_action_id from invoice_action
+go
+INSERT into obj_info (obj_type, obj_id) select "Job", job_id from job
+go
+dump tran skyrix with no_log
+go
+INSERT into obj_info (obj_type, obj_id) select "JobHistory", job_history_id from job_history
+go
+INSERT into obj_info (obj_type, obj_id) select "JobHistoryInfo", job_history_info_id from job_history_info
+go
+INSERT into obj_info (obj_type, obj_id) select "Log", log_id from log
+go
+INSERT into obj_info (obj_type, obj_id) select "NewsArticle", news_article_id from news_article
+go
+INSERT into obj_info (obj_type, obj_id) select "NewsArticleLink", news_article_link_id from news_article_link
+go
+INSERT into obj_info (obj_type, obj_id) select "Note", document_id from note
+go
+INSERT into obj_info (obj_type, obj_id) select "Person", company_id from person
+go
+INSERT into obj_info (obj_type, obj_id) select "Project", project_id from project
+go
+INSERT into obj_info (obj_type, obj_id) select "Resource", resource_id from resource
+go
+INSERT into obj_info (obj_type, obj_id) select "SessionLog", session_log_id from session_log
+go
+INSERT into obj_info (obj_type, obj_id) select "Team", company_id from team
+go
+INSERT into obj_info (obj_type, obj_id) select "Telephone", telephone_id from telephone
+go
+dump tran skyrix with no_log
+go

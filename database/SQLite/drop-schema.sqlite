@@ -1,0 +1,193 @@
+/*  */
+/* OpenGroupware.org database schema creation script */
+/* (C) 2000-2003 SKYRIX Software AG */
+/* $Id: drop-schema.sqlite,v 1.1 2003/08/20 12:55:24 helge Exp $ */
+/* */
+
+/* model modification requires heavy-locking .. */
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, LOCKING PESSIMISTIC;
+
+/* drop indexes */
+
+DROP INDEX action_idx;
+DROP INDEX appointment_resource_name_idx;
+DROP INDEX article_status_idx;
+DROP INDEX assignment_kind_idx;
+DROP INDEX attribute_idx;
+DROP INDEX document_editing_status_idx;
+DROP INDEX document_status_idx;
+DROP INDEX email;
+DROP INDEX end_date_ind;
+DROP INDEX has_access_idx;
+DROP INDEX invoice_date_idx;
+DROP INDEX invoice_status_idx;
+DROP INDEX is_absence_idx;
+DROP INDEX is_account_idx;
+DROP INDEX is_attendance_idx;
+DROP INDEX is_conflict_disabled_idx;
+DROP INDEX is_control_job_idx;
+DROP INDEX is_enterprise_idx;
+DROP INDEX is_extra_account_idx;
+DROP INDEX is_fake_idx;
+DROP INDEX is_folder_idx;
+DROP INDEX is_index_article_idx;
+DROP INDEX is_index_doc_idx;
+DROP INDEX is_intra_account_idx;
+DROP INDEX is_location_team_idx;
+DROP INDEX is_new_idx;
+DROP INDEX is_note_idx;
+DROP INDEX is_object_link_idx;
+DROP INDEX is_person_idx;
+DROP INDEX is_private_idx;
+DROP INDEX is_special_idx;
+DROP INDEX is_team_idx;
+DROP INDEX is_team_job_idx;
+DROP INDEX is_trust_idx;
+DROP INDEX job_db_status_idx;
+DROP INDEX job_status_idx;
+DROP INDEX invoice_kind_idx;
+DROP INDEX project_kind_idx;
+DROP INDEX job_kind_idx;
+DROP INDEX object_link_idx;
+DROP INDEX priority_idx;
+DROP INDEX project_db_status_idx;
+DROP INDEX project_status_idx;
+DROP INDEX start_date_ind;
+DROP INDEX address_type_idx;
+DROP INDEX company_value_type_idx;
+COMMIT;
+
+/* drop views */
+
+DROP VIEW person CASCADE;
+COMMIT;
+DROP VIEW enterprise CASCADE;
+COMMIT;
+DROP VIEW trust CASCADE;
+COMMIT;
+DROP VIEW team CASCADE;
+COMMIT;
+DROP VIEW note CASCADE;
+COMMIT;
+DROP VIEW doc CASCADE;
+COMMIT;
+
+/* drop tables */
+
+DROP TABLE staff CASCADE;
+COMMIT;
+DROP TABLE company CASCADE;
+COMMIT;
+DROP TABLE company_info CASCADE;
+COMMIT;
+DROP TABLE company_value CASCADE;
+COMMIT;
+DROP TABLE company_category CASCADE;
+COMMIT;
+DROP TABLE company_assignment CASCADE;
+COMMIT;
+DROP TABLE appointment_resource CASCADE;
+COMMIT;
+DROP TABLE appointment CASCADE;
+COMMIT;
+DROP TABLE date_info CASCADE;
+COMMIT;
+DROP TABLE date_company_assignment CASCADE;
+COMMIT;
+DROP TABLE project CASCADE;
+COMMIT;
+DROP TABLE project_company_assignment CASCADE;
+COMMIT;
+DROP TABLE document CASCADE;
+COMMIT;
+DROP TABLE document_version CASCADE;
+COMMIT;
+DROP TABLE document_editing CASCADE;
+COMMIT;
+DROP TABLE address CASCADE;
+COMMIT;
+DROP TABLE telephone CASCADE;
+COMMIT;
+DROP TABLE job CASCADE;
+COMMIT;
+DROP TABLE job_history CASCADE;
+COMMIT;
+DROP TABLE job_history_info CASCADE;
+COMMIT;
+DROP TABLE email_folder CASCADE;
+COMMIT;
+DROP TABLE email_content CASCADE;
+COMMIT;
+DROP TABLE email CASCADE;
+COMMIT;
+DROP TABLE news_article CASCADE;
+COMMIT;
+DROP TABLE news_article_link CASCADE;
+COMMIT;
+DROP TABLE key_generator CASCADE;
+COMMIT;
+DROP TABLE log CASCADE;
+COMMIT;
+DROP TABLE table_version CASCADE;
+COMMIT;
+DROP TABLE object_model CASCADE;
+COMMIT;
+DROP TABLE url_criterion CASCADE;
+COMMIT;
+DROP TABLE url_rating CASCADE;
+COMMIT;
+DROP TABLE url CASCADE;
+COMMIT;
+DROP TABLE invoice CASCADE;
+COMMIT;
+DROP TABLE article CASCADE;
+COMMIT;
+DROP TABLE article_unit CASCADE;
+COMMIT;
+DROP TABLE article_category CASCADE;
+COMMIT;
+DROP TABLE invoice_article_assignment CASCADE;
+COMMIT;
+DROP TABLE resource CASCADE;
+COMMIT;
+DROP TABLE job_resource_assignment CASCADE;
+COMMIT;
+DROP TABLE job_assignment CASCADE;
+COMMIT;
+DROP TABLE project_info CASCADE;
+COMMIT;
+DROP TABLE obj_property CASCADE;
+COMMIT;
+
+/* drop domains */
+
+DROP DOMAIN text            CASCADE;
+COMMIT;
+DROP DOMAIN money           CASCADE;
+COMMIT;
+DROP DOMAIN image           CASCADE;
+COMMIT;
+DROP DOMAIN t_id            CASCADE;
+COMMIT;
+DROP DOMAIN t_int           CASCADE;
+COMMIT;
+DROP DOMAIN t_bool          CASCADE;
+COMMIT;
+DROP DOMAIN t_string        CASCADE;
+COMMIT;
+DROP DOMAIN t_smallstring   CASCADE;
+COMMIT;
+DROP DOMAIN t_tinystring    CASCADE;
+COMMIT;
+DROP DOMAIN t_tinieststring CASCADE;
+COMMIT;
+DROP DOMAIN t_text          CASCADE;
+COMMIT;
+DROP DOMAIN t_image         CASCADE;
+COMMIT;
+DROP DOMAIN t_datetime      CASCADE;
+COMMIT;
+DROP DOMAIN t_price         CASCADE;
+COMMIT;
+DROP DOMAIN t_money         CASCADE;
+COMMIT;

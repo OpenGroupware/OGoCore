@@ -1,0 +1,25 @@
+# $Id: SQL-Keywords.txt,v 1.1.1.1 2003/07/09 22:57:26 cvs Exp $
+
+Collect SQL keywords to avoid in the database model.
+
+FrontBase keywords:
+#   action
+#   catalog
+#   date
+#   language
+#   name
+#   number
+#   position
+#   size
+#   table_name
+#   type
+#   value
+
+Frontbase2 keywords:
+#   elseif
+#   function
+#   if
+#   procedure
+#   return
+#   returns
+#   routine

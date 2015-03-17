@@ -1,0 +1,7 @@
+-- OpenGroupware.org database schema creation script
+-- (C) 2000-2003 SKYRIX Software AG
+-- $Id: pg-rename-root-to-cyrus.psql,v 1.1.1.1 2003/07/09 22:57:26 cvs Exp $
+
+\connect skyrix skyrix
+
+update person set login = 'mailadmin' where login = 'root';

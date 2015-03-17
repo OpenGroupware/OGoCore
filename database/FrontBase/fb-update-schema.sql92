@@ -1,0 +1,69 @@
+# 
+# OpenGroupware.org database schema creation script
+# (C) 2000-2003 SKYRIX Software AG
+# $Id: fb-update-schema.sql92,v 1.3 2003/12/05 15:18:46 martin Exp $
+# 
+
+# nothing to update, initial OGo release ;-)
+
+CREATE TABLE obj_link (
+  obj_link_id t_id,
+  source_id   t_int,
+  source_type t_tinystring,
+  target      t_string,
+  target_id   t_int,
+  target_type t_tinystring,
+  link_type   t_tinystring,
+  label       t_string);
+
+COMMIT;
+ALTER TABLE obj_link ADD CHECK(obj_link_id IS NOT NULL);
+COMMIT;
+ALTER TABLE obj_link ADD CHECK(source_id IS NOT NULL);
+COMMIT;
+ALTER TABLE obj_link ADD CHECK(target IS NOT NULL);
+COMMIT;
+ALTER TABLE obj_link ADD CONSTRAINT pk_obj_link 
+        PRIMARY KEY (obj_link_id);
+COMMIT;
+
+CREATE INDEX obj_l_obj_id_idx      ON obj_link(obj_link_id);
+CREATE INDEX obj_l_source_id_idx   ON obj_link(source_id);
+CREATE INDEX obj_l_source_type_idx ON obj_link(source_type);
+CREATE INDEX obj_l_target_idx      ON obj_link(target);
+CREATE INDEX obj_l_target_id_idx   ON obj_link(target_id);
+CREATE INDEX obj_l_target_type_idx ON obj_link(target_type);
+CREATE INDEX obj_l_link_type_idx   ON obj_link(link_type);
+CREATE INDEX obj_l_label_idx       ON obj_link(label);
+COMMIT;
+
+INSERT INTO table_version (fname, table_version)
+  VALUES ('obj_link', 42);
+
+update object_model set db_version=3;
+
+ALTER TABLE palm_address ADD COLUMN object_version t_int;
+ALTER TABLE palm_date    ADD COLUMN object_version t_int;
+ALTER TABLE palm_memo    ADD COLUMN object_version t_int;
+ALTER TABLE palm_todo    ADD COLUMN object_version t_int;
+
+ALTER TABLE palm_address ADD COLUMN skyrix_palm_version t_int;
+ALTER TABLE palm_date    ADD COLUMN skyrix_palm_version t_int;
+ALTER TABLE palm_memo    ADD COLUMN skyrix_palm_version t_int;
+ALTER TABLE palm_todo    ADD COLUMN skyrix_palm_version t_int;
+COMMIT;
+
+UPDATE table_version 
+  SET table_version = 43 
+  WHERE table_name = 'palm_address';
+UPDATE table_version 
+  SET table_version = 43 
+  WHERE table_name = 'palm_date';
+UPDATE table_version 
+  SET table_version = 43 
+  WHERE table_name = 'palm_memo';
+UPDATE table_version 
+  SET table_version = 43 
+  WHERE table_name = 'palm_todo';
+
+COMMIT;

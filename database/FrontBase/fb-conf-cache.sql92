@@ -1,0 +1,74 @@
+# 
+# OpenGroupware.org database cache creation script
+# (C) 2000-2003 SKYRIX Software AG
+# $Id: fb-conf-cache.sql92,v 1.1.1.1 2003/07/09 22:57:26 cvs Exp $
+#
+
+#
+# Configure FrontBase table caches. Table caches are only available
+# in a commercial FrontBase license.
+#
+
+# cache settings: min-rows/max-rows/between%
+ALTER TABLE log                        SET CACHE (2000, 20000, 100);
+ALTER TABLE table_version              SET CACHE (2000, 20000, 100);
+ALTER TABLE staff                      SET CACHE (2000, 20000, 100);
+ALTER TABLE company                    SET CACHE (2000, 20000, 100);
+ALTER TABLE company_info               SET CACHE (2000, 20000, 100);
+ALTER TABLE company_value              SET CACHE (2000, 20000, 100);
+ALTER TABLE company_category           SET CACHE (2000, 20000, 100);
+ALTER TABLE company_assignment         SET CACHE (2000, 20000, 100);
+ALTER TABLE appointment_resource       SET CACHE (2000, 20000, 100);
+ALTER TABLE appointment                SET CACHE (2000, 20000, 100);
+ALTER TABLE date_info                  SET CACHE (2000, 20000, 100);
+ALTER TABLE date_company_assignment    SET CACHE (2000, 20000, 100);
+ALTER TABLE project                    SET CACHE (2000, 20000, 100);
+ALTER TABLE project_company_assignment SET CACHE (2000, 20000, 100);
+ALTER TABLE document                   SET CACHE (2000, 200000, 100);
+ALTER TABLE document_version           SET CACHE (2000, 200000, 100);
+ALTER TABLE document_editing           SET CACHE (2000, 200000, 100);
+ALTER TABLE address                    SET CACHE (2000, 20000, 100);
+ALTER TABLE telephone                  SET CACHE (2000, 20000, 100);
+ALTER TABLE job                        SET CACHE (2000, 20000, 100);
+ALTER TABLE job_history                SET CACHE (2000, 20000, 100);
+ALTER TABLE job_history_info           SET CACHE (2000, 20000, 100);
+ALTER TABLE news_article               SET CACHE (2000, 20000, 100);
+ALTER TABLE news_article_link          SET CACHE (2000, 20000, 100);
+ALTER TABLE project_info               SET CACHE (2000, 20000, 100);
+ALTER TABLE obj_property               SET CACHE (2000, 500000, 100);
+
+# caches that survive transactions
+ALTER TABLE log                        SET PRESERVE TRUE;
+ALTER TABLE staff                      SET PRESERVE TRUE;
+ALTER TABLE company                    SET PRESERVE TRUE;
+ALTER TABLE company_info               SET PRESERVE TRUE;
+ALTER TABLE company_value              SET PRESERVE TRUE;
+ALTER TABLE company_category           SET PRESERVE TRUE;
+ALTER TABLE company_assignment         SET PRESERVE TRUE;
+ALTER TABLE appointment_resource       SET PRESERVE TRUE;
+ALTER TABLE appointment                SET PRESERVE TRUE;
+ALTER TABLE date_info                  SET PRESERVE TRUE;
+ALTER TABLE date_company_assignment    SET PRESERVE TRUE;
+ALTER TABLE project                    SET PRESERVE TRUE;
+ALTER TABLE project_company_assignment SET PRESERVE TRUE;
+ALTER TABLE document                   SET PRESERVE TRUE;
+ALTER TABLE document_version           SET PRESERVE TRUE;
+ALTER TABLE document_editing           SET PRESERVE TRUE;
+ALTER TABLE address                    SET PRESERVE TRUE;
+ALTER TABLE telephone                  SET PRESERVE TRUE;
+ALTER TABLE job                        SET PRESERVE TRUE;
+ALTER TABLE job_history                SET PRESERVE TRUE;
+ALTER TABLE job_history_info           SET PRESERVE TRUE;
+ALTER TABLE news_article               SET PRESERVE TRUE;
+ALTER TABLE news_article_link          SET PRESERVE TRUE;
+ALTER TABLE project_info               SET PRESERVE TRUE;
+ALTER TABLE obj_property               SET PRESERVE TRUE;
+
+# pre-load caches
+
+ALTER TABLE staff                      SET PREPARE TRUE;
+ALTER TABLE company                    SET PREPARE TRUE;
+ALTER TABLE appointment                SET PREPARE TRUE;
+ALTER TABLE obj_property               SET PREPARE TRUE;
+
+COMMIT;

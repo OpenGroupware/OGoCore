@@ -1,0 +1,45 @@
+CAREFUL: OUTDATED INFORMATION, based on SQLite ~2004
+
+SQLite
+======
+
+WORK IN PROGRESS
+
+Database schema for SQLite database:
+
+  http://www.sqlite.org/
+
+Would be quite useful for extremely rapid setup, without the requirement
+for an external database server.
+
+Conversion Issues
+=================
+
+comments:
+- SQLite comments are C-style "/* */", not # as in FrontBase
+
+domains (custom types):
+- SQLite doesn't support domains (CREATE DOMAIN)
+  - we don't care, this is mapped in the model anyway ...
+
+views:
+- SQLite doesn't support writable views - what to do about that?
+  - mostly affects company table
+- either we create separate tables (probably problematic, even though
+  SQLite has no constraints anyway)
+  - problematic because we have joins between company and date for example
+- or we make all writes go directly to the company table
+  - need to hack code for that
+  ^^^ this is probably the way to go
+
+alter table
+- not supported by SQLite
+- tables need to be dropped and recreated
+
+constraints
+- no foreign key constraints
+- check constraints are not evaluated
+
+primary sequence
+- well, how to do that? maybe we can use AUTOINCREMENT fields
+- or we generate IDs in the app ...

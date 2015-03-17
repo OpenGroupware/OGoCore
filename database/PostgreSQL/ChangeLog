@@ -1,0 +1,63 @@
+2009-09-11  Adam Tauno Williams <awilliam@whitemiceconsulting.com>
+
+	* pg-update-1.x-to-5.5.psql: Added schema changes for Bug#2027.
+
+	* pg-build-schema.psql: Added owner_id to job table. Bug#2027.
+
+2009-06-18  Adam Tauno Williams <awilliam@whitemiceconsulting.com>
+
+	* pg-update-1.x-to-5.5.psql: script to update DB from a 1.x schema to 
+	  the v5.5 schema.	
+
+2009-03-13  Adam Tauno Williams <awilliam@whitemice.org>
+
+	* pg-build-schema.psql: fixed a typo, a duplicate comma.
+
+2009-02-27  Adam Tauno Williams <awilliam@whitemice.org>
+
+	* pg-build-schema.psql: updated object_acl table. object_id and
+	  auth_id are not integers.  Required for PGSQL 8.3 and greater.
+
+2005-12-01  Helge Hess  <helge.hess@skyrix.com>
+
+	* pg-build-schema.psql: bumped length of date_x 'type' field to 255
+	  chars (recurrence pattern)
+
+2005-09-30  Helge Hess  <helge.hess@skyrix.com>
+
+	* pg-build-schema.psql: added 'team creators' team
+
+2005-09-29  Helge Hess  <helge.hess@opengroupware.org>
+
+	* pg-build-schema.psql: mark default teams as owned by root, readonly
+	  but not private
+
+2005-08-23  Helge Hess  <helge.hess@opengroupware.org>
+
+	* added pg-fill-objinfo.psql script to fill the obj_info table of the
+	  database
+
+	* pg-build-schema.psql: create index on obj_info table
+
+2005-03-22  Stefan Huehner  <stefan@huehner.org>
+	
+	* pg-build-schema.psql.constraints: removed all table creation and
+	  DML statements to use the script as an addon to pg-build-schema.psql
+	
+Fri Dec  5 17:18:44 2003  Martin Hoerning  <mh@skyrix.com>
+
+	* pg-build-schema.psql, pg-update-schema.psql: added columns
+	  'object_version', 'skyrix_palm_version' to palm tables.
+	  palm table version increased to 43.
+
+2003-11-11  Helge Hess  <helge.hess@skyrix.com>
+
+	* pg-build-schema.psql, pg-build-schema.psql.constraints: increased 
+	  length of person.password field to 255 chars (related to OGo bug 364)
+	  Note: the constraints schema is not in sync with 
+	  pg-build-schema.psql? (eg obj_link table)
+
+Wed Oct  8 17:55:17 2003  Jan Reichmann  <jr@skyrix.com>
+
+	* pg-build-schema.psql: add obj_link table (a table to store links 
+	  between objects or urls and objects) 

@@ -1,0 +1,1128 @@
+-- OpenGroupware.org database schema creation script
+-- (C) 2000-2005 SKYRIX Software AG
+
+CREATE TABLE staff (
+  staff_id    int not null,
+  company_id  int not null,
+  description varchar(255),
+  login       varchar(255),
+  is_team     smallint,
+  is_account  smallint,
+  db_status   varchar(50),
+  constraint  pk_staff primary key (staff_id),
+  constraint  unique_company_id unique(company_id));
+
+CREATE TABLE company (
+  company_id          int not null,
+
+  object_version      int,
+  owner_id            int,
+  contact_id          int,   
+  template_user_id    int,   
+  is_private          smallint,
+  is_person           smallint,
+  is_readonly         smallint,      
+  is_enterprise       smallint,
+  is_account          smallint,
+  is_intra_account    smallint,
+  is_extra_account    smallint,
+  is_trust            smallint,
+  is_team             smallint,
+  is_location_team    smallint,
+  is_customer         smallint,
+  
+  number              varchar(100),
+  description         varchar(255),
+  priority            varchar(50),
+  keywords            varchar(255),
+
+  url                 varchar(255),
+  email               varchar(100), 
+  type                varchar(50),
+  bank                varchar(100),
+  bank_code           varchar(50),
+  account             varchar(50),
+  payment             varchar(50),
+
+  is_locked           smallint,
+  is_template_user    smallint,
+  can_change_password smallint,
+  login               varchar(50),
+  password            varchar(255),
+  pop3_account        varchar(50),
+
+  name                varchar(50),
+  middlename          varchar(50), 
+  firstname           varchar(50),
+  salutation          varchar(50),
+  degree              varchar(50),
+  birthday            timestamp with time zone,
+  sex                 varchar(10),
+
+  source_url          varchar(255),
+  db_status           varchar(50),
+
+  sensitivity         smallint,                 -- sensitivity
+  boss_name           varchar(255),             -- boss' name
+  partner_name        varchar(255),             -- partners' name
+  assistant_name      varchar(255),             -- assistants' name 
+  department          varchar(255),             -- department
+  office              varchar(255),             -- office (office number)
+  occupation          varchar(255),             -- occupation
+  anniversary         timestamp with time zone, -- anniversary
+  dir_server          varchar(255),             -- directory serv. (NetMeeting)
+  email_alias         varchar(255),             -- email alias (NetMeeting)
+  freebusy_url        varchar(255),             -- free/busy URL
+
+  fileas              varchar(255),             -- file as/save as
+  name_title          varchar(255),             -- name title (e.g. Prof.)
+  name_affix          varchar(255),             -- name affix (e.g. jun.)
+  im_address          varchar(255),             -- Instant Messenger address
+  associated_contacts varchar(255),             -- associated contacts
+  associated_categories varchar(255),           -- associated categories
+  associated_company  varchar(255),             -- associated company
+
+  show_email_as       varchar(255),             -- email show as attr 
+  show_email2_as      varchar(255),             -- email show as attr 
+  show_email3_as      varchar(255),             -- email show as attr 
+  
+  constraint          pk_company primary key (company_id),
+  constraint          unique_company_number unique(number),
+  constraint          unique_company_login unique(login)
+);
+
+CREATE TABLE company_info (
+  company_info_id int         not null,
+  company_id      int         not null, 
+  comment         text      ,
+  db_status       varchar(50),
+  constraint pk_company_info primary key (company_info_id));
+
+
+-- Note: attribute_type is not mapped in model!
+--       neither are: value_date, value_int, category
+-- Likely reason: those columns where added to mirror obj_property
+CREATE TABLE company_value (
+  company_value_id   int         not null,
+  company_id         int        ,
+  attribute          varchar(255)    ,
+  attribute_type     varchar(50),
+  value_string       varchar(255)    ,
+  value_date         timestamp with time zone  ,
+  value_int          int       ,
+  is_enum            smallint      ,
+  category           varchar(255)    ,
+  uid                int        , 
+  label              varchar(255)    ,
+  type               int       ,
+  is_label_localized smallint      ,
+  db_status          varchar(50),
+  constraint pk_company_value primary key (company_value_id));
+
+CREATE TABLE company_category (
+  company_category_id int         not null,
+  object_version      int       ,
+  category            varchar(255)    ,
+  db_status           varchar(50),
+  constraint pk_company_category primary key (company_category_id));
+
+CREATE TABLE company_assignment (
+  company_assignment_id int         not null,
+  company_id            int        ,
+  sub_company_id        int        ,
+  is_headquarter        smallint      ,
+  is_chief              smallint      ,
+  function              varchar(255)    ,
+  db_status             varchar(50),
+  constraint pk_company_assignment primary key (company_assignment_id));
+
+CREATE TABLE appointment_resource (
+  appointment_resource_id int         not null,
+  object_version          int       ,
+  name                    varchar(255)     not null,
+  email                   varchar(255)    ,
+  email_subject           varchar(255)    ,
+  category                varchar(255)    ,
+  notification_time       int       ,
+  db_status               varchar(50),
+  constraint pkx_company_category primary key (appointment_resource_id),
+  constraint unique_aptresname_idx unique(name));
+
+CREATE TABLE date_x (
+  date_id                int not null,
+  object_version         int,
+  owner_id               int,
+  access_team_id         int,
+  parent_date_id         int,
+
+  start_date             timestamp with time zone  not null,
+  end_date               timestamp with time zone  not null,
+  cycle_end_date         timestamp with time zone,
+  type                   varchar(255),    -- repetition type
+  title                  varchar(255) not null,
+  location               varchar(255),
+  absence                varchar(255),
+  resource_names         varchar(255),
+  write_access_list      varchar(255),
+  is_absence             smallint,
+  is_attendance          smallint,
+  is_conflict_disabled   smallint,
+  travel_duration_before int,
+  travel_duration_after  int,
+  notification_time      int,
+  db_status              varchar(50),
+  apt_type               varchar(100),    -- appointment type (birthday...)
+  calendar_name          varchar(255),
+  source_url             varchar(255),
+  fbtype                 varchar(50),     -- free/busy type
+
+  sensitivity            smallint,        -- sensitivity
+  busy_type              smallint,        -- busy type
+  importance             smallint,        -- importance
+  last_modified          int,             -- timestamp of last modification
+  evo_reminder           varchar(255),    -- Evolution reminder settings
+  ol_reminder            varchar(255),    -- Outlook reminder settings
+  online_meeting         varchar(255),    -- CSV for online meeting values
+  associated_contacts    varchar(255),    -- Outlook associated_contacts
+  keywords               varchar(255),    -- Outlook keywords
+
+  constraint             pk_date primary key (date_id));
+
+CREATE TABLE date_info (
+  date_info_id int not null,
+  date_id      int not null,
+  comment      text,
+  db_status    varchar(50),
+  constraint   pk_date_info primary key (date_info_id));
+
+CREATE TABLE date_company_assignment (
+  date_company_assignment_id int not null,
+  company_id                 int,
+  date_id                    int,
+  is_staff                   smallint,
+  is_new                     smallint,
+  partstatus                 varchar(50),
+  role                       varchar(50),
+  comment                    varchar(255),
+  rsvp                       smallint,
+  db_status                  varchar(50),
+  outlook_key                varchar(255),
+  constraint                 pk_date_company_assignment primary key
+                             (date_company_assignment_id));
+
+CREATE TABLE project (
+  project_id     int not null,
+  object_version int,
+  owner_id       int not null,
+  team_id        int,
+  number         varchar(100),
+  name           varchar(255),
+  start_date     timestamp with time zone,
+  end_date       timestamp with time zone,
+  status         varchar(255),
+  is_fake        smallint,
+  db_status      varchar(50),
+  kind           varchar(50),
+  url            varchar(100),
+  constraint     pk_project primary key (project_id),
+  constraint     unique_project_number unique(number));
+
+CREATE TABLE object_acl (
+  object_acl_id int not null,
+  sort_key      int not null,
+  action        varchar(10) not null,
+  object_id     int not null,
+  auth_id       int not null,
+  permissions   varchar(50));
+
+CREATE TABLE project_company_assignment (
+  project_company_assignment_id int not null,
+  company_id                    int,
+  project_id                    int,
+  info                          varchar(255),
+  has_access                    smallint,
+  access_right                  varchar(50),
+  db_status                     varchar(50),
+  constraint                    pk_project_company_assignment
+                                primary key (project_company_assignment_id));
+
+CREATE TABLE document (
+  document_id        int not null,
+  object_version     int,
+  project_id         int,
+  parent_document_id int,
+  date_id            int,
+  first_owner_id     int,
+  current_owner_id   int,
+  version_count      int,
+  file_size          int,
+  is_note            smallint,
+  is_folder          smallint,
+  is_object_link     smallint,
+  is_index_doc       smallint,
+  title              varchar(255),
+  abstract           varchar(255),
+  file_type          varchar(255),
+  object_link        varchar(255),
+  creation_date      timestamp with time zone,
+  lastmodified_date  timestamp with time zone,
+  status             varchar(50),
+  db_status          varchar(50),
+  contact            varchar(255),
+  constraint         pk_document primary key (document_id));
+
+CREATE TABLE document_version (
+  document_version_id int not null,
+  object_version      int,
+  document_id         int,
+  last_owner_id       int,
+  title               varchar(255),
+  abstract            varchar(255),
+  file_type           varchar(255),
+  version             int,
+  file_size           int,
+  creation_date       timestamp with time zone,
+  archive_date        timestamp with time zone,
+  is_packed           smallint,
+  change_text         text,
+  db_status           varchar(50),
+  contact             varchar(255),
+  constraint          pk_document_version primary key (document_version_id));
+
+CREATE TABLE document_editing (
+  document_editing_id int not null,
+  object_version      int,
+  document_id         int,
+  current_owner_id    int,
+  title               varchar(255),
+  abstract            varchar(255),
+  file_type           varchar(255),
+  file_size           int,
+  version             int,
+  is_attach_changed   smallint,
+  checkout_date       timestamp with time zone,
+  status              varchar(50),
+  db_status           varchar(50),
+  contact             varchar(255),
+  constraint          pk_document_editing primary key (document_editing_id));
+
+CREATE TABLE address (
+  address_id     int not null,
+  object_version int,
+  company_id     int,
+  name1          varchar(255),
+  name2          varchar(255),
+  name3          varchar(255),
+  street         varchar(255),
+  zip            varchar(50),
+  zipcity        varchar(255),
+  country        varchar(100),
+  state          varchar(100),
+  type           varchar(50) not null,
+  db_status      varchar(50),
+  source_url     varchar(255),
+  constraint     pk_address primary key (address_id));
+
+CREATE TABLE telephone (
+  telephone_id   int not null,
+  object_version int,
+  company_id     int,
+  number         varchar(255),
+  real_number    varchar(255),
+  type           varchar(50) not null,
+  info           varchar(255),
+  url            varchar(255),
+  db_status      varchar(50),
+  constraint     pk_telephone primary key (telephone_id));
+
+CREATE TABLE job (
+  job_id               int not null,
+  object_version       int,
+  parent_job_id        int,
+  project_id           int,
+  creator_id           int,
+  owner_id             int,
+  executant_id         int,
+  name                 varchar(255) not null,
+  start_date           timestamp with time zone not null,
+  end_date             timestamp with time zone not null,
+  notify_x             int,
+  is_control_job       smallint,
+  is_team_job          smallint,
+  is_new               smallint,
+  job_status           varchar(255),
+  category             varchar(255),
+  priority             int,
+  db_status            varchar(50),
+  kind                 varchar(50),
+  keywords             varchar(255),
+  source_url           varchar(255),
+  sensitivity          smallint,
+  job_comment          text,
+  completion_date      timestamp with time zone,
+  percent_complete     smallint,
+  actual_work          smallint,
+  total_work           smallint,
+  last_modified        int,
+  accounting_info      varchar(255),
+  kilometers           varchar(255),
+  associated_companies varchar(255),
+  associated_contacts  varchar(255),
+  timer_date           timestamp with time zone,
+  constraint           pk_job primary key (job_id));
+
+CREATE TABLE job_history (
+  job_history_id int not null,
+  object_version int,
+  job_id         int not null,
+  actor_id       int,
+  action         varchar(50),
+  action_date    timestamp with time zone,
+  job_status     varchar(50),
+  db_status      varchar(50),
+  constraint     pk_job_history primary key (job_history_id));
+
+CREATE TABLE job_history_info (
+  job_history_info_id int not null,
+  job_history_id      int not null,
+  comment             text,
+  db_status           varchar(50),
+  constraint          pk_job_history_info primary key (job_history_info_id));
+
+CREATE TABLE resource (
+  resource_id    int not null,
+  resource_name  varchar(255) not null,
+  token          varchar(255),
+  object_id      int,
+  quantity       int,
+  comment        text,
+  standard_costs numeric(19,2),
+  type           int not null,
+  db_status      varchar(50),
+  object_version int,
+  constraint     pk_resource_id primary key (resource_id));
+
+CREATE TABLE job_resource_assignment (
+  job_resource_assignment_id int not null,
+  resource_id                int,
+  job_id                     int,
+  operative_part             int,
+  db_status                  varchar(50),
+  constraint                 pk_job_resource_id primary key 
+                             (job_resource_assignment_id));
+
+CREATE TABLE news_article (
+  news_article_id  int not null,
+  object_version   int,
+  name             varchar(255),
+  caption          varchar(255),
+  is_index_article smallint,
+  creation_date    timestamp with time zone,
+  db_status        varchar(50),
+  constraint       pk_news_article primary key (news_article_id));
+
+CREATE TABLE news_article_link (
+  news_article_link_id int not null,
+  object_version       int,
+  news_article_id      int,
+  sub_news_article_id  int,
+  constraint           pk_article_link primary key (news_article_link_id));
+
+CREATE TABLE invoice (
+  invoice_id        int not null,
+  debitor_id        int not null,
+  parent_invoice_id int,
+  invoice_nr        varchar(255) not null,
+  invoice_date      timestamp with time zone,
+  kind              varchar(100),    
+  status            varchar(100) not null,  
+  net_amount        numeric(19,4),
+  gross_amount      numeric(19,4),
+  paid              numeric(19,4),
+  comment           text,
+  object_version    int,
+  db_status         varchar(50)  ,
+  constraint        pk_invoice primary key (invoice_id));
+
+CREATE TABLE article_category (
+  article_category_id int not null,
+  category_name       varchar(255) not null,
+  category_abbrev     varchar(255),
+  constraint          pk_article_category primary key (article_category_id));
+
+CREATE TABLE article_unit (
+  article_unit_id    int not null,
+  format             varchar(50),
+  singular_unit      varchar(255),
+  plural_unit        varchar(255),
+  constraint         pk_url_x primary key (article_unit_id));
+
+CREATE TABLE article (
+  article_id          int not null,
+  article_unit_id     int,
+  article_category_id int,
+  object_version      int,
+  article_name        varchar(255) not null,
+  article_nr          varchar(255) not null,
+  article_text        text,
+  status              varchar(50),
+  price               numeric(19,4),
+  vat                 numeric(19,4),
+  vat_group           varchar(50),
+  db_status           varchar(50),
+  constraint          pk_article primary key (article_id));
+
+CREATE TABLE invoice_article_assignment (
+  invoice_article_assignment_id int not null,
+  invoice_id                    int not null,
+  article_id                    int not null,
+  article_count                 numeric(19,4) not null,
+  object_version                int,
+  net_amount                    numeric(19,4),
+  vat                           numeric(19,8),
+  comment                       text,
+  db_status                     varchar(50),
+  constraint                    pk_invoice_article_assignment primary key 
+                                (invoice_article_assignment_id));
+
+CREATE TABLE invoice_account (
+  invoice_account_id int not null,
+  enterprise_id      int not null,
+  account_nr         varchar(50) not null,
+  balance            numeric(19,4),
+  object_version     int,
+  db_status          varchar(50),
+  constraint         pk_invoice_account primary key (invoice_account_id));
+
+CREATE TABLE invoice_action (
+  invoice_action_id int not null,
+  account_id        int not null,
+  invoice_id        int,
+  document_id       int,
+  action_date       timestamp with time zone,
+  action_kind       varchar(100) not null,
+  log_text          text,
+  object_version    int,
+  db_status         varchar(50),
+  constraint        pk_invoice_action primary key (invoice_action_id));
+
+CREATE TABLE invoice_accounting (
+  invoice_accounting_id int not null,
+  action_id             int not null,
+  debit                 numeric(19,4),
+  balance               numeric(19,4),
+  object_version        int,
+  db_status             varchar(50),
+  constraint            pk_invoice_accounting primary key 
+                        (invoice_accounting_id));
+
+CREATE TABLE job_assignment (
+  job_assignment_id int not null,
+  parent_job_id     int not null,
+  child_job_id      int not null,
+  position_x        int,
+  assignment_kind   varchar(50),
+  db_status         varchar(50),
+  constraint        pk_job_assignment primary key (job_assignment_id));
+
+CREATE TABLE project_info (
+  project_info_id int not null,
+  project_id      int not null, 
+  comment         text,
+  db_status       varchar(50),
+  constraint      pk_project_info primary key (project_info_id));
+
+CREATE TABLE log (
+  log_id        int not null,
+  creation_date timestamp with time zone not null,
+  object_id     int not null,
+  log_text      text not null,
+  action        varchar(100) not null,
+  account_id    int,
+  constraint    pk_log primary key (log_id));
+
+CREATE TABLE session_log (
+  session_log_id int not null,
+  account_id     int not null,
+  log_date       timestamp with time zone not null,
+  action         varchar(255) not null,
+  constraint     pk_session_log primary key (session_log_id));
+
+CREATE TABLE obj_info (
+  obj_id     int not null,
+  obj_type   varchar(255) not null,
+  constraint pk_obj_info primary key (obj_id));
+
+CREATE TABLE obj_property (
+  obj_property_id  int not null,
+  obj_id           int not null,
+  obj_type         varchar(255),
+  access_key       int,     
+  value_key        varchar(255) not null, 
+  namespace_prefix varchar(255),     
+  preferred_type   varchar(255) not null, 
+  value_string     varchar(255),     
+  value_int        int,     
+  value_float      numeric(19,8),
+  value_date       timestamp with time zone,
+  value_oid        varchar(255),
+  blob_size        int,
+  value_blob       text,
+  constraint       pk_obj_property primary key (obj_property_id));
+
+CREATE TABLE obj_link (
+  obj_link_id int          not null,
+  source_id   int          not null,
+  source_type varchar(50)  null,
+  target      varchar(255) not null,
+  target_id   int          null,
+  target_type varchar(50)  null,
+  link_type   varchar(50)  null,
+  label       varchar(255) null);
+
+CREATE TABLE object_model (
+  db_version int not null,
+  model_name varchar(255) not null);
+
+INSERT INTO object_model(db_version, model_name) VALUES ( 3, 'OpenGroupware.org_PostgreSQL');
+
+CREATE TABLE table_version (
+  table_name    varchar(255) not null,
+  table_version int not null,
+  constraint    pk_table_version primary key (table_name));
+
+CREATE TABLE person ()     INHERITS(company);
+CREATE TABLE enterprise () INHERITS(company);
+CREATE TABLE trust ()      INHERITS(company);
+CREATE TABLE team ()       INHERITS(company);
+
+CREATE TABLE note () INHERITS(document);
+CREATE TABLE doc ()  INHERITS(document);
+
+-- PDA
+
+CREATE TABLE palm_address (
+  company_id                    int not null,
+  device_id                     varchar(50) not null,
+  palm_address_id               int not null,
+  palm_id                       int,
+  category_index                int,
+  is_deleted                    smallint not null,
+  is_modified                   smallint not null,
+  is_archived                   smallint not null,
+  is_new                        smallint not null,
+  is_private                    smallint not null,
+  md5hash                       varchar(50) not null,
+  address                       varchar(255),
+  city                          varchar(255),
+  company                       varchar(255),
+  country                       varchar(255),
+  display_phone                 int not null,
+  firstname                     varchar(255),
+  lastname                      varchar(255),
+  note                          text,
+  phone0                        varchar(255),
+  phone1                        varchar(255),
+  phone2                        varchar(255),
+  phone3                        varchar(255),
+  phone4                        varchar(255),
+  phone_label_id0               int not null,
+  phone_label_id1               int not null,
+  phone_label_id2               int not null,
+  phone_label_id3               int not null,
+  phone_label_id4               int not null,
+  state                         varchar(255),
+  title                         varchar(255),
+  zipcode                       varchar(255),
+  custom1                       varchar(255),
+  custom2                       varchar(255),
+  custom3                       varchar(255),
+  custom4                       varchar(255),
+  skyrix_id                     int,
+  skyrix_sync                   int,
+  skyrix_version                int,
+  skyrix_type                   varchar(10),
+  object_version                int,
+  skyrix_palm_version           int,
+  constraint                    pk_palm_address primary key (palm_address_id)
+);
+
+CREATE TABLE palm_date (
+  company_id                    int not null,
+  device_id                     varchar(50) not null,
+  palm_date_id                  int not null,
+  palm_id                       int,
+  category_index                int,
+  is_deleted                    smallint not null,
+  is_modified                   smallint not null,
+  is_archived                   smallint not null,
+  is_new                        smallint not null,
+  is_private                    smallint not null,
+  md5hash                       varchar(50) not null,
+  alarm_advance_time            int not null,
+  alarm_advance_unit            int not null,
+  description                   varchar(255) not null,
+  enddate                       timestamp with time zone,
+  is_alarmed                    smallint not null,
+  is_untimed                    smallint not null,
+  note                          text,
+  repeat_enddate                timestamp with time zone,
+  repeat_frequency              int,
+  repeat_on                     int,
+  repeat_start_week             int,
+  repeat_type                   int,
+  startdate                     timestamp with time zone,
+  exceptions                    text,
+  skyrix_id                     int,
+  skyrix_sync                   int,
+  skyrix_version                int,
+  object_version                int,
+  skyrix_palm_version           int,
+  constraint pk_palm_date primary key (palm_date_id)
+);
+
+CREATE TABLE palm_memo (
+  company_id     int not null,
+  device_id      varchar(50) not null,
+  palm_memo_id   int not null,
+  palm_id        int,
+  category_index int,
+  is_deleted     smallint not null,
+  is_modified    smallint not null,
+  is_archived    smallint not null,
+  is_new         smallint not null,
+  is_private     smallint not null,
+  md5hash        varchar(50) not null,
+  memo           text not null,
+  skyrix_id      int,
+  skyrix_sync    int,
+  skyrix_version int,
+  object_version                int,
+  skyrix_palm_version           int,
+  constraint     pk_palm_memo primary key (palm_memo_id)
+);
+
+CREATE TABLE palm_todo (
+  company_id     int not null,
+  device_id      varchar(50) not null,
+  palm_todo_id   int not null,
+  palm_id        int,
+  category_index int,
+  is_deleted     smallint not null,
+  is_modified    smallint not null,
+  is_archived    smallint not null,
+  is_new         smallint not null,
+  is_private     smallint not null,
+  md5hash        varchar(50) not null,
+  description    varchar(255) not null,
+  duedate        timestamp with time zone,
+  note           text,
+  priority       int not null,
+  is_completed   smallint not null,
+  skyrix_id      int,
+  skyrix_sync    int,
+  skyrix_version int,
+  object_version                int,
+  skyrix_palm_version           int,
+  constraint     pk_palm_todo primary key (palm_todo_id)
+);
+
+CREATE TABLE palm_category (
+  company_id       int not null,
+  device_id        varchar(50) not null,
+  palm_category_id int not null,
+  palm_id          int,
+  palm_table       varchar(10) not null,
+  is_modified      smallint not null,
+  md5hash          varchar(50) not null,
+  category_index   int not null,
+  category_name    varchar(255) not null,
+  constraint       pk_palm_category primary key (palm_category_id)
+);
+
+-- End PDA
+
+INSERT INTO person (company_id, login, name, description, is_account, 
+                    is_intra_account, is_extra_account, is_person, number, 
+                    is_private, is_readonly, db_status, object_version) 
+  VALUES (10000, 'root', 'root', 'Administrator', 1, 1, 0, 1, 'LS10000', 0, 1,
+          'inserted', 1);
+
+INSERT INTO staff (staff_id, company_id, is_account) 
+  VALUES (10001, 10000, 1);
+
+INSERT INTO company_info (company_info_id, company_id)
+  VALUES (10002, 10000);
+
+INSERT INTO person (company_id, owner_id, login, name, description, 
+                    is_account, is_intra_account, is_extra_account, 
+                    is_person, number, is_private, is_readonly, is_locked, 
+                    is_template_user, db_status, object_version) 
+  VALUES (9999, 10000, 'template', 'template', 'Template', 1, 1, 0, 1, 
+          'LS9999', 1, 1, 1, 1, 'inserted', 1);
+
+INSERT INTO staff (staff_id, company_id, is_account) 
+  VALUES (9998, 9999, 1);
+
+INSERT INTO company_info (company_info_id, company_id)
+  VALUES (9997, 9999);
+
+INSERT INTO team (company_id, description, is_team, number, login, db_status,
+                  object_version, owner_id, is_readonly, is_private) 
+  VALUES (10003, 'all intranet', 1, 'LS10003', 'all intranet', 'inserted', 1,
+          10000, 1, 0);
+
+INSERT INTO staff (staff_id, company_id, is_team) 
+  VALUES (10004, 10003, 1);
+
+INSERT INTO company_info (company_info_id, company_id)
+  VALUES (10005, 10003);
+
+
+INSERT INTO team (company_id, description, is_team, number, login, db_status, 
+                  object_version, owner_id, is_readonly, is_private)
+  VALUES (9991, 'news editors', 1, 'LS9991', 'newseditors', 'inserted', 1,
+          10000, 1, 0);
+
+INSERT INTO staff (staff_id, company_id, is_team) 
+  VALUES (9992, 9991, 1);
+
+INSERT INTO company_info (company_info_id, company_id)
+  VALUES (9993, 9991);
+
+
+INSERT INTO team (company_id, description, is_team, number, login, db_status, 
+                  object_version, owner_id, is_readonly, is_private)
+  VALUES (9981, 'team creators', 1, 'LS9981', 'teamcreators', 'inserted', 1,
+          10000, 1, 0);
+
+INSERT INTO staff (staff_id, company_id, is_team) 
+  VALUES (9982, 9981, 1);
+
+INSERT INTO company_info (company_info_id, company_id)
+  VALUES (9983, 9981);
+
+
+INSERT INTO news_article (news_article_id, name, caption, is_index_article,
+                          object_version)
+  VALUES (10006, 'index', 'Index', 1, 1);
+
+CREATE SEQUENCE key_generator INCREMENT 10 START 10100;
+
+UPDATE project_company_assignment set access_right = 'r' 
+  WHERE has_access = 1 AND access_right is null
+;
+
+
+CREATE INDEX action_idx             ON log(action);
+CREATE INDEX log_object_idx         ON log(object_id);
+CREATE INDEX log_account_id_idx     ON log(account_id);
+CREATE INDEX account_id_idx         ON session_log(account_id);
+CREATE INDEX session_log_action_idx ON session_log(action);
+CREATE INDEX staff__is_team         ON staff(is_team);
+CREATE INDEX staff__is_account      ON staff(is_account);
+
+CREATE INDEX company_is_team_idx       ON company(is_team);
+CREATE INDEX company_is_enterprise_idx ON company(is_enterprise);
+CREATE INDEX company_is_trust_idx      ON company(is_trust);
+CREATE INDEX company_is_person_idx     ON company(is_person);
+
+CREATE INDEX person_name_idx               ON person(name);
+CREATE INDEX person_firstname_idx          ON person(firstname);
+CREATE INDEX person_keywords_idx           ON person(keywords);
+CREATE INDEX person_private_idx            ON person(is_private);
+CREATE INDEX person_is_account_idx         ON person(is_account);
+CREATE INDEX person_is_intra_account_idx   ON person(is_intra_account);
+CREATE INDEX person_is_extra_account_idx   ON person(is_extra_account);
+CREATE INDEX person_is_template_user_idx   ON person(is_template_user);
+CREATE INDEX person_company_db_status_idx  ON person(db_status);
+
+CREATE INDEX enterprise_keywords_idx       ON enterprise(keywords);
+CREATE INDEX enterprise_description_idx    ON enterprise(description);
+CREATE INDEX enterprise_email_idx          ON enterprise(email);
+
+CREATE INDEX team_description_idx ON team(description);
+CREATE INDEX team_is_location_idx ON team(is_location_team);
+
+CREATE INDEX attribute_idx ON company_value(attribute);
+CREATE INDEX company_value_type_idx      ON company_value(type);
+CREATE INDEX is_absence_idx           ON date_x(is_absence);
+CREATE INDEX is_attendance_idx        ON date_x(is_attendance);
+CREATE INDEX is_conflict_disabled_idx ON date_x(is_conflict_disabled);
+CREATE INDEX resource_names_ind       ON date_x(resource_names);
+CREATE INDEX is_fake_idx           ON project(is_fake);
+CREATE INDEX project_kind_idx      ON project(kind);
+CREATE INDEX project_status_idx    ON project(status);
+CREATE INDEX project_db_status_idx ON project(db_status);
+CREATE INDEX has_access_idx   ON project_company_assignment(has_access);
+CREATE INDEX access_right_idx ON project_company_assignment(access_right);
+CREATE INDEX doc_is_note_idx     ON document(is_note);
+CREATE INDEX is_folder_idx       ON doc(is_folder);
+CREATE INDEX is_object_link_idx  ON doc(is_object_link);
+CREATE INDEX is_index_doc_idx    ON doc(is_index_doc);
+CREATE INDEX object_link_idx     ON doc(object_link);
+CREATE INDEX document_status_idx ON doc(status);
+CREATE INDEX doc_title_id_idx    ON doc(title);
+CREATE INDEX doc_v_obj_version_idx    ON document_version(object_version);
+CREATE INDEX document_editing_status_idx ON document_editing(status);
+CREATE INDEX address__name1      ON address(name1);
+CREATE INDEX address__name2      ON address(name2);
+CREATE INDEX address__name3      ON address(name3);
+CREATE INDEX address__street     ON address(street);
+CREATE INDEX address__zip        ON address(zip);
+CREATE INDEX address__zipcity    ON address(zipcity);
+CREATE INDEX address_type_idx    ON address(type);
+CREATE INDEX telephone__fnumber     ON telephone(number);
+CREATE INDEX telephone__ftype       ON telephone(type);
+CREATE INDEX telephone__real_number ON telephone(real_number);
+CREATE INDEX job__keywords      ON job(keywords);
+CREATE INDEX is_control_job_idx ON job(is_control_job);
+CREATE INDEX is_team_job_idx    ON job(is_team_job);
+CREATE INDEX is_new_idx         ON job(is_new);
+CREATE INDEX priority_idx       ON job(priority);
+CREATE INDEX job_kind_idx       ON job(kind);
+CREATE INDEX job_status_idx     ON job(job_status);
+CREATE INDEX job_db_status_idx  ON job(db_status);
+CREATE INDEX is_index_article_idx ON news_article(is_index_article);
+CREATE INDEX assignment_kind_idx ON job_assignment(assignment_kind);
+CREATE INDEX obj_p_obj_id_idx           ON obj_property(obj_id);
+CREATE INDEX obj_p_value_key_idx        ON obj_property(value_key);
+CREATE INDEX obj_p_value_string_idx     ON obj_property(value_string);
+CREATE INDEX obj_p_namespace_prefix_idx ON obj_property(namespace_prefix);
+CREATE INDEX obj_p_access_key_idx       ON obj_property(access_key);
+
+CREATE INDEX obj_l_obj_id_idx        ON obj_link(obj_link_id);
+CREATE INDEX obj_l_source_id_idx     ON obj_link(source_id);
+CREATE INDEX obj_l_target_id_idx     ON obj_link(target);
+CREATE INDEX obj_l_source_type_idx   ON obj_link(source_type);
+CREATE INDEX obj_l_target_type_idx   ON obj_link(target_type);
+CREATE INDEX obj_l_target_idx        ON obj_link(target_id);
+CREATE INDEX obj_l_label_idx         ON obj_link(label);
+CREATE INDEX obj_l_type_idx          ON obj_link(link_type);
+
+CREATE INDEX obj_info_objectid ON obj_info(obj_id);
+
+CREATE INDEX obj_p_obj_type_idx         ON obj_property(obj_type);
+CREATE INDEX obj_acl_sort_key_idx    ON object_acl(sort_key);
+CREATE INDEX obj_acl_object_id_idx   ON object_acl(object_id);
+CREATE INDEX obj_acl_action_idx     ON object_acl(action);
+CREATE INDEX obj_acl_auth_id_idx     ON object_acl(auth_id);
+CREATE INDEX obj_acl_permissions_idx ON object_acl(permissions);
+
+CREATE INDEX log_creation_date_idx ON log(creation_date);
+CREATE INDEX log_date_idx ON session_log(log_date);
+CREATE INDEX start_date_ind           ON date_x(start_date);
+CREATE INDEX end_date_ind             ON date_x(end_date);
+
+CREATE INDEX company_contact_idx ON company(contact_id);
+CREATE INDEX company_owner_idx   ON company(owner_id);
+
+CREATE INDEX cinfo_company_idx   ON company_info(company_id);
+CREATE INDEX cvalue_company_idx  ON company_value(company_id);
+
+CREATE INDEX cassignment_company_idx    ON company_assignment(company_id);
+CREATE INDEX cassignment_subcompany_idx ON company_assignment(sub_company_id);
+
+CREATE INDEX apt_parent_idx ON date_x (parent_date_id);
+CREATE INDEX apt_owner_idx  ON date_x (owner_id);
+CREATE INDEX apt_team_idx   ON date_x (access_team_id);
+
+CREATE INDEX date_info_apt_idx ON date_info (date_id);
+
+CREATE INDEX date_assign_company_idx ON date_company_assignment(company_id);
+CREATE INDEX date_assign_apt_idx ON date_company_assignment(date_id);
+
+CREATE INDEX project_owner_idx  ON project (owner_id);
+CREATE INDEX project_team_idx   ON project (team_id);
+
+CREATE INDEX project_assign_company_idx 
+  ON project_company_assignment(company_id);
+CREATE INDEX project_assign_project_idx 
+  ON project_company_assignment(project_id);
+
+CREATE INDEX doc_parent_idx        ON doc(parent_document_id);
+CREATE INDEX doc_project_idx       ON doc(project_id);
+CREATE INDEX note_project_idx      ON note(project_id);
+CREATE INDEX note_date_idx         ON note(date_id);
+CREATE INDEX doc_first_owner_idx   ON doc(first_owner_id);
+CREATE INDEX doc_current_owner_idx ON doc(current_owner_id);
+
+CREATE INDEX dversion_doc_idx        ON document_version(document_id);
+CREATE INDEX dversion_last_owner_idx ON document_version(last_owner_id);
+ 
+CREATE INDEX dediting_doc_idx           ON document_editing(document_id);
+CREATE INDEX dediting_current_owner_idx ON document_editing(current_owner_id);
+
+CREATE INDEX tel_company_idx     ON telephone(company_id);
+CREATE INDEX address_company_idx ON address(company_id);
+
+CREATE INDEX job_project_idx   ON job(project_id);
+CREATE INDEX job_creator_idx   ON job(creator_id);
+CREATE INDEX job_executant_idx ON job(executant_id);
+
+CREATE INDEX jobh_job_idx   ON job_history(job_id);
+CREATE INDEX jobh_actor_idx ON job_history(actor_id);
+
+CREATE INDEX jobhi_jobh_idx ON job_history_info(job_history_id);
+
+CREATE INDEX newsa_news_idx    ON news_article_link(news_article_id);
+CREATE INDEX newsa_subnews_idx ON news_article_link(sub_news_article_id);
+
+CREATE UNIQUE INDEX unique_person_login on person (login);
+CREATE UNIQUE INDEX unique_person_number on person (number);
+CREATE UNIQUE INDEX unique_enterprise_login on enterprise (login);
+CREATE UNIQUE INDEX unique_enterprise_number on enterprise (number);
+CREATE UNIQUE INDEX unique_team_login on team (login);
+CREATE UNIQUE INDEX unique_team_number on team (number);
+
+CREATE INDEX palmaddr_company_idx ON palm_address (company_id);
+CREATE INDEX palmaddr_device_idx ON palm_address (device_id);
+CREATE INDEX palmaddr_palm_idx ON palm_address (palm_id);
+CREATE INDEX palmaddr_md5hash_idx ON palm_address (md5hash);
+CREATE INDEX palmaddr_skyrix_idx ON palm_address (skyrix_id);
+CREATE INDEX palmaddr_cat_idx ON palm_address(category_index);
+CREATE INDEX palmaddr_is_del_idx ON palm_address(is_deleted);
+CREATE INDEX palmaddr_is_mod_idx ON palm_address(is_modified);
+CREATE INDEX palmaddr_is_arch_idx ON palm_address(is_archived);
+CREATE INDEX palmaddr_is_new_idx ON palm_address(is_new);
+CREATE INDEX palmaddr_is_priv_idx ON palm_address(is_private);
+CREATE INDEX palmaddr_sky_sync_idx ON palm_address(skyrix_sync);
+CREATE INDEX palmaddr_sky_vers_idx ON palm_address(skyrix_version);
+CREATE INDEX palmaddr_sky_type_idx ON palm_address(skyrix_type);
+
+CREATE INDEX palmmemo_company_idx ON palm_memo (company_id);
+CREATE INDEX palmmemo_device_idx ON palm_memo (device_id);
+CREATE INDEX palmmemo_palm_idx ON palm_memo (palm_id);
+CREATE INDEX palmmemo_md5hash_idx ON palm_memo (md5hash);
+CREATE INDEX palmmemo_skyrix_idx ON palm_memo (skyrix_id);
+
+CREATE INDEX palmcat_company_idx ON palm_category (company_id);
+CREATE INDEX palmcat_device_idx ON palm_category (device_id);
+CREATE INDEX palmcat_palm_idx ON palm_category (palm_id);
+CREATE INDEX palmcat_md5hash_idx ON palm_category (md5hash);
+CREATE INDEX palmcat_table_idx ON palm_category (palm_table);
+
+CREATE INDEX palmdate_company_idx ON palm_date (company_id);
+CREATE INDEX palmdate_device_idx ON palm_date (device_id);
+CREATE INDEX palmdate_palm_idx ON palm_date (palm_id);
+CREATE INDEX palmdate_md5hash_idx ON palm_date (md5hash);
+CREATE INDEX palmdate_skyrix_idx ON palm_date (skyrix_id);
+CREATE INDEX palmdate_startdate_idx ON palm_date (startdate);
+CREATE INDEX palmdate_enddate_idx ON palm_date (enddate);
+
+CREATE INDEX palmtodo_company_idx ON palm_todo (company_id);
+CREATE INDEX palmtodo_device_idx ON palm_todo (device_id);
+CREATE INDEX palmtodo_palm_idx ON palm_todo (palm_id);
+CREATE INDEX palmtodo_md5hash_idx ON palm_todo (md5hash);
+CREATE INDEX palmtodo_skyrix_idx ON palm_todo (skyrix_id);
+
+-- table versions -------------------------------------------------------------
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('_model', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('staff', 41);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('company', 45);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('company_info', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('company_value', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('company_category', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('company_assignment', 41);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('appointment_resource', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('appointment', 47);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('date', 47);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('date_info', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('date_company_assignment', 43);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('project', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('project_info', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('project_company_assignment', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('document', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('document_version', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('document_editing', 41);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('address', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('telephone', 41);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('job', 46);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('job_history', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('job_history_info', 42);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('news_article', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('news_article_link', 41);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('key_generator', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('key_lock', 41);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('person', 45);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('enterprise', 46);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('trust', 45);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('team', 45);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('note', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('doc', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('log', 42);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('invoice', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('invoice_action', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('article_category', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('article_unit', 41);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('article', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('invoice_article_assignment', 42);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('palm_address', 43);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('palm_date', 43);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('palm_memo', 43);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('palm_todo', 43);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('palm_category', 41);
+
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('resource', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('obj_property', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('obj_link', 42);
