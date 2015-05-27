@@ -20,6 +20,8 @@ ALTER TABLE company ADD constraint
 ALTER TABLE company_value ADD constraint
    company_value2company foreign key (company_id) 
     references company(company_id);
+ALTER TABLE company_value ADD CONSTRAINT company_unique_valuetype
+  UNIQUE ( company_id, attribute );
 
 -- table company_category
 
@@ -106,10 +108,14 @@ ALTER TABLE document_editing ADD constraint
 -- table address
 ALTER TABLE address ADD constraint
     address2company foreign key (company_id) references company(company_id);
+ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
+  UNIQUE ( company_id, type );
 
 -- table telephone
 ALTER TABLE telephone ADD constraint
     telephone2company foreign key (company_id) references company(company_id);
+ALTER TABLE telephone ADD CONSTRAINT company_unique_phonetype
+  UNIQUE ( company_id, type );
 
 -- table job
 ALTER TABLE job ADD constraint 
