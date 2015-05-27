@@ -1,0 +1,301 @@
+-- OpenGroupware.org database schema update script
+-- (C) 2007-2008 Helge Hess
+-- this script updates the OGo database schema from v1.0 to v5.4
+
+
+ALTER TABLE object_acl ALTER COLUMN object_id TYPE INT USING object_id::int;
+ALTER TABLE object_acl ALTER COLUMN auth_id   TYPE INT USING auth_id::int;
+
+ALTER TABLE company_value
+  ADD COLUMN start_date TIMESTAMP WITH TIME ZONE NULL;
+ALTER TABLE company_value
+  ADD COLUMN end_date TIMESTAMP WITH TIME ZONE NULL;
+
+ALTER TABLE company_assignment
+ ADD COLUMN start_date TIMESTAMP WITH TIME ZONE NULL;
+ALTER TABLE company_assignment
+ ADD COLUMN end_date   TIMESTAMP WITH TIME ZONE NULL;
+
+ALTER TABLE project_company_assignment
+ ADD COLUMN start_date TIMESTAMP WITH TIME ZONE NULL;
+ALTER TABLE project_company_assignment
+ ADD COLUMN end_date   TIMESTAMP WITH TIME ZONE NULL;
+
+
+ALTER TABLE company ADD COLUMN birthplace    VARCHAR(255) NULL;
+ALTER TABLE company ADD COLUMN birthname     VARCHAR(255) NULL;
+ALTER TABLE company ADD COLUMN family_status VARCHAR(255) NULL;
+ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
+ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
+
+-- district of a city (eg Magdeburg "Nord")
+ALTER TABLE address ADD COLUMN district    VARCHAR(255) NULL;
+
+-- field to connect documents and notes to contacts
+ALTER TABLE document ADD COLUMN company_id INT NULL;
+
+-- prepare for project hierarchies
+ALTER TABLE project ADD COLUMN parent_project_id INT NULL;
+
+
+-- ensure that a type is used only once per person/company (eg you can only have
+-- one 'bill' address, this is because OGo creates dictionaries based on the
+-- type)
+ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
+  UNIQUE ( company_id, type );
+
+-- both do not work on SX:
+ALTER TABLE telephone ADD CONSTRAINT company_unique_phonetype
+  UNIQUE ( company_id, type );
+ALTER TABLE company_value ADD CONSTRAINT company_unique_valuetype
+  UNIQUE ( company_id, attribute );
+-- =>
+SELECT T1.company_id, T1.type, T1.telephone_id, T2.telephone_id
+FROM telephone T1 INNER JOIN telephone T2 ON
+( T1.company_id = T2.company_id AND T1.type = T2.type AND
+  NOT (T1.telephone_id = T2.telephone_id) );
+SELECT T1.company_id, T1.attribute, T1.company_value_id, T2.company_value_id
+FROM company_value T1 INNER JOIN company_value T2 ON
+( T1.company_id = T2.company_id AND T1.attribute = T2.attribute AND
+  NOT (T1.company_value_id = T2.company_value_id) );
+
+
+CREATE TABLE login_token (
+  token           VARCHAR(4096) PRIMARY KEY,
+  account_id      INT   NOT NULL,
+  environment     TEXT  NULL,
+  info            TEXT  NULL,
+  creation_date   TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  touch_date      TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  timeout         INT DEFAULT 3600 NOT NULL,
+  expiration_date TIMESTAMP WITH TIME ZONE NULL
+);
+
+
+-- TBD: we should probably include the full join info (ie company data)
+CREATE VIEW employment AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS enterprise_id,
+    ca.sub_company_id AS person_id,
+    ca.is_headquarter, ca.is_chief, ca."function",
+    ca.db_status,
+    ca.start_date, ca.end_date,
+    ca.hoursperweek
+  FROM company_assignment ca
+  INNER JOIN enterprise e USING (company_id)
+  INNER JOIN person     p ON (p.company_id = ca.sub_company_id);
+
+CREATE RULE employment_add AS ON INSERT TO employment DO INSTEAD
+  INSERT INTO company_assignment (
+    company_assignment_id, company_id, sub_company_id,
+    is_headquarter, is_chief, "function", db_status,
+    start_date, end_date, hoursperweek
+  )
+  VALUES (
+    new.company_assignment_id, new.enterprise_id, new.person_id,
+    new.is_headquarter, new.is_chief, new."function", new.db_status,
+    new.start_date, new.end_date, new.hoursperweek
+  );
+
+CREATE RULE employment_set AS ON UPDATE TO employment DO INSTEAD
+  UPDATE company_assignment
+  SET company_id     = new.enterprise_id,
+      sub_company_id = new.person_id,
+      is_headquarter = new.is_headquarter,
+      is_chief       = new.is_chief,
+      "function"     = new."function",
+      db_status      = new.db_status,
+      start_date     = new.start_date,
+      end_date       = new.end_date,
+      hoursperweek   = new.hoursperweek
+  WHERE company_assignment_id = old.company_assignment_id;
+
+CREATE RULE employment_delete AS ON DELETE TO employment DO INSTEAD
+  DELETE FROM company_assignment
+  WHERE company_assignment_id = old.company_assignment_id;
+
+
+
+CREATE VIEW company_hierarchy AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS parent_id,
+    ca.sub_company_id AS company_id,
+    ca.is_headquarter, ca.is_chief, ca."function",
+    ca.db_status,
+    ca.start_date AS start_date, ca.end_date AS end_date
+  FROM company_assignment ca
+  INNER JOIN enterprise e1 USING (company_id)
+  INNER JOIN enterprise e2 ON (e2.company_id = ca.sub_company_id);
+
+CREATE RULE company_hierarchy_add AS ON INSERT TO company_hierarchy DO INSTEAD
+  INSERT INTO company_assignment (
+    company_assignment_id, company_id, sub_company_id,
+    is_headquarter, is_chief, "function", db_status,
+    start_date, end_date
+  )
+  VALUES (
+    new.company_assignment_id, new.parent_id, new.company_id,
+    new.is_headquarter, new.is_chief, new."function", new.db_status,
+    new.start_date, new.end_date
+  );
+
+CREATE RULE company_hierarchy_set AS ON UPDATE TO company_hierarchy DO INSTEAD
+  UPDATE company_assignment
+  SET company_id     = new.parent_id,
+      sub_company_id = new.company_id,
+      is_headquarter = new.is_headquarter,
+      is_chief       = new.is_chief,
+      "function"     = new."function",
+      db_status      = new.db_status,
+      start_date     = new.start_date,
+      end_date       = new.end_date
+  WHERE company_assignment_id = old.company_assignment_id;
+
+CREATE RULE company_hierarchy_delete AS ON DELETE TO company_hierarchy DO INSTEAD
+  DELETE FROM company_assignment
+  WHERE company_assignment_id = old.company_assignment_id;
+
+
+
+-- TBD: we should probably include the full join info (ie team data)
+CREATE VIEW team_membership AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS team_id,
+    ca.sub_company_id AS person_id,
+    ca.is_headquarter, ca.is_chief, ca."function",
+    ca.db_status,
+    ca.start_date AS start_date, ca.end_date AS end_date
+  FROM company_assignment ca
+  INNER JOIN team   t USING (company_id)
+  INNER JOIN person p ON (p.company_id = ca.sub_company_id);
+
+CREATE VIEW team_hierarchy AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS parent_id,
+    ca.sub_company_id AS team_id,
+    ca.is_headquarter, ca.is_chief, ca."function",
+    ca.db_status,
+    start_date, end_date
+  FROM company_assignment ca
+  INNER JOIN team t1 USING (company_id)
+  INNER JOIN team t2 ON (t2.company_id = ca.sub_company_id);
+
+
+CREATE VIEW project_teams AS
+  SELECT pca.*
+  FROM project_company_assignment pca
+  JOIN team e USING (company_id);
+
+CREATE RULE project_teams_add AS ON INSERT TO project_teams DO INSTEAD
+  INSERT INTO project_company_assignment (
+    project_company_assignment_id, company_id, project_id, info,
+    has_access, access_right, db_status
+  )
+  VALUES (
+    new.project_company_assignment_id, new.company_id, new.project_id, new.info,
+    new.has_access, new.access_right, new.db_status
+  );
+CREATE RULE project_teams_set AS ON UPDATE TO project_teams DO INSTEAD
+  UPDATE project_company_assignment
+  SET company_id = new.company_id, project_id = new.project_id, info = new.info,
+      has_access = new.has_access, access_right = new.access_right,
+      db_status  = new.db_status
+  WHERE project_company_assignment_id = old.project_company_assignment_id;
+
+CREATE RULE project_teams_del AS ON DELETE TO project_teams DO INSTEAD
+  DELETE FROM project_company_assignment
+  WHERE project_company_assignment_id = old.project_company_assignment_id;
+
+
+CREATE VIEW project_persons AS
+  SELECT pca.*
+  FROM project_company_assignment pca
+  JOIN person p USING (company_id);
+
+CREATE RULE project_persons_add AS ON INSERT TO project_persons DO INSTEAD
+  INSERT INTO project_company_assignment (
+    project_company_assignment_id, company_id, project_id, info, has_access,
+    access_right, db_status, start_date, end_date
+  )
+  VALUES (
+    new.project_company_assignment_id, new.company_id, new.project_id, new.info,
+    new.has_access, new.access_right, new.db_status,
+    new.start_date, new.end_date
+  );
+CREATE RULE project_persons_set AS ON UPDATE TO project_persons DO INSTEAD
+  UPDATE project_company_assignment
+  SET company_id = new.company_id, project_id = new.project_id, info = new.info,
+      has_access = new.has_access, access_right = new.access_right,
+      db_status  = new.db_status,
+      start_date = new.start_date, end_date = new.end_date
+  WHERE project_company_assignment_id = old.project_company_assignment_id;
+
+CREATE RULE project_persons_del AS ON DELETE TO project_persons DO INSTEAD
+  DELETE FROM project_company_assignment
+  WHERE project_company_assignment_id = old.project_company_assignment_id;
+
+
+CREATE VIEW project_companies AS
+  SELECT pca.*
+  FROM project_company_assignment pca
+  JOIN enterprise e USING (company_id);
+
+CREATE RULE project_companies_add AS ON INSERT TO project_companies DO INSTEAD
+  INSERT INTO project_company_assignment (
+    project_company_assignment_id, company_id, project_id, info, has_access,
+    access_right, db_status
+  )
+  VALUES (
+    new.project_company_assignment_id, new.company_id, new.project_id, new.info,
+    new.has_access, new.access_right, new.db_status,
+    new.start_date, new.end_date
+  );
+CREATE RULE project_companies_set AS ON UPDATE TO project_companies DO INSTEAD
+  UPDATE project_company_assignment
+  SET company_id = new.company_id, project_id = new.project_id, info = new.info,
+      has_access = new.has_access, access_right = new.access_right,
+      db_status  = new.db_status,
+      start_date = new.start_date, end_date = new.end_date
+  WHERE project_company_assignment_id = old.project_company_assignment_id;
+
+CREATE RULE project_companies_del AS ON DELETE TO project_companies DO INSTEAD
+  DELETE FROM project_company_assignment
+  WHERE project_company_assignment_id = old.project_company_assignment_id;
+
+
+-- unused? sounds useful, but maybe its overkill
+CREATE VIEW project_acl AS
+  SELECT pca.*
+  FROM project_company_assignment pca
+  WHERE has_access = 1;
+
+
+
+
+
+-- fixup last modified dates / object_version
+
+UPDATE doc  SET object_version    = version_count WHERE object_version    IS NULL;
+UPDATE note SET lastmodified_date = creation_date WHERE lastmodified_date IS NULL;
+
+UPDATE doc
+SET lastmodified_date =
+  (SELECT archive_date FROM document_version WHERE document_version.document_id = doc.document_id ORDER BY version DESC LIMIT 1)
+WHERE version_count > 0 AND lastmodified_date IS NULL;
+
+UPDATE job
+SET object_version =
+    (SELECT COUNT(*) FROM job_history WHERE job.job_id = job_history.job_id)
+WHERE object_version IS NULL;
+
+-- not sure whether last_modified is actually done in Windows time by ZideLook,
+-- this would be from January 1, 1601
+UPDATE job
+SET last_modified = 
+    (SELECT EXTRACT(EPOCH FROM action_date) FROM job_history 
+     WHERE job.job_id = job_history.job_id ORDER BY action_date DESC LIMIT 1)
+WHERE last_modified IS NULL;
