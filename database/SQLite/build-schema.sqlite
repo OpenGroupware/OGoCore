@@ -20,7 +20,7 @@ CREATE TABLE object_model (
   CHECK(db_version IS NOT NULL),
   CHECK(model_name IS NOT NULL)
 );
-INSERT INTO object_model(db_version, model_name) VALUES ( 1, 'fb_sky41' );
+INSERT INTO object_model(db_version, model_name) VALUES ( 2, 'fb_sky41' );
 
 CREATE TABLE log (
   log_id        INTEGER     /* t_id */,
@@ -59,10 +59,10 @@ CREATE INDEX session_log_action_idx ON session_log(faction);
 
 CREATE TABLE table_version (
   table_version INTEGER      /* t_int */,
-  fname         VARCHAR(255) /* t_string */
+  name         VARCHAR(255) /* t_string */
   ,
-  PRIMARY KEY(fname),
-  CHECK(fname         IS NOT NULL),
+  PRIMARY KEY(name),
+  CHECK(name          IS NOT NULL),
   CHECK(table_version IS NOT NULL)
 );
 
@@ -106,7 +106,7 @@ CREATE TABLE company (
   is_location_team  BOOLEAN /* t_bool */,
   is_customer       BOOLEAN /* t_bool */,
   
-  fnumber           VARCHAR(50)  /* t_tinystring */, /* Sybase:number */
+  number            VARCHAR(50)  /* t_tinystring */, /* Sybase:number */
   description       VARCHAR(255) /* t_string */,
   priority          VARCHAR(50)  /* t_tinystring */,
   keywords          VARCHAR(255) /* t_string */,
@@ -132,7 +132,7 @@ CREATE TABLE company (
 
 /* person */
 
-  fname             VARCHAR(50) /* t_tinystring */, /* Sybase:name */
+  name              VARCHAR(50) /* t_tinystring */, /* Sybase:name */
   middlename        VARCHAR(50) /* t_tinystring */, 
   firstname         VARCHAR(50) /* t_tinystring */,
   salutation        VARCHAR(50) /* t_tinystring */,
@@ -175,7 +175,7 @@ CREATE TABLE company (
              is_trust IS NULL AND is_team IS NULL))
 );
 
-CREATE UNIQUE INDEX unique_company_number ON company(fnumber);
+CREATE UNIQUE INDEX unique_company_number ON company(number);
 CREATE UNIQUE INDEX unique_company_login  ON company(login);
 
 /* TODO: constraints
@@ -193,7 +193,7 @@ CREATE INDEX company__is_enterprise ON company(is_enterprise);
 CREATE INDEX company__is_trust      ON company(is_trust);
 CREATE INDEX company__is_person     ON company(is_person);
 CREATE INDEX company__email         ON company(email);
-CREATE INDEX company__name          ON company(fname);
+CREATE INDEX company__name          ON company(name);
 CREATE INDEX company__firstname     ON company(firstname);
 CREATE INDEX company__keywords      ON company(keywords);
 CREATE INDEX is_private_idx         ON company(is_private);
@@ -279,7 +279,7 @@ ALTER TABLE company_assignment ADD CONSTRAINT company_assignment2sub_company
 CREATE TABLE appointment_resource (
   appointment_resource_id INTEGER /* t_id */,
   object_version          INTEGER /* t_int */,
-  fname                   VARCHAR(255) /* t_string */, /* Sybase: name */
+  name                    VARCHAR(255) /* t_string */, /* Sybase: name */
   email                   VARCHAR(255) /* t_string */,
   email_subject           VARCHAR(255) /* t_string */,
   category                VARCHAR(255) /* t_string */,
@@ -288,9 +288,9 @@ CREATE TABLE appointment_resource (
   ,
   PRIMARY KEY(appointment_resource_id),
   CHECK(appointment_resource_id IS NOT NULL),
-  CHECK(fname IS NOT NULL)
+  CHECK(name IS NOT NULL)
 );
-CREATE UNIQUE INDEX unique_aptresname_idx ON appointment_resource(fname);
+CREATE UNIQUE INDEX unique_aptresname_idx ON appointment_resource(name);
 
 CREATE TABLE appointment ( /* Sybase: date */
   date_id                INTEGER /* t_id */, /* primary key */
@@ -396,8 +396,8 @@ CREATE TABLE project (
   object_version INTEGER /* t_int */,
   owner_id       INTEGER /* t_id */,
   team_id        INTEGER /* t_id */,
-  fnumber        VARCHAR(50) /* t_tinystring */,  /*Sybase: number */
-  fname          VARCHAR(255) /* t_string */,  /*Sybase: name */
+  number         VARCHAR(50) /* t_tinystring */,  /*Sybase: number */
+  name           VARCHAR(255) /* t_string */,  /*Sybase: name */
   start_date     TIMESTAMP /* t_datetime */,
   end_date       TIMESTAMP /* t_datetime */,
   status         VARCHAR(255) /* t_string */,
@@ -416,7 +416,7 @@ ALTER TABLE project ADD CONSTRAINT project2owner FOREIGN KEY (owner_id)
 ALTER TABLE project ADD CONSTRAINT project2team FOREIGN KEY (team_id)
   REFERENCES staff(company_id);
 */
-CREATE UNIQUE INDEX unique_project_number ON project(fnumber);
+CREATE UNIQUE INDEX unique_project_number ON project(number);
 CREATE INDEX is_fake_idx           ON project(is_fake);
 CREATE INDEX project_kind_idx      ON project(kind);
 CREATE INDEX project_status_idx    ON project(status);
@@ -589,7 +589,7 @@ CREATE TABLE telephone (
   telephone_id      INTEGER /* t_id */,
   object_version    INTEGER /* t_int */,
   company_id        INTEGER /* t_id */,
-  fnumber           VARCHAR(255) /* t_string */, /*Sybase: number */
+  number            VARCHAR(255) /* t_string */, /*Sybase: number */
   real_number       VARCHAR(255) /* t_string */,
   ftype             VARCHAR(50)  /* t_tinystring */, /*Sybase: type */
   info              VARCHAR(255) /* t_string */,
@@ -605,7 +605,7 @@ ALTER TABLE telephone ADD CONSTRAINT telephone2company FOREIGN KEY (company_id)
  REFERENCES company(company_id);
 */
 
-CREATE INDEX telephone__fnumber     ON telephone(fnumber);
+CREATE INDEX telephone__number     ON telephone(number);
 CREATE INDEX telephone__ftype       ON telephone(ftype);
 CREATE INDEX telephone__real_number ON telephone(real_number);
 
@@ -618,7 +618,7 @@ CREATE TABLE job (
   project_id           INTEGER /* t_id */,
   creator_id           INTEGER /* t_id */,
   executant_id         INTEGER /* t_id */,
-  fname                VARCHAR(255) /* t_string */,    /* Sybase: name */
+  name                 VARCHAR(255) /* t_string */,    /* Sybase: name */
   start_date           TIMESTAMP /* t_datetime */,
   end_date             TIMESTAMP /* t_datetime */,
   notify               INTEGER /* t_int */,
@@ -647,7 +647,7 @@ CREATE TABLE job (
   ,
   PRIMARY KEY(job_id),
   CHECK(job_id     IS NOT NULL),
-  CHECK(fname      IS NOT NULL),
+  CHECK(name       IS NOT NULL),
   CHECK(start_date IS NOT NULL),
   CHECK(end_date   IS NOT NULL)
 );
@@ -729,7 +729,7 @@ ALTER TABLE job_resource_assignment ADD CONSTRAINT job_resource2job
 CREATE TABLE news_article (
   news_article_id       INTEGER /* t_id */,
   object_version        INTEGER /* t_int */,
-  fname                 VARCHAR(255) /* t_string */, /* Sybase: name */
+  name                  VARCHAR(255) /* t_string */, /* Sybase: name */
   caption               VARCHAR(255) /* t_string */,
   is_index_article      BOOLEAN /* t_bool */,
   db_status             VARCHAR(50) /* t_tinystring */
@@ -1334,7 +1334,7 @@ SET UNIQUE = 10100 FOR key_generator;
 
 CREATE VIEW person AS 
   SELECT company_id, owner_id, contact_id, template_user_id, 
-         fnumber, description, priority, keywords, fname,
+         number, description, priority, keywords, name,
          middlename, firstname, salutation, degree, is_private, is_readonly,
          birthday, url, sex, is_person, login, password, is_locked, 
          pop3_account, is_account, is_intra_account, is_extra_account, 
@@ -1351,7 +1351,7 @@ CREATE VIEW person AS
         is_team       IS NULL;
 
 CREATE VIEW enterprise AS 
-  SELECT company_id, owner_id, contact_id, fnumber, description, priority, 
+  SELECT company_id, owner_id, contact_id, number, description, priority, 
          keywords, url, email, login, bank, bank_code, account,
          is_enterprise, db_status, is_customer, is_private, is_readonly,
          object_version, source_url, sensitivity, boss_name, partner_name,
@@ -1367,7 +1367,7 @@ CREATE VIEW enterprise AS
         is_team       IS NULL;
 
 CREATE VIEW trust AS 
-  SELECT company_id, owner_id, contact_id, fnumber, is_private, is_readonly,
+  SELECT company_id, owner_id, contact_id, number, is_private, is_readonly,
          description, priority, keywords, url, email, is_trust, db_status,
          object_version
   FROM company 
@@ -1377,7 +1377,7 @@ CREATE VIEW trust AS
         is_team       IS NULL;
 
 CREATE VIEW team AS 
-  SELECT company_id, owner_id, contact_id, fnumber, login, email,
+  SELECT company_id, owner_id, contact_id, number, login, email,
          description, is_team, is_location_team, db_status, object_version,
          sensitivity, boss_name, partner_name, assistant_name, department, 
          office, occupation, anniversary, dir_server, email_alias, 
@@ -1395,8 +1395,8 @@ CREATE VIEW note AS SELECT * FROM document WHERE is_note = 1;
 CREATE VIEW doc  AS SELECT * FROM document WHERE is_note = 0;
 
 
-INSERT INTO company (company_id, login, fname, description, is_account, 
-                    is_intra_account, is_extra_account, is_person, fnumber, 
+INSERT INTO company (company_id, login, name, description, is_account, 
+                    is_intra_account, is_extra_account, is_person, number, 
                     is_private, is_readonly, db_status, object_version) 
   VALUES (10000, 'root', 'root', 'Administrator', 1, 1, 0, 1, 'LS10000', 0, 1,
          'inserted', 1);
@@ -1412,9 +1412,9 @@ INSERT INTO company_info (company_info_id, company_id)
 
 /* insert template account */
 
-INSERT INTO company (company_id, owner_id, login, fname, description, 
+INSERT INTO company (company_id, owner_id, login, name, description, 
                     is_account, is_intra_account, is_extra_account, 
-                    is_person, fnumber, is_private, is_readonly, is_locked, 
+                    is_person, number, is_private, is_readonly, is_locked, 
                     is_template_user, db_status, object_version)
   VALUES (9999, 10000, 'template', 'template', 'Template', 1, 1, 0, 1, 
           'LS9999', 1, 1, 1, 1, 'inserted', 1);
@@ -1423,7 +1423,7 @@ INSERT INTO staff (staff_id, company_id, is_account) VALUES (9998, 9999, 1);
 
 INSERT INTO company_info (company_info_id, company_id) VALUES (9997, 9999);
 
-INSERT INTO company (company_id, description, is_team, fnumber, login, 
+INSERT INTO company (company_id, description, is_team, number, login, 
  		     db_status, object_version) 
   VALUES (10003, 'all intranet', 1, 'LS10003', 'all intranet', 'inserted', 1);
 /* TODO: keygen SELECT UNIQUE FROM key_generator; */
@@ -1434,7 +1434,7 @@ INSERT INTO staff (staff_id, company_id, is_team) VALUES (10004, 10003, 1);
 INSERT INTO company_info (company_info_id, company_id)  VALUES (10005, 10003);
 /* TODO: keygen SELECT UNIQUE FROM key_generator; */
 
-INSERT INTO company (company_id, description, is_team, fnumber, login, 
+INSERT INTO company (company_id, description, is_team, number, login, 
                      db_status, object_version) 
   VALUES (9991, 'news editors', 1, 'LS9991', 'newseditors', 'inserted', 1);
 /* TODO: keygen SELECT UNIQUE FROM key_generator; */
@@ -1445,7 +1445,7 @@ INSERT INTO staff (staff_id, company_id, is_team) VALUES (9992, 9991, 1);
 INSERT INTO company_info (company_info_id, company_id)  VALUES (9993, 9991);
 /* TODO: keygen SELECT UNIQUE FROM key_generator; */
 
-INSERT INTO news_article (news_article_id, fname, caption, is_index_article,
+INSERT INTO news_article (news_article_id, name, caption, is_index_article,
                           object_version)
   VALUES (10006, 'index', 'Index', 1, 1);
 /* TODO: keygen SELECT UNIQUE FROM key_generator; */
@@ -1453,110 +1453,110 @@ INSERT INTO news_article (news_article_id, fname, caption, is_index_article,
 UPDATE project_company_assignment SET access_right = 'r' 
   WHERE has_access = 1 AND access_right IS NULL;
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('_model', 41);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('staff', 41);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('company', 45);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('company_info', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('company_value', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('company_category', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('company_assignment', 41);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('appointment_resource', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('appointment', 47);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('date', 47);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('date_info', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('date_company_assignment', 43);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('project', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('project_info', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('project_company_assignment', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('document', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('document_version', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('document_editing', 41);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('address', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('telephone', 41);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('job', 46);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('job_history', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('job_history_info', 42);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('news_article', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('news_article_link', 41);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('key_generator', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('key_lock', 41);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('person', 45);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('enterprise', 46);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('trust', 45);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('team', 45);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('note', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('doc', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('log', 42);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('invoice', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('invoice_action', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('article_category', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('article_unit', 41);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('article', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('invoice_article_assignment', 42);
 
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('palm_address', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('palm_date', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('palm_memo', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('palm_todo', 42);
-INSERT INTO table_version (fname, table_version) 
+INSERT INTO table_version (name, table_version) 
   VALUES ('palm_category', 41);
 
-INSERT INTO table_version (fname, table_version)
+INSERT INTO table_version (name, table_version)
   VALUES ('resource', 42);
-INSERT INTO table_version (fname, table_version)
+INSERT INTO table_version (name, table_version)
   VALUES ('obj_property', 42);
