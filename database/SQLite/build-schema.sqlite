@@ -115,7 +115,7 @@ CREATE TABLE company (
 
   url               VARCHAR(255) /* t_string */,
   email             VARCHAR(50)  /* t_tinystring */, 
-  ftype             VARCHAR(50)  /* t_tinystring */, /* Sybase:type */
+  type              VARCHAR(50)  /* t_tinystring */, /* Sybase:type */
   bank              VARCHAR(50)  /* t_tinystring */,
   bank_code         VARCHAR(50)  /* t_tinystring */,
   account           VARCHAR(50)  /* t_tinystring */,
@@ -231,7 +231,7 @@ CREATE TABLE company_value (
   category           VARCHAR(255)  /* t_string */,
   uid                INTEGER       /* t_id */, 
   label              VARCHAR(255)  /* t_string */,
-  ftype              INTEGER       /* t_int */,
+  type               INTEGER       /* t_int */,
   is_label_localized BOOLEAN       /* t_bool */,
   db_status          VARCHAR(50)   /* t_tinystring */
   ,
@@ -243,7 +243,7 @@ ALTER TABLE company_value ADD CONSTRAINT company_value
         FOREIGN KEY (company_id) REFERENCES company(company_id);
 */
 CREATE INDEX attribute_idx ON company_value(attribute);
-CREATE INDEX company_value_type_idx      ON company_value(ftype);
+CREATE INDEX company_value_type_idx      ON company_value(type);
 
 CREATE TABLE company_category (
   company_category_id INTEGER /* t_id */,
@@ -301,7 +301,7 @@ CREATE TABLE appointment ( /* Sybase: date */
   start_date             TIMESTAMP /* t_datetime */,
   end_date               TIMESTAMP /* t_datetime */,
   cycle_end_date         TIMESTAMP /* t_datetime */,
-  ftype                  VARCHAR(255) /* t_tinystring */, /* Sybase: type:weekday daily weekly monthly yearly */
+  type                   VARCHAR(255) /* t_tinystring */, /* Sybase: type:weekday daily weekly monthly yearly */
   title                  VARCHAR(255) /* t_string */,
   location               VARCHAR(255) /* t_string */,
   absence                VARCHAR(255) /* t_string */,
@@ -565,13 +565,13 @@ CREATE TABLE address (
   zipcity           VARCHAR(255) /* t_string */,
   country           VARCHAR(50) /* t_tinystring */,
   state             VARCHAR(50) /* t_tinystring */,
-  ftype             VARCHAR(50) /* t_tinystring */, /*Sybase: type */
+  type              VARCHAR(50) /* t_tinystring */, /*Sybase: type */
   db_status         VARCHAR(50) /* t_tinystring */,
   source_url        VARCHAR(255) /* t_string */
   ,
   PRIMARY KEY(address_id),
   CHECK(address_id IS NOT NULL),
-  CHECK(ftype      IS NOT NULL)
+  CHECK(type       IS NOT NULL)
 );
 /* TODO: constraints
 ALTER TABLE address ADD CONSTRAINT address2company FOREIGN KEY (company_id)
@@ -583,7 +583,7 @@ CREATE INDEX address__name3      ON address(name3);
 CREATE INDEX address__street     ON address(street);
 CREATE INDEX address__zip        ON address(zip);
 CREATE INDEX address__zipcity    ON address(zipcity);
-CREATE INDEX address_type_idx    ON address(ftype);
+CREATE INDEX address_type_idx    ON address(type);
  
 CREATE TABLE telephone (
   telephone_id      INTEGER /* t_id */,
@@ -591,22 +591,22 @@ CREATE TABLE telephone (
   company_id        INTEGER /* t_id */,
   number            VARCHAR(255) /* t_string */, /*Sybase: number */
   real_number       VARCHAR(255) /* t_string */,
-  ftype             VARCHAR(50)  /* t_tinystring */, /*Sybase: type */
+  type              VARCHAR(50)  /* t_tinystring */, /*Sybase: type */
   info              VARCHAR(255) /* t_string */,
   url               VARCHAR(255) /* t_string */,
   db_status         VARCHAR(50)  /* t_tinystring */
   ,
   PRIMARY KEY(telephone_id),
   CHECK(telephone_id IS NOT NULL)
-  CHECK(ftype IS NOT NULL)
+  CHECK(type IS NOT NULL)
 );
 /* TODO: constraints
 ALTER TABLE telephone ADD CONSTRAINT telephone2company FOREIGN KEY (company_id)
  REFERENCES company(company_id);
 */
 
-CREATE INDEX telephone__number     ON telephone(number);
-CREATE INDEX telephone__ftype       ON telephone(ftype);
+CREATE INDEX telephone__number      ON telephone(number);
+CREATE INDEX telephone__type        ON telephone(type);
 CREATE INDEX telephone__real_number ON telephone(real_number);
 
 /* -------------------- job -------------------- */
@@ -931,14 +931,14 @@ CREATE TABLE resource (
   quantity            INTEGER /* t_int */,
   comment             VARCHAR(2000000000) /* t_text */, /*(oracle: ocomment)*/
   standard_costs      NUMERIC(19,2) /* t_price */,
-  ftype               INTEGER /* t_int */,
+  type                INTEGER /* t_int */,
   db_status           VARCHAR(50) /* t_tinystring */,
   object_version      INTEGER /* t_int */
   ,
   PRIMARY KEY(resource_id),
-  CHECK(resource_id IS NOT NULL),
+  CHECK(resource_id   IS NOT NULL),
   CHECK(resource_name IS NOT NULL),
-  CHECK(ftype IS NOT NULL)
+  CHECK(type          IS NOT NULL)
 );
 /* TODO: constraints
 ALTER TABLE job_resource_assignment ADD CONSTRAINT job_resource2resource
