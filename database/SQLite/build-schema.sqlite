@@ -27,7 +27,7 @@ CREATE TABLE log (
   creation_date TIMESTAMP   /* t_datetime */,
   object_id     INTEGER     /* t_id */,      
   log_text      VARCHAR(2000000000) /* t_text */,
-  faction       VARCHAR(50) /* t_smallstring */,
+  action        VARCHAR(50) /* t_smallstring */,
   account_id    INTEGER     /* t_id */
   ,
   PRIMARY KEY(log_id),
@@ -36,7 +36,7 @@ CREATE TABLE log (
   CHECK(object_id     IS NOT NULL),
   CHECK(log_text      IS NOT NULL)
 );
-CREATE INDEX action_idx ON log(faction);
+CREATE INDEX action_idx ON log(action);
 CREATE INDEX log_object_idx        ON log(object_id);
 CREATE INDEX log_creation_date_idx ON log(creation_date);
 CREATE INDEX log_account_id_idx    ON log(account_id);
@@ -45,17 +45,17 @@ CREATE TABLE session_log (
   session_log_id          INTEGER /* t_id */,
   account_id              INTEGER /* t_id */,
   log_date                TIMESTAMP /* t_datetime */,
-  faction                 VARCHAR(255) /* t_string */
+  action                  VARCHAR(255) /* t_string */
   ,
   PRIMARY KEY(session_log_id),
   CHECK(session_log_id IS NOT NULL),
   CHECK(account_id     IS NOT NULL),
   CHECK(log_date       IS NOT NULL),
-  CHECK(faction        IS NOT NULL)
+  CHECK(action         IS NOT NULL)
 );
 CREATE INDEX account_id_idx ON session_log(account_id);
 CREATE INDEX log_date_idx ON session_log(log_date);
-CREATE INDEX session_log_action_idx ON session_log(faction);
+CREATE INDEX session_log_action_idx ON session_log(action);
 
 CREATE TABLE table_version (
   table_version INTEGER      /* t_int */,
@@ -169,6 +169,12 @@ CREATE TABLE company (
   show_email2_as      VARCHAR(255) /* t_string */,   /* email 2 show as attr */
   show_email3_as      VARCHAR(255) /* t_string */    /* email 3 show as attr */
   ,
+  birthplace          VARCHAR(255),
+  birthname           VARCHAR(255),
+  family_status       VARCHAR(255),
+  citizenship         VARCHAR(255),
+  dayofdeath          timestamp with time zone
+  ,
   PRIMARY KEY(company_id),
   CHECK (company_id IS NOT NULL),
   CHECK (NOT(is_person IS NULL AND is_enterprise IS NULL AND 
@@ -235,6 +241,9 @@ CREATE TABLE company_value (
   is_label_localized BOOLEAN       /* t_bool */,
   db_status          VARCHAR(50)   /* t_tinystring */
   ,
+  start_date         timestamp with time zone,
+  end_date           timestamp with time zone
+  ,
   PRIMARY KEY(company_value_id),
   CHECK(company_value_id IS NOT NULL)
 );
@@ -263,6 +272,9 @@ CREATE TABLE company_assignment (
   is_chief              BOOLEAN      /* t_bool */,
   ffunction             VARCHAR(255) /* t_string */, /* sybase: function */
   db_status             VARCHAR(50)  /* t_tinystring */
+  ,
+  start_date         timestamp with time zone,
+  end_date           timestamp with time zone
   ,
   PRIMARY KEY(company_assignment_id),
   CHECK(company_assignment_id IS NOT NULL)
@@ -392,19 +404,20 @@ ALTER TABLE date_company_assignment ADD CONSTRAINT date_company_assign2date
 /* -------------------- projects -------------------- */
 
 CREATE TABLE project (
-  project_id     INTEGER /* t_id */,
-  object_version INTEGER /* t_int */,
-  owner_id       INTEGER /* t_id */,
-  team_id        INTEGER /* t_id */,
-  number         VARCHAR(50) /* t_tinystring */,  /*Sybase: number */
-  name           VARCHAR(255) /* t_string */,  /*Sybase: name */
-  start_date     TIMESTAMP /* t_datetime */,
-  end_date       TIMESTAMP /* t_datetime */,
-  status         VARCHAR(255) /* t_string */,
-  is_fake        BOOLEAN /* t_bool */,
-  db_status      VARCHAR(50) /* t_tinystring */,
-  kind           VARCHAR(50) /* t_tinystring */,
-  url            VARCHAR(50) /* t_smallstring */
+  project_id        INTEGER /* t_id */,
+  object_version    INTEGER /* t_int */,
+  owner_id          INTEGER /* t_id */,
+  team_id           INTEGER /* t_id */,
+  number            VARCHAR(50) /* t_tinystring */,  /*Sybase: number */
+  name              VARCHAR(255) /* t_string */,  /*Sybase: name */
+  start_date        TIMESTAMP /* t_datetime */,
+  end_date          TIMESTAMP /* t_datetime */,
+  status            VARCHAR(255) /* t_string */,
+  is_fake           BOOLEAN /* t_bool */,
+  db_status         VARCHAR(50) /* t_tinystring */,
+  kind              VARCHAR(50) /* t_tinystring */,
+  url               VARCHAR(50) /* t_smallstring */,
+  parent_project_id INTEGER
   ,
   PRIMARY KEY(project_id),
   CHECK(project_id IS NOT NULL),
@@ -430,6 +443,9 @@ CREATE TABLE project_company_assignment (
   has_access                    BOOLEAN /* t_bool */,
   access_right                  VARCHAR(50) /* t_tinystring */,
   db_status                     VARCHAR(50) /* t_tinystring */
+  ,
+  start_date         timestamp with time zone,
+  end_date           timestamp with time zone
   ,
   PRIMARY KEY(project_company_assignment_id),
   CHECK(project_company_assignment_id IS NOT NULL)
@@ -467,7 +483,8 @@ CREATE TABLE document (
   lastmodified_date  TIMESTAMP    /* t_datetime */,
   status             VARCHAR(50)  /* t_tinystring */,
   db_status          VARCHAR(50)  /* t_tinystring */,
-  contact            VARCHAR(255) /* t_string */
+  contact            VARCHAR(255) /* t_string */,
+  company_id         INTEGER
   ,
   PRIMARY KEY(document_id),
   CHECK(document_id IS NOT NULL)
@@ -567,7 +584,8 @@ CREATE TABLE address (
   state             VARCHAR(50) /* t_tinystring */,
   type              VARCHAR(50) /* t_tinystring */, /*Sybase: type */
   db_status         VARCHAR(50) /* t_tinystring */,
-  source_url        VARCHAR(255) /* t_string */
+  source_url        VARCHAR(255) /* t_string */,
+  district          VARCHAR(255)
   ,
   PRIMARY KEY(address_id),
   CHECK(address_id IS NOT NULL),
@@ -676,7 +694,7 @@ CREATE TABLE job_history (
   object_version INTEGER /* t_int */,
   job_id         INTEGER /* t_id */,
   actor_id       INTEGER /* t_id */,
-  faction        VARCHAR(50) /* t_tinystring */, /* Sybase : action */
+  action         VARCHAR(50) /* t_tinystring */, /* Sybase : action */
   action_date    TIMESTAMP   /* t_datetime */,
   job_status     VARCHAR(50) /* t_tinystring */,
   db_status      VARCHAR(50) /* t_tinystring */ 
@@ -1049,22 +1067,22 @@ CREATE TABLE obj_info (
 /* -------------------- ObjectAcl  -------------------- */
 
 CREATE TABLE object_acl (
-  object_acl_id INTEGER      /* t_id */,
-  sort_key      INTEGER      /* t_int */,
-  faction       VARCHAR(10)  /* t_tinieststring */,
-  object_id     VARCHAR(255) /* t_string */,
-  auth_id       VARCHAR(255) /* t_string */,
+  object_acl_id INTEGER NOT NULL  /* t_id */,
+  sort_key      INTEGER NOT NULL  /* t_int */,
+  action        VARCHAR(10) NOT NULL  /* t_tinieststring */,
+  object_id     INTEGER NOT NULL,
+  auth_id       INTEGER NOT NULL,
   permissions   VARCHAR(50)  /* t_tinystring */
   ,
   PRIMARY KEY (object_acl_id),
-  CHECK(sort_key IS NOT NULL),
-  CHECK(faction IS NOT NULL),
+  CHECK(sort_key  IS NOT NULL),
+  CHECK(action    IS NOT NULL),
   CHECK(object_id IS NOT NULL)
 );
 
 CREATE INDEX obj_acl_sort_key_idx    ON object_acl(sort_key);
 CREATE INDEX obj_acl_object_id_idx   ON object_acl(object_id);
-CREATE INDEX obj_acl_faction_idx     ON object_acl(faction);
+CREATE INDEX obj_acl_action_idx      ON object_acl(action);
 CREATE INDEX obj_acl_auth_id_idx     ON object_acl(auth_id);
 CREATE INDEX obj_acl_permissions_idx ON object_acl(permissions);
 
@@ -1393,6 +1411,111 @@ CREATE VIEW team AS
 
 CREATE VIEW note AS SELECT * FROM document WHERE is_note = 1;
 CREATE VIEW doc  AS SELECT * FROM document WHERE is_note = 0;
+
+
+/* CTags */
+
+CREATE TABLE ctags (
+  entity VARCHAR NOT NULL,
+  ctag  INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX ctag_unique_entity ON ctags(entity);
+
+INSERT INTO ctags (entity) VALUES ('Person'); 
+INSERT INTO ctags (entity) VALUES ('Enterprise');
+INSERT INTO ctags (entity) VALUES ('Date');
+INSERT INTO ctags (entity) VALUES ('Job');
+INSERT INTO ctags (entity) VALUES ('Team');
+
+
+/* Login Token */
+
+CREATE TABLE login_token (
+  token           VARCHAR(4096) PRIMARY KEY,
+  account_id      INT   NOT NULL,
+  environment     TEXT  NULL,
+  info            TEXT  NULL,
+
+  creation_date   TIMESTAMP WITH TIME ZONE /*DEFAULT NOW()*/ NOT NULL,
+  touch_date      TIMESTAMP WITH TIME ZONE /*DEFAULT NOW()*/ NOT NULL,
+
+  timeout         INT DEFAULT 3600 NOT NULL,
+  expiration_date TIMESTAMP WITH TIME ZONE NULL
+);
+
+
+/* Views */
+
+/* TBD: we should probably include the full join info (ie company data) */
+CREATE VIEW employment AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS enterprise_id,
+    ca.sub_company_id AS person_id,
+    ca.is_headquarter, ca.is_chief, ca."function",
+    ca.db_status,
+    ca.start_date, ca.end_date
+  FROM company_assignment ca
+  INNER JOIN enterprise e USING (company_id)
+  INNER JOIN person     p ON (p.company_id = ca.sub_company_id);
+
+CREATE VIEW company_hierarchy AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS parent_id,
+    ca.sub_company_id AS company_id,
+    ca.is_headquarter, ca.is_chief, ca."function",
+    ca.db_status,
+    ca.start_date AS start_date, ca.end_date AS end_date
+  FROM company_assignment ca
+  INNER JOIN enterprise e1 USING (company_id)
+  INNER JOIN enterprise e2 ON (e2.company_id = ca.sub_company_id);
+
+CREATE VIEW team_membership AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS team_id,
+    ca.sub_company_id AS person_id,
+    ca.is_headquarter, ca.is_chief, ca."function",
+    ca.db_status,
+    ca.start_date AS start_date, ca.end_date AS end_date
+  FROM company_assignment ca
+  INNER JOIN team   t USING (company_id)
+  INNER JOIN person p ON (p.company_id = ca.sub_company_id);
+
+CREATE VIEW team_hierarchy AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS parent_id,
+    ca.sub_company_id AS team_id,
+    ca.is_headquarter, ca.is_chief, ca."function",
+    ca.db_status,
+    start_date, end_date
+  FROM company_assignment ca
+  INNER JOIN team t1 USING (company_id)
+  INNER JOIN team t2 ON (t2.company_id = ca.sub_company_id);
+
+CREATE VIEW project_teams AS
+  SELECT pca.*
+  FROM project_company_assignment pca
+  JOIN team e USING (company_id);
+
+CREATE VIEW project_persons AS
+  SELECT pca.*
+  FROM project_company_assignment pca
+  JOIN person p USING (company_id);
+
+CREATE VIEW project_companies AS
+  SELECT pca.*
+  FROM project_company_assignment pca
+  JOIN enterprise e USING (company_id);
+
+CREATE VIEW project_acl AS
+  SELECT pca.*
+  FROM project_company_assignment pca
+  WHERE has_access = 1;
+
 
 
 INSERT INTO company (company_id, login, name, description, is_account, 
