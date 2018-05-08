@@ -53,7 +53,7 @@ import org.getobjects.foundation.UString;
 import org.getobjects.jaas.EODatabaseLoginModule;
 import org.opengroupware.logic.db.OGoDatabase;
 import org.opengroupware.logic.db.OGoLoginToken;
-import org.postgresql.util.UnixCrypt;
+import org.apache.commons.codec.digest.UnixCrypt;
 
 /**
  * OGoLoginModule
