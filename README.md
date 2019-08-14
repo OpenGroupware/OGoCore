@@ -17,7 +17,7 @@ but the OGo database schema itself has quite some bit-rust :-)
 But if you still have OGo databases deployed, this can be a good starting point
 to put new life into them.
 
-###Implementation
+### Implementation
 
 The implementation of OGoCore is focused on high performance. Stuff which used
 to be slow in Objective-C OGo is really fast in OGo/J. Plenty of queries have
@@ -31,7 +31,7 @@ handling and such are pretty limited.
 Things which work well and have been tested in production systems are contacts,
 projects and todos.
 
-###Source
+### Source
 
 The interesting package is org.opengroupware.logic.
 
