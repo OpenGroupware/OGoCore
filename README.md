@@ -1,15 +1,13 @@
 # OGoCore
 
-Section: H's Computer History Museum
-
 OGoCore is a Java implementation of the
-[OpenGroupware.org](http://www.opengroupware.org/en/index.html)
+[OpenGroupware.org](http://www.opengroupware.org/en/)
 server application logic.
 This is just the functionality wrapped around an OGo database:
 it provides a Java API,
 it does *not* include a user interface or web API.
 
-Is it useful for you? Quite likely not :-)
+Is it useful for you? Maybe it is!
 
 OGo/J is a pretty neat implementation of OGo (which is complex and quite
 powerful),
@@ -107,3 +105,7 @@ The OGo/J ops are highly optimized as well. Bulk inserts and bulk updates are
 efficiently ordered by type, ACLs are checked in bulk, etc.
 Again the API is a bit complex to support this, but there are convenience
 methods to make easy cases easy to deal with.
+
+### Contact
+
+[@helge@mastodon.social](https://mastodon.social/@helge)
