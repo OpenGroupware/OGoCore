@@ -443,7 +443,8 @@ public class OGoLoginModule extends EODatabaseLoginModule {
       pwdHash = "{md5}" + UString.md5HashForString(_pwd);
     else {
       /* crypt password */
-      pwdHash = UnixCrypt.crypt(storedPwdHash, _pwd);
+      // TBD: why is that?
+      pwdHash = UnixCrypt.crypt(_pwd, storedPwdHash);
     }
     
     
