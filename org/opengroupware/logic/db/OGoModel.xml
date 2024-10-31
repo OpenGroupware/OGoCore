@@ -374,7 +374,7 @@
     <!-- unstructured contact attachments -->
     <attribute name="associatedContacts"  column="associated_contacts"
                type="VARCHAR"             width="255"  />
-    <attribute name="associatedCompanies" column="associated_companies"
+    <attribute name="associatedCompanies" column="associated_company"
                type="VARCHAR"             width="255"  />
     
     <!-- derived other columns from the information schema -->
@@ -678,7 +678,7 @@
     <!-- unstructured contact attachments -->
     <attribute name="associatedContacts"  column="associated_contacts"
                type="VARCHAR"             width="255"  />
-    <attribute name="associatedCompanies" column="associated_companies"
+    <attribute name="associatedCompanies" column="associated_company"
                type="VARCHAR"             width="255"  />
     
     <!-- derived other columns from the information schema -->
