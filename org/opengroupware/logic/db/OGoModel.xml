@@ -149,7 +149,7 @@
           restrictingQualifier="isAccount = 1"
   >
     <attribute name="id"             column="company_id"     />
-    <attribute name="objectVersion" column="object_version" />
+    <attribute name="objectVersion"  column="object_version" />
     <attribute name="ownerId"        column="owner_id"       />
 
     <attribute name="login"             column="login"     />
@@ -171,7 +171,7 @@
 
     <to-one  name="person"          to="Persons"  join="id,id" />
     <to-one  name="accountTemplate" to="Accounts" join="templateUserId,id" />
-    <to-many name="teamMemberships" to="TeamMemberships" join="id,personId" />
+    <to-many name="teamMemberships" to="TeamMemberships" join="id,teamId" />
     <to-many name="acl"             to="ACLEntries"   join="id,objectId" />
     
     <!-- fetch specifications -->
@@ -1271,7 +1271,7 @@
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
     
-    <to-one name="team"    to="Teams"    join="companyId,id" />
+    <to-one name="team"    to="Teams"    join="teamId,id" />
     <to-one name="person"  to="Persons"  join="personId,id" />
     <to-one name="account" to="Accounts" join="personId,id" />
 
@@ -1293,8 +1293,8 @@
     <attribute name="function"  column="function"      />
     <attribute name="isChief"   column="is_chief"      />
     
-    <attribute name="startDate"    column="start_date"   />
-    <attribute name="endDate"      column="end_date"     />
+    <attribute name="startDate" column="start_date"   />
+    <attribute name="endDate"   column="end_date"     />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
