@@ -74,7 +74,7 @@
     <!-- can be NULL? -->
     <attribute name="accountId" column="account_id"    type="INT" />
     
-    <!-- eg: 00_created, 05_changed, 10_archived, created -->
+    <!-- eg: 00_created, 05_changed, 10_archived, created, download -->
     <attribute name="action"  column="action"
                type="VARCHAR" width="100"  />
     
@@ -1905,10 +1905,16 @@
   </entity>
   
 
+  <!--
+    This associates "actions" with jobs,
+    it tracks status changes, when the action was performed,
+    and an optional comment (TaskNoteComments).
+    The comment is in a separate table for legacy reasons (BLOB).
+    -->
   <entity name="TaskNotes" table="job_history" primarykey="id"
           class="OGoTaskNote" datasource="OGoDataSource">
     <attribute name="id"             column="job_history_id" type="INT" />
-    <attribute name="objectVersion" column="object_version" type="INT" />
+    <attribute name="objectVersion"  column="object_version" type="INT" />
     <attribute name="dbStatus"       column="db_status"
                type="VARCHAR"        width="50"  />
 
@@ -1931,10 +1937,15 @@
     <!-- fetch specification -->
   </entity>
   
+  <!--
+    The TEXT comment for a `TaskNotes` record.
+  
+    The comment is in a separate table for legacy reasons (BLOB).
+    -->
   <entity name="TaskNoteComments" table="job_history_info" primarykey="id"
           class="OGoObject" datasource="OGoDataSource">
     <attribute name="id"       column="job_history_info_id" type="INT" />
-    <attribute name="noteId"   column="job_history_id" type="INT" />
+    <attribute name="noteId"   column="job_history_id"      type="INT" />
     <attribute name="dbStatus" column="db_status"
                type="VARCHAR"  width="50"  />
     <attribute name="comment"  column="comment" type="TEXT" />
