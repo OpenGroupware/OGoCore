@@ -218,9 +218,9 @@
          (just use description? or maybe 'cn' [commonName]).
       -->
     <attribute name="name"           column="description" />
-    <attribute name="login"          column="login" />
+    <attribute name="login" />
 
-    <attribute name="email"          column="email" />
+    <attribute name="email" />
 
     <attribute name="isPrivate"      column="is_private"  />
     <attribute name="isReadOnlyFlag" column="is_readonly" />
@@ -229,6 +229,15 @@
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+    <attribute name="isIntraTeam"    column="is_intra_account" />
+    <attribute name="isExtraTeam"    column="is_extra_account" />
+    <attribute name="isLocked"       column="is_locked" />
+
+    <attribute name="pop3Account"     column="pop3_account"     />
+    <attribute name="sourceURL"       column="source_url"       />
+    <attribute name="directoryServer" column="dir_server"       />
+    <attribute name="emailAlias"      column="email_alias"      />
+    <attribute name="freebusyURL"     column="freebusy_url"     />
     
     <!-- relationships -->
 
@@ -330,23 +339,33 @@
     <attribute name="nameTitle"      column="name_title" />
     <attribute name="nameAffix"      column="name_affix" />
     
-    <attribute name="email"          column="email"       />
+    <attribute name="email" />
+    <attribute name="imAddress"      column="im_address" />
 
-    <attribute name="login"          column="login"       />
-    <attribute name="number"         column="number"      />
-    <attribute name="type"           column="type"        />
+    <attribute name="login"  />
+    <attribute name="number" />
+    <attribute name="type"   />
 
-    <attribute name="contactId"      column="contact_id"  />
+    <attribute name="contactId"       column="contact_id"  />
 
-    <attribute name="isPrivate"      column="is_private"  />
-    <attribute name="isReadOnlyFlag" column="is_readonly" />
-    <attribute name="isAccount"      column="is_account"  />
-    <attribute name="isPerson"       column="is_person"   />
-    <!-- TODO: add necessary attributes -->
+    <attribute name="isPrivate"       column="is_private"       />
+    <attribute name="isReadOnlyFlag"  column="is_readonly"      />
+    <attribute name="isAccount"       column="is_account"       />
+    <attribute name="isIntraAccount"  column="is_intra_account" />
+    <attribute name="isExtraAccount"  column="is_extra_account" />
+    <attribute name="isTemplateUser"  column="is_template_user" />
+    <attribute name="isLocked"        column="is_locked"        />
+    <attribute name="isCustomer"      column="is_customer"      />
+    <attribute name="isPerson"        column="is_person"        />
+
+    <attribute name="sourceURL"       column="source_url"       />
+    <attribute name="directoryServer" column="dir_server"       />
+    <attribute name="emailAlias"      column="email_alias"      />
+    <attribute name="freebusyURL"     column="freebusy_url"     />
     
-    <attribute name="salutation"     column="salutation"  />
-    <attribute name="degree"         column="degree"      />
-    <attribute name="sex"            column="sex"         />
+    <attribute name="salutation" />
+    <attribute name="degree"     />
+    <attribute name="sex"        />
     <!-- TBD: sensitivity (could be exposed as a red banner? :-) -->
     <!-- TBD: priority -->
 
@@ -657,8 +676,9 @@
     <attribute name="ownerId"        column="owner_id"       />
 
     <attribute name="name"           column="description" />
-    <attribute name="number"         column="number"      />
-    <attribute name="email"          column="email"       />
+    <attribute name="number"         />
+    <attribute name="email"          />
+    <attribute name="imAddress"      column="im_address"  />
 
     <attribute name="type"           column="type"        />
 
@@ -667,10 +687,10 @@
     <attribute name="isPrivate"      column="is_private"    />
     <attribute name="isReadOnlyFlag" column="is_readonly"   />
     <attribute name="isCompany"      column="is_enterprise" />
-    <!-- TODO: add necessary attributes -->
+    <attribute name="isCustomer"     column="is_customer"   />
 
     <!-- tag names separated by comma -->
-    <attribute name="keywords"       column="keywords" />
+    <attribute name="keywords"       column="keywords"       />
 
     <attribute name="bankCode"       column="bank_code"      />
     <attribute name="bankAccount"    column="account"        />
@@ -683,6 +703,8 @@
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+
+    <attribute name="sourceURL"          column="source_url" />
 
     
     <!-- relationships -->
@@ -862,16 +884,17 @@
            restrictingQualifier="isCompanyProject != 1"
          This can break permission fetches.
       -->
-    <attribute name="id"             column="project_id" />
+    <attribute name="id"             column="project_id"     />
     <attribute name="objectVersion"  column="object_version" />
     <attribute name="dbStatus"       column="db_status"
-               type="VARCHAR"        width="50"  />
+               type="VARCHAR"        width="50"              />
 
-    <attribute name="code"           column="number"     />
-    <attribute name="ownerId"        column="owner_id"   />
-    <attribute name="teamId"         column="team_id"    />
+    <attribute name="code"           column="number"            />
+    <attribute name="ownerId"        column="owner_id"          />
+    <attribute name="teamId"         column="team_id"           />
+    <attribute name="parentId"       column="parent_project_id" />
     
-    <attribute name="name"           column="name" />
+    <attribute name="name"           column="name"              />
 
     <attribute name="startDate"      column="start_date" />
     <attribute name="endDate"        column="end_date"   />
@@ -880,6 +903,8 @@
     <attribute name="status"         column="status"     />
     <attribute name="type"           column="kind"       />
 
+    <!-- when companies are created, they get a special project created 
+         alongside them -->
     <attribute name="isCompanyProject" column="is_fake" />
 
     <!-- eg: skyrix://move/, file:///home/helge/OGoRoot/SkyFileSystem/10990 -->
@@ -1104,6 +1129,8 @@
     <attribute name="id"             column="project_company_assignment_id" />
     <attribute name="companyId"      column="company_id" />
     <attribute name="projectId"      column="project_id" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"              />
 
     <!-- this specifies whether the companyId has access to the project or
          whether its an 'informational' attachment (eg associated company)
@@ -1112,10 +1139,12 @@
     <attribute name="hasAccess"      column="has_access" />
     <attribute name="permissions"    column="access_right" /> <!-- eg 'iwdr' -->
 
-    <attribute name="info"           column="info" />
-    
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+    <attribute name="info" />
+
+    <attribute name="startDate"      column="start_date" />
+    <attribute name="endDate"        column="end_date"   />
 
     <!-- relationships -->
 
@@ -1141,12 +1170,15 @@
       </qualifier>
     </fetch>
   </entity>
+  <!-- SQL View/Join on project_company_assignment, new in 5.4 -->
   <entity name="ProjectTeams" table="project_teams" readonly="true"
           class="OGoProjectMembership" primarykey="id"
           datasource="OGoDataSource">
     <attribute name="id"             column="project_company_assignment_id" />
     <attribute name="companyId"      column="company_id" />
     <attribute name="projectId"      column="project_id" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"          />
 
     <!-- this specifies whether the companyId has access to the project or
          whether its an 'informational' attachment (eg associated company)
@@ -1155,10 +1187,10 @@
     <attribute name="hasAccess"      column="has_access" />
     <attribute name="permissions"    column="access_right" /> <!-- eg 'iwdr' -->
 
-    <attribute name="info"           column="info" />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+    <attribute name="info" />
 
     <!-- relationships -->
 
@@ -1179,21 +1211,26 @@
       </qualifier>
     </fetch>
   </entity>
+  <!-- SQL View on project_company_assignment, new in 5.4 schema -->
   <entity name="ProjectPersons" table="project_persons" readonly="true"
           class="OGoProjectMembership" primarykey="id"
           datasource="OGoDataSource">
     <attribute name="id"             column="project_company_assignment_id" />
     <attribute name="companyId"      column="company_id" />
     <attribute name="projectId"      column="project_id" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"          />
 
     <!-- this specifies whether the companyId has access to the project or
          whether its an 'informational' attachment (eg associated company)
          Hm, but this is already tracked by permissions != ''?!
       -->
-    <attribute name="hasAccess"      column="has_access" />
+    <attribute name="hasAccess"      column="has_access"   />
     <attribute name="permissions"    column="access_right" /> <!-- eg 'iwdr' -->
 
-    <attribute name="info"           column="info" />
+    <attribute name="info" />
+    <attribute name="startDate"      column="start_date" />
+    <attribute name="endDate"        column="end_date"   />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
@@ -1217,12 +1254,15 @@
       </qualifier>
     </fetch>
   </entity>
+  <!-- SQL View on project_company_assignment, new in 5.4 schema -->
   <entity name="ProjectCompanies" table="project_companies" readonly="true"
           class="OGoProjectMembership" primarykey="id"
           datasource="OGoDataSource">
     <attribute name="id"             column="project_company_assignment_id" />
     <attribute name="companyId"      column="company_id" />
     <attribute name="projectId"      column="project_id" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
 
     <!-- this specifies whether the companyId has access to the project or
          whether its an 'informational' attachment (eg associated company)
@@ -1231,7 +1271,9 @@
     <attribute name="hasAccess"      column="has_access" />
     <attribute name="permissions"    column="access_right" /> <!-- eg 'iwdr' -->
 
-    <attribute name="info"           column="info" />
+    <attribute name="info" />
+    <attribute name="startDate"      column="start_date" />
+    <attribute name="endDate"        column="end_date"   />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
@@ -1260,16 +1302,19 @@
 
   <!-- Contact Relationships -->  
   
+  <!-- SQL View on company_assignment, new in 5.4 schema -->
   <entity name="TeamMemberships" table="team_membership"
           primarykey="id" flags="readonly" 
           class="OGoTeamMembership" datasource="OGoDataSource">
     <attribute name="id"        column="company_assignment_id" />
     <attribute name="teamId"    column="team_id"   />
     <attribute name="personId"  column="person_id" />
-    <attribute name="function"  column="function"  />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+    <attribute name="dbStatus"  column="db_status"
+               type="VARCHAR"   width="50"  />
+    <attribute name="function" />
     
     <to-one name="team"    to="Teams"    join="teamId,id" />
     <to-one name="person"  to="Persons"  join="personId,id" />
@@ -1285,13 +1330,16 @@
     </fetch>
   </entity>
 
+  <!-- SQL View on company_assignment, new in 5.4 schema -->
   <entity name="Employments" table="employment" primarykey="id"
           class="OGoEmployment" datasource="OGoDataSource">
     <attribute name="id"        column="company_assignment_id" />
     <attribute name="companyId" column="enterprise_id" />
     <attribute name="personId"  column="person_id"     />
-    <attribute name="function"  column="function"      />
+    <attribute name="function" />
     <attribute name="isChief"   column="is_chief"      />
+    <attribute name="dbStatus"  column="db_status"
+               type="VARCHAR"   width="50"  />
     
     <attribute name="startDate" column="start_date"   />
     <attribute name="endDate"   column="end_date"     />
@@ -1325,12 +1373,15 @@
     </fetch>
   </entity>
   
+  <!-- SQL View on company_assignment, new in 5.4 schema -->
   <entity name="CompanyRelationships" table="company_hierarchy" primarykey="id"
           class="OGoCompanyRelationship" datasource="OGoDataSource">
     <attribute name="id"           column="company_assignment_id" />
     <attribute name="parentId"     column="parent_id" />
     <attribute name="companyId"    column="company_id"     />
     <attribute name="function"     column="function"      />
+    <attribute name="dbStatus"  column="db_status"
+               type="VARCHAR"   width="50"  />
     
     <attribute name="startDate"    column="start_date"    />
     <attribute name="endDate"      column="end_date"      />
@@ -1441,20 +1492,21 @@
       -->
     <attribute name="key" column="type" type="VARCHAR" width="50" />
 
-    <attribute name="name1"    type="VARCHAR" width="255" />
-    <attribute name="name2"    type="VARCHAR" width="255" />
-    <attribute name="name3"    type="VARCHAR" width="255" />
-    <attribute name="street"   type="VARCHAR" width="255" />
-    <attribute name="zip"      type="VARCHAR" width="50" />
-    <attribute name="city"     column="zipcity" type="VARCHAR" width="255" />
-    <attribute name="country"  type="VARCHAR" width="100" />
-    <attribute name="state"    type="VARCHAR" width="100" />
-    <attribute name="district" type="VARCHAR" width="100" />
-    <!-- db_status, source_url -->
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
-    
+    <attribute name="name1"     type="VARCHAR" width="255" />
+    <attribute name="name2"     type="VARCHAR" width="255" />
+    <attribute name="name3"     type="VARCHAR" width="255" />
+    <attribute name="street"    type="VARCHAR" width="255" />
+    <attribute name="zip"       type="VARCHAR" width="50" />
+    <attribute name="city"      column="zipcity" type="VARCHAR" width="255" />
+    <attribute name="country"   type="VARCHAR" width="100" />
+    <attribute name="state"     type="VARCHAR" width="100" />
+    <attribute name="district"  type="VARCHAR" width="100" />
+
+    <attribute name="sourceURL" column="source_url" />
+
     <!-- relationships -->
 
     <to-one name="person" to="Persons" join="companyId,id" />
@@ -1496,19 +1548,20 @@
       -->
     <attribute name="key" column="type" type="VARCHAR" width="50" />
 
-    <attribute name="name1"   type="VARCHAR" width="255" />
-    <attribute name="name2"   type="VARCHAR" width="255" />
-    <attribute name="name3"   type="VARCHAR" width="255" />
-    <attribute name="street"  type="VARCHAR" width="255" />
-    <attribute name="zip"     type="VARCHAR" width="50" />
-    <attribute name="city"    column="zipcity" type="VARCHAR" width="255" />
-    <attribute name="country" type="VARCHAR" width="100" />
-    <attribute name="state"   type="VARCHAR" width="100" />
-    <!-- db_status, source_url -->
+    <attribute name="name1"     type="VARCHAR" width="255" />
+    <attribute name="name2"     type="VARCHAR" width="255" />
+    <attribute name="name3"     type="VARCHAR" width="255" />
+    <attribute name="street"    type="VARCHAR" width="255" />
+    <attribute name="zip"       type="VARCHAR" width="50" />
+    <attribute name="city"      column="zipcity" type="VARCHAR" width="255" />
+    <attribute name="country"   type="VARCHAR" width="100" />
+    <attribute name="state"     type="VARCHAR" width="100" />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
     
+    <attribute name="sourceURL" column="source_url"       />
+
     <!-- relationships -->
 
     <to-one name="company" to="Companies" join="companyId,id" />
@@ -1597,22 +1650,15 @@
     <attribute name="accessTeamId"    column="access_team_id" type="INT" />
     <attribute name="writeAccessList" column="write_access_list"
                type="VARCHAR"         width="255"  />
+               
+    <attribute name="isAbsence"       column="is_absence"     type="INT" />
+    <attribute name="isAttendance"    column="is_attendance"  type="INT" />
 
-    <!-- 
-      unused:
-        absence
-        is_absence
-        is_attendance
-                                calendar_name  VARCHAR(255)
-                                source_url     VARCHAR(255)
-                                busy_type      smallint
-                                evo_reminder   VARCHAR(255)
-                                ol_reminder    VARCHAR(255)
-        online_meeting VARCHAR(255)
-      -->
-    
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+    <attribute name="calendarName"    column="calendar_name"  />
+    <attribute name="onlineMeeting"   column="online_meeting" /> <!-- URL? -->
+    <attribute name="sourceURL"       column="source_url"     />
 
     <!-- relationships -->
     <to-one  name="owner"       to="Persons"      join="ownerId,id"      />
@@ -1667,9 +1713,9 @@
     
     <!-- core data -->
     <attribute name="status"  column="partstatus" type="VARCHAR" width="50"  />
-    <attribute name="role"    column="role"       type="VARCHAR" width="50"  />
-    <attribute name="comment" column="comment"    type="VARCHAR" width="255" />
-    <attribute name="rsvp"    column="rsvp"       type="SMALLINT"/>
+    <attribute name="role"    type="VARCHAR" width="50"  />
+    <attribute name="comment" type="VARCHAR" width="255" />
+    <attribute name="rsvp"    type="SMALLINT"/>
     
     <!-- join -->
     <attribute name="companyId"      column="company_id" type="INT"      />
@@ -1735,15 +1781,17 @@
     <attribute name="priority"       column="priority"    type="SMALLINT" />
                
     <!-- notification -->
-    <!--  TODO: notify_x INT 
+    <!--
       0-no notify
       1-always notify
       2-notify-on-done/accept
     -->
+    <attribute name="notifictionType" column="notify_x"   type="SMALLINT" />
     
     <!-- contact references -->
     <attribute name="creatorId"      column="creator_id"       type="INT" />
-    <attribute name="ownerId"        column="executant_id"     type="INT" />
+    <attribute name="ownerId"        column="owner_id"         type="INT" />
+    <attribute name="executantId"    column="executant_id"     type="INT" />
     <attribute name="isOwnerTeam"    column="is_team_job"      type="INT" />
     
     <!-- projects -->
@@ -1767,11 +1815,12 @@
 
     <!--
       unused:
-                                parent_job_id  INT
-                                is_control_job SMALLINT
                                 is_new         SMALLINT
-        source_url     VARCHAR(255)
       -->
+    <attribute name="parentId"       column="parent_job_id"    type="INT" />
+    <attribute name="isControlTask"  column="is_control_job"   type="INT" />
+
+    <attribute name="sourceURL"      column="source_url" />
 
                 <!-- relationships -->
                 
@@ -1974,6 +2023,8 @@
     <attribute name="id"             column="document_editing_id" type="INT" />
     <attribute name="documentId"     column="document_id"      type="INT" />
     <attribute name="objectVersion" column="object_version"   type="INT" />
+    <attribute name="dbStatus"       column="db_status"
+               type="VARCHAR"        width="50"  />
 
     <attribute name="filename" column="title"     type="VARCHAR" />
     <attribute name="fileext"  column="file_type" type="VARCHAR" />
@@ -1984,6 +2035,9 @@
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+    <attribute name="isAttachmentChanged" column="is_attach_changed" />
+    <attribute name="checkoutDate"        column="checkout_date" />
+    <attribute name="checkoutDate"        column="checkout_date" />
 
     <!-- relationships -->
     <to-one  name="owner"    to="Persons"   join="ownerId,id" />
@@ -2011,8 +2065,11 @@
   <entity name="DocumentVersions" table="document_version" primarykey="id"
           class="OGoDocumentEditing"
   >
-    <attribute name="id"             column="document_version_id" type="INT" />
-    <attribute name="documentId"     column="document_id"         type="INT" />
+    <attribute name="id"            column="document_version_id" type="INT" />
+    <attribute name="documentId"    column="document_id"         type="INT" />
+    <attribute name="objectVersion" column="object_version"      type="INT" />
+    <attribute name="dbStatus"      column="db_status"
+               type="VARCHAR"       width="50"  />
 
     <attribute name="filename" column="title"     type="VARCHAR" />
     <attribute name="fileext"  column="file_type" type="VARCHAR" />
@@ -2023,6 +2080,8 @@
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+    <attribute name="isPacked"   column="is_packed"   type="INT" />
+    <attribute name="changeText" column="change_text" type="VARCHAR" />
     
     <!-- relationships -->
     <to-one  name="owner"    to="Persons"    join="ownerId,id" />
@@ -2050,17 +2109,17 @@
   <entity name="Notes" table="note" primarykey="id"
           class="OGoNote" datasource="OGoNotes"
   >
-    <attribute name="id"             column="document_id"       type="INT" />
-    <attribute name="objectVersion"  column="object_version"    type="INT" />
-    <attribute name="versionCount"   column="version_count"     type="INT" />
+    <attribute name="id"            column="document_id"    type="INT" />
+    <attribute name="objectVersion" column="object_version" type="INT" />
+    <attribute name="versionCount"  column="version_count"  type="INT" />
 
-    <attribute name="creationDate"   column="creation_date"
+    <attribute name="creationDate"  column="creation_date"
                type="TIMESTAMP WITH TIME ZONE" />
-    <attribute name="lastModified"   column="lastmodified_date"
+    <attribute name="lastModified"  column="lastmodified_date"
                type="TIMESTAMP WITH TIME ZONE" />
 
-    <attribute name="dbStatus"       column="db_status"
-               type="VARCHAR"        width="50"  />
+    <attribute name="dbStatus"      column="db_status"
+               type="VARCHAR"       width="50"  />
 
     <attribute name="filename" column="title"     type="VARCHAR" />
     <attribute name="fileext"  column="file_type" type="VARCHAR" />
@@ -2071,15 +2130,16 @@
          regular file or a note, the note becomes a 'comment'. -->
     <attribute name="parentId"  column="parent_document_id" type="INT" />
 
-    <attribute name="creatorId" column="first_owner_id"   type="INT" />
-    <attribute name="ownerId"   column="current_owner_id" type="INT" />
-    
-    <attribute name="projectId" column="project_id"       type="INT" />
-    <attribute name="eventId"   column="date_id"          type="INT" />
-    <attribute name="companyId" column="company_id"       type="INT" />
+    <attribute name="creatorId" column="first_owner_id"     type="INT" />
+    <attribute name="ownerId"   column="current_owner_id"   type="INT" />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+    <attribute name="projectId" column="project_id"         type="INT" />
+    <attribute name="eventId"   column="date_id"            type="INT" />
+    <attribute name="companyId" column="company_id"         type="INT" />
+
+    <attribute name="isNote" column="is_note" type="INT" />
 
     <!-- relationships -->
     <to-one  name="creator"  to="Persons"          join="creatorId,id"  />
@@ -2088,9 +2148,9 @@
     <to-one  name="editing"  to="DocumentEditings" join="id,documentId" />
     <to-many name="versions" to="DocumentVersions" join="id,documentId" />
 
-    <to-one  name="event"    to="Events"           join="eventId,id" />
-    <to-one  name="person"   to="Persons"          join="companyId,id" />
-    <to-one  name="company"  to="Companies"        join="companyId,id" />
+    <to-one  name="event"    to="Events"           join="eventId,id"    />
+    <to-one  name="person"   to="Persons"          join="companyId,id"  />
+    <to-one  name="company"  to="Companies"        join="companyId,id"  />
 
     <to-many name="acl"      to="ACLEntries"       join="id,objectId" />
 
