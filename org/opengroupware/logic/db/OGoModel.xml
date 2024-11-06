@@ -2062,7 +2062,7 @@
   </entity>
 
   <entity name="DocumentVersions" table="document_version" primarykey="id"
-          class="OGoDocumentEditing"
+          class="OGoDocumentVersion"
   >
     <attribute name="id"            column="document_version_id" type="INT" />
     <attribute name="documentId"    column="document_id"         type="INT" />
