@@ -1669,7 +1669,7 @@
     <attribute name="status"  column="partstatus" type="VARCHAR" width="50"  />
     <attribute name="role"    column="role"       type="VARCHAR" width="50"  />
     <attribute name="comment" column="comment"    type="VARCHAR" width="255" />
-    <attribute name="rsvp"    column="rsvp"       type="SMALLINT "/>
+    <attribute name="rsvp"    column="rsvp"       type="SMALLINT"/>
     
     <!-- join -->
     <attribute name="companyId"      column="company_id" type="INT"      />
