@@ -2037,7 +2037,6 @@
     <attribute columnNameLike="*" />
     <attribute name="isAttachmentChanged" column="is_attach_changed" />
     <attribute name="checkoutDate"        column="checkout_date" />
-    <attribute name="checkoutDate"        column="checkout_date" />
 
     <!-- relationships -->
     <to-one  name="owner"    to="Persons"   join="ownerId,id" />
