@@ -250,6 +250,8 @@ public abstract class OGoObject extends EOActiveRecord implements IOGoObject {
         this.takeValueForKey(now, "creationDate");
       if (lEntity.attributeNamed("lastmodified_date") != null)
         this.takeValueForKey(now, "lastmodified_date");
+      if (lEntity.attributeNamed("lastModified") != null)
+        this.takeValueForKey(now, "lastModified");
     }
     
     return null; /* no errors */
@@ -271,9 +273,12 @@ public abstract class OGoObject extends EOActiveRecord implements IOGoObject {
         this.takeValueForKey("updated", "db_status");
 
       Date now = new Date();
+      if (lEntity.attributeNamed("lastModified") != null)
+        this.takeValueForKey(now, "lastModified");
       if (lEntity.attributeNamed("lastmodified_date") != null)
         this.takeValueForKey(now, "lastmodified_date");
       if (lEntity.attributeNamed("lastmodified") != null)
+        // hh(2024-11-12): Who is using this for what?
         this.takeValueForKey(now.getTime(), "lastmodified");
     }
     
