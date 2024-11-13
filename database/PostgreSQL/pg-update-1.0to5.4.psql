@@ -89,8 +89,7 @@ CREATE VIEW employment AS
     ca.sub_company_id AS person_id,
     ca.is_headquarter, ca.is_chief, ca."function",
     ca.db_status,
-    ca.start_date, ca.end_date,
-    ca.hoursperweek
+    ca.start_date, ca.end_date
   FROM company_assignment ca
   INNER JOIN enterprise e USING (company_id)
   INNER JOIN person     p ON (p.company_id = ca.sub_company_id);
@@ -99,12 +98,12 @@ CREATE RULE employment_add AS ON INSERT TO employment DO INSTEAD
   INSERT INTO company_assignment (
     company_assignment_id, company_id, sub_company_id,
     is_headquarter, is_chief, "function", db_status,
-    start_date, end_date, hoursperweek
+    start_date, end_date
   )
   VALUES (
     new.company_assignment_id, new.enterprise_id, new.person_id,
     new.is_headquarter, new.is_chief, new."function", new.db_status,
-    new.start_date, new.end_date, new.hoursperweek
+    new.start_date, new.end_date
   );
 
 CREATE RULE employment_set AS ON UPDATE TO employment DO INSTEAD
@@ -116,8 +115,7 @@ CREATE RULE employment_set AS ON UPDATE TO employment DO INSTEAD
       "function"     = new."function",
       db_status      = new.db_status,
       start_date     = new.start_date,
-      end_date       = new.end_date,
-      hoursperweek   = new.hoursperweek
+      end_date       = new.end_date
   WHERE company_assignment_id = old.company_assignment_id;
 
 CREATE RULE employment_delete AS ON DELETE TO employment DO INSTEAD
