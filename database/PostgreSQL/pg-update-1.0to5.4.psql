@@ -51,21 +51,24 @@ ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
   UNIQUE ( company_id, type );
 
 -- both do not work on SX:
+-- nor elsewhere, there seems to be a bug in OGo that duplicates `email1` at
+-- least.
 ALTER TABLE telephone ADD CONSTRAINT company_unique_phonetype
   UNIQUE ( company_id, type );
 ALTER TABLE company_value ADD CONSTRAINT company_unique_valuetype
   UNIQUE ( company_id, attribute );
--- =>
+-- => those show dupes
 SELECT T1.company_id, T1.type, T1.telephone_id, T2.telephone_id
-FROM telephone T1 INNER JOIN telephone T2 ON
-( T1.company_id = T2.company_id AND T1.type = T2.type AND
-  NOT (T1.telephone_id = T2.telephone_id) );
+  FROM telephone T1 INNER JOIN telephone T2 
+    ON ( T1.company_id = T2.company_id AND T1.type = T2.type AND
+   NOT (T1.telephone_id = T2.telephone_id) );
 SELECT T1.company_id, T1.attribute, T1.company_value_id, T2.company_value_id
-FROM company_value T1 INNER JOIN company_value T2 ON
-( T1.company_id = T2.company_id AND T1.attribute = T2.attribute AND
+  FROM company_value T1 INNER JOIN company_value T2 
+    ON ( T1.company_id = T2.company_id AND T1.attribute = T2.attribute AND
   NOT (T1.company_value_id = T2.company_value_id) );
 
 
+-- Also in pg-update-1.x-to-5.5.psql
 CREATE TABLE login_token (
   token           VARCHAR(4096) PRIMARY KEY,
   account_id      INT   NOT NULL,
