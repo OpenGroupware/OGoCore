@@ -1,7 +1,9 @@
 -- OpenGroupware.org database schema update script
 -- (C) 2007-2008 Helge Hess
 -- this script updates the OGo database schema from v1.0 to v5.4
-
+-- 2024-11-13:
+-- looks like this doesn't have everything needed,
+-- and pg-update-1.x-to-5.5.psql needs to be run first.
 
 ALTER TABLE object_acl ALTER COLUMN object_id TYPE INT USING object_id::int;
 ALTER TABLE object_acl ALTER COLUMN auth_id   TYPE INT USING auth_id::int;
@@ -21,7 +23,7 @@ ALTER TABLE project_company_assignment
 ALTER TABLE project_company_assignment
  ADD COLUMN end_date   TIMESTAMP WITH TIME ZONE NULL;
 
-
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE company ADD COLUMN birthplace    VARCHAR(255) NULL;
 ALTER TABLE company ADD COLUMN birthname     VARCHAR(255) NULL;
 ALTER TABLE company ADD COLUMN family_status VARCHAR(255) NULL;
@@ -29,18 +31,22 @@ ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
 ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
 
 -- district of a city (eg Magdeburg "Nord")
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE address ADD COLUMN district    VARCHAR(255) NULL;
 
 -- field to connect documents and notes to contacts
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE document ADD COLUMN company_id INT NULL;
 
 -- prepare for project hierarchies
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE project ADD COLUMN parent_project_id INT NULL;
 
 
 -- ensure that a type is used only once per person/company (eg you can only have
 -- one 'bill' address, this is because OGo creates dictionaries based on the
 -- type)
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
   UNIQUE ( company_id, type );
 
