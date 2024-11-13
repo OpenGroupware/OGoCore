@@ -121,7 +121,6 @@ public class OGoDataSource extends EODatabaseDataSource {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public OGoResultSet fetchResultSet() {
     EOFetchSpecification fs = this.fetchSpecification();
-    EOFetchSpecification newFS = null;
     
     EOQualifier q = fs != null ? fs.qualifier() : null;
     if (q != null && q.hasUnresolvedBindings()) {
