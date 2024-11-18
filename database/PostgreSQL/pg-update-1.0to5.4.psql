@@ -1,5 +1,5 @@
 -- OpenGroupware.org database schema update script
--- (C) 2007-2008 Helge Hess
+-- (C) 2007-2024 Helge Hess
 -- this script updates the OGo database schema from v1.0 to v5.4
 -- 2024-11-13:
 -- looks like this doesn't have everything needed,
@@ -254,7 +254,7 @@ CREATE VIEW project_companies AS
 CREATE RULE project_companies_add AS ON INSERT TO project_companies DO INSTEAD
   INSERT INTO project_company_assignment (
     project_company_assignment_id, company_id, project_id, info, has_access,
-    access_right, db_status
+    access_right, db_status, start_date, end_date
   )
   VALUES (
     new.project_company_assignment_id, new.company_id, new.project_id, new.info,
@@ -286,23 +286,28 @@ CREATE VIEW project_acl AS
 
 -- fixup last modified dates / object_version
 
-UPDATE doc  SET object_version    = version_count WHERE object_version    IS NULL;
-UPDATE note SET lastmodified_date = creation_date WHERE lastmodified_date IS NULL;
+UPDATE doc  SET object_version    = version_count 
+ WHERE object_version    IS NULL;
+UPDATE note SET lastmodified_date = creation_date 
+ WHERE lastmodified_date IS NULL;
 
 UPDATE doc
 SET lastmodified_date =
-  (SELECT archive_date FROM document_version WHERE document_version.document_id = doc.document_id ORDER BY version DESC LIMIT 1)
+  (SELECT archive_date FROM document_version 
+   WHERE document_version.document_id = doc.document_id 
+   ORDER BY version DESC LIMIT 1)
 WHERE version_count > 0 AND lastmodified_date IS NULL;
 
 UPDATE job
-SET object_version =
-    (SELECT COUNT(*) FROM job_history WHERE job.job_id = job_history.job_id)
-WHERE object_version IS NULL;
+   SET object_version =
+     (SELECT COUNT(*) FROM job_history WHERE job.job_id = job_history.job_id)
+ WHERE object_version IS NULL;
 
 -- not sure whether last_modified is actually done in Windows time by ZideLook,
 -- this would be from January 1, 1601
 UPDATE job
-SET last_modified = 
+   SET last_modified = 
     (SELECT EXTRACT(EPOCH FROM action_date) FROM job_history 
-     WHERE job.job_id = job_history.job_id ORDER BY action_date DESC LIMIT 1)
-WHERE last_modified IS NULL;
+      WHERE job.job_id = job_history.job_id 
+      ORDER BY action_date DESC LIMIT 1)
+ WHERE last_modified IS NULL;
