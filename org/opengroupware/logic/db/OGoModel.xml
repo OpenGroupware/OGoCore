@@ -151,6 +151,7 @@
     <attribute name="id"             column="company_id"     />
     <attribute name="objectVersion"  column="object_version" />
     <attribute name="ownerId"        column="owner_id"       />
+    <attribute name="dbStatus"       column="db_status"      />
 
     <attribute name="login"             column="login"     />
     <attribute name="password"          column="password"  />
@@ -159,13 +160,19 @@
     <attribute name="email"             column="email"     />
     <attribute name="canChangePassword" column="can_change_password" />
 
-    <attribute name="isPrivate"      column="is_private"  />
-    <attribute name="isReadOnlyFlag"     column="is_readonly" />
-    <attribute name="isAccount"      column="is_account" />
-    <attribute name="isLocked"       column="is_locked" />
+    <attribute name="isPrivate"       column="is_private"  />
+    <attribute name="isReadOnlyFlag"  column="is_readonly" />
+    <attribute name="isAccount"       column="is_account" />
+    <attribute name="isLocked"        column="is_locked" />
 
-    <attribute name="isTemplateUser" column="is_template_user" />
-    <attribute name="templateUserId" column="template_user_id" />
+    <attribute name="isTemplateUser"  column="is_template_user" />
+    <attribute name="templateUserId"  column="template_user_id" />
+    
+    <attribute name="pop3Account"     column="pop3_account"     />
+    <attribute name="sourceURL"       column="source_url"       />
+    <attribute name="directoryServer" column="dir_server"       />
+    <attribute name="emailAlias"      column="email_alias"      />
+    <attribute name="freebusyURL"     column="freebusy_url"     />
     
     <!-- relationships -->
 
