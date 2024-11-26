@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2008 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 

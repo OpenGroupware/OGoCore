@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2014 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -230,7 +230,7 @@ public abstract class OGoObject extends EOActiveRecord implements IOGoObject {
   
   /* saving */
   
-  private static final int one = new Integer(1);
+  private static final int one = Integer.valueOf(1);
   
   @Override
   public Exception validateForInsert() {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2009 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -160,7 +160,7 @@ public class OGoDatabase extends EODatabase
         int ikey = this.nextKey;
         this.keyCount--;
         this.nextKey++;
-        return new Integer(ikey);
+        return Integer.valueOf(ikey);
       }
       
       // hola, SQL inside synchronized, not too good ...
