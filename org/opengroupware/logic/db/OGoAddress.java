@@ -167,7 +167,7 @@ public class OGoAddress extends OGoObject
   /* permissions */
   
   public void applyPermissions(String _perms) {
-    super.applyPermissions(_perms)
+    super.applyPermissions(_perms);
     if (_perms == null || _perms.length() == 0) {
       // TBD: use a special 'forbidden' value
       this.name1   = null;
