@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2008 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -174,7 +174,8 @@ public class OGoTasksStateChange extends OGoOperation {
       values.put("status", newStatus);
       
       values.put("objectVersion", new EORawSQLValue("object_version + 1"));
-      values.put("lastModified",  new Integer((int)(this.now.getTime()/1000)));
+      values.put("lastModified",  
+                 Integer.valueOf((int)(this.now.getTime()/1000)));
       values.put("dbStatus",      "updated");
       
       /* apply status specific changes */
@@ -215,6 +216,6 @@ public class OGoTasksStateChange extends OGoOperation {
     return null /* everything is fine */;
   }
   
-  private static final Integer int0   = new Integer(0);
-  private static final Integer int100 = new Integer(100);
+  private static final Integer int0   = Integer.valueOf(0);
+  private static final Integer int100 = Integer.valueOf(100);
 }

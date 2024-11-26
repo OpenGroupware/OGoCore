@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2008 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -231,7 +231,7 @@ public abstract class OGoOperation extends NSObject implements IOGoOperation {
     if (values == null) values = new HashMap<String, Object>(2);
 
     if (entity.attributeNamed("objectVersion") != null)
-      values.put("objectVersion", new Integer(1));
+      values.put("objectVersion", Integer.valueOf(1));
     if (entity.attributeNamed("dbStatus") != null)
       values.put("dbStatus", "inserted");
     

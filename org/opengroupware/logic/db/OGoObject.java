@@ -266,7 +266,7 @@ public abstract class OGoObject extends EOActiveRecord implements IOGoObject {
     if (lEntity != null) {
       if (lEntity.attributeNamed("objectVersion") != null) {
         int v = NSJavaRuntime.intValueForKey(this, "objectVersion") + 1;
-        this.takeValueForKey(new Integer(v), "objectVersion");
+        this.takeValueForKey(Integer.valueOf(v), "objectVersion");
       }
       
       if (lEntity.attributeNamed("db_status") != null)

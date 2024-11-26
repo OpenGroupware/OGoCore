@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2008-2014 Helge Hess
+  Copyright (C) 2008-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -476,7 +476,7 @@ public class OGoEOInsertOperation extends OGoCompoundOperation
      */
     return null;
   }
-  private final static Number one = new Integer(1);
+  private final static Number one = Integer.valueOf(1);
   
   
   /* do it */
