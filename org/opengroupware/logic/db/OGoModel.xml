@@ -1663,6 +1663,13 @@
 
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
+
+    <!-- This was originally for Outlook/iCal support, but we can reuse that
+         for tags. In iCal this is the `CATEGORIES` column.
+         Tag names separated by comma.
+      -->
+    <attribute name="keywords"        column="keywords" />
+
     <attribute name="calendarName"    column="calendar_name"  />
     <attribute name="onlineMeeting"   column="online_meeting" /> <!-- URL? -->
     <attribute name="sourceURL"       column="source_url"     />
