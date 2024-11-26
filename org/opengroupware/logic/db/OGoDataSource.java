@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2014 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -124,7 +124,7 @@ public class OGoDataSource extends EODatabaseDataSource {
     
     EOQualifier q = fs != null ? fs.qualifier() : null;
     if (q != null && q.hasUnresolvedBindings()) {
-      // TBD: I don't like this crap, this is too hackish
+      // TBD: I don't like this, too hackish
       Object v = NSKeyValueCoding.Utility.valueForKey
         (this.qualifierBindings, "authIds");
       if (v == null) {
@@ -145,8 +145,6 @@ public class OGoDataSource extends EODatabaseDataSource {
     /* perform fetch */
     
     List objects = this.fetchObjects();
-    if (newFS != null)
-      this.setFetchSpecification(fs); /* restore old FS */
     
     if (objects == null)
       return new OGoResultSet(this.consumeLastException());
