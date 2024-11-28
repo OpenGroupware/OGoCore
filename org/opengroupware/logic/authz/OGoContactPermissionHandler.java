@@ -138,7 +138,8 @@ public class OGoContactPermissionHandler extends NSObject implements
 
   @SuppressWarnings("rawtypes")
   public boolean processWithStrictPublic(OGoAuthzFetchContext _ac,
-      EOKeyGlobalID kgid, NSKeyValueCoding object, Object _info) {
+      EOKeyGlobalID kgid, NSKeyValueCoding object, Object _info) 
+  {
     if (object == null && _info == null) {
       if (log.isDebugEnabled())
         log.debug("process contact-gid w/o object/info: " + kgid);
@@ -245,124 +246,14 @@ public class OGoContactPermissionHandler extends NSObject implements
     return true;
   }
 
-  /**
-   * Not implemented.
-   * 
-   * @param _ac
-   * @param kgid
-   * @param object
-   * @param _info
-   * @return
-   */
-  @SuppressWarnings("rawtypes")
+  /* TBD: implement men
   public boolean processWithStrictPrivate(OGoAuthzFetchContext _ac,
-      EOKeyGlobalID kgid, NSKeyValueCoding object, Object _info) {
+      EOKeyGlobalID kgid, NSKeyValueCoding object, Object _info) 
+  {
     // TBD: implement me
-    if (object == null && _info == null) {
-      if (log.isDebugEnabled())
-        log.debug("process contact-gid w/o object/info: " + kgid);
-
-      /* we do NOT have the info for this GID and need to fetch it */
-      _ac.requestFetchOfInfo(this, kgid);
-
-      /* and in case we fetch ACLs, we also fetch the ACLs of this object */
-      _ac.considerFetchOfACL(this, kgid);
-
-      return false; /* pending, need to fetch info */
-    }
-
-    if (log.isDebugEnabled())
-      log.debug("    contact-gid with object/info: " + kgid);
-
-    /* extract relevant fields */
-
-    Boolean isPrivate = null;
-    Boolean isReadOnly = null;
-    Number ownerId = null;
-    Number contactId = null;
-    if (object != null) {
-      // TBD: can we checked whether field was fetched?
-      isPrivate = UObject.boolValue(object.valueForKey("isPrivate"));
-      isReadOnly = UObject.boolValue(object.valueForKey("isReadOnlyFlag"));
-      ownerId = (Number) object.valueForKey("ownerId");
-      contactId = (Number) object.valueForKey("contactId");
-    }
-    if (_info != null) {
-      Map m = (Map) _info;
-
-      if (isPrivate == null)
-        isPrivate = UObject.boolValue(m.get("is_private"));
-      if (isReadOnly == null)
-        isReadOnly = UObject.boolValue(m.get("is_readonly"));
-      if (ownerId == null)
-        ownerId = (Number) m.get("owner_id"); // raw fetches
-      if (contactId == null)
-        contactId = (Number) m.get("contact_id"); // raw fetches
-    }
-
-    /* first we check whether we are the owner */
-
-    if (_ac.contextHasAccountId(ownerId)) {
-      /* Its private, but we are the owner. Hurray! */
-      if (log.isDebugEnabled())
-        log.debug("    DONE: we own the contact: " + kgid);
-      _ac.recordPermissionsForGlobalID(
-          resolveCompoundPermissions(ownerContactPermissions), kgid);
-      return true;
-    }
-
-    /* check whether its public (not marked private) */
-    // TBD: hm
-
-    if (isPrivate == null || !isPrivate.booleanValue()) {
-      /*
-       * yes, isPrivate != 1 => public object, no ACL checks necessary
-       */
-      if (log.isDebugEnabled())
-        log.debug("    DONE: contact is public: " + kgid);
-
-      String perm = (isReadOnly == null || !isReadOnly.booleanValue()) ? publicContactPermissions
-          : publicContactReadOnlyPermissions;
-
-      _ac.recordPermissionsForGlobalID(resolveCompoundPermissions(perm), kgid);
-      return true;
-    }
-
-    /*
-     * ok, its private, we are NOT the owner. Check the ACL to see whether the
-     * owner granted us access
-     */
-
-    String aclPerm = _ac.processACLOfObject(kgid,
-        (object != null) ? (Collection) object.valueForKey("acl") : null);
-    if (aclPerm == null) {
-      _ac.requestFetchOfACL(this, kgid);
-      return false; /* pending, need to fetch ACL */
-    }
-
-    /* give read-access to the contact */
-
-    if (_ac.contextHasPrincipalId(contactId)) {
-      /* Its private, but we are the primary contact */
-      if (log.isDebugEnabled())
-        log.debug("    we are the primary contact: " + kgid);
-      aclPerm = UString.unionCharacterSets(aclPerm, primaryContactPermissions);
-    }
-    if (_ac.contextHasAccountId(kgid.toNumber())) {
-      // TBD: also check teams?
-      /* Its private, but this is us :-) */
-      if (log.isDebugEnabled())
-        log.debug("    DONE: we ARE the contact: " + kgid);
-      aclPerm = UString.unionCharacterSets(aclPerm,
-          authorizedContactPermissions);
-      return true;
-    }
-
-    if (log.isDebugEnabled())
-      log.debug("    DONE: we have the ACL: " + kgid);
-    _ac.recordPermissionsForGlobalID(resolveCompoundPermissions(aclPerm), kgid);
-    return true;
+    // return processWithStrictPublic(_ac, kgid, object, _info);
   }
+  */
 
   /* fetching infos */
 
