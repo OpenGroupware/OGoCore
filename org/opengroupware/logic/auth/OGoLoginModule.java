@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2008-2009 Helge Hess
+  Copyright (C) 2008-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -53,7 +53,7 @@ import org.getobjects.foundation.UString;
 import org.getobjects.jaas.EODatabaseLoginModule;
 import org.opengroupware.logic.db.OGoDatabase;
 import org.opengroupware.logic.db.OGoLoginToken;
-import org.postgresql.util.UnixCrypt;
+import org.apache.commons.codec.digest.UnixCrypt;
 
 /**
  * OGoLoginModule
@@ -443,7 +443,8 @@ public class OGoLoginModule extends EODatabaseLoginModule {
       pwdHash = "{md5}" + UString.md5HashForString(_pwd);
     else {
       /* crypt password */
-      pwdHash = UnixCrypt.crypt(storedPwdHash, _pwd);
+      // TBD: why is that?
+      pwdHash = UnixCrypt.crypt(_pwd, storedPwdHash);
     }
     
     
@@ -487,7 +488,8 @@ public class OGoLoginModule extends EODatabaseLoginModule {
     logEntry.put("session_log_id", pkey);
     logEntry.put("log_date",       new Date());
     logEntry.put("action",         _action);
-    logEntry.put("account_id", _loginId != null ? _loginId : new Integer(0));
+    logEntry.put("account_id", 
+                 _loginId != null ? _loginId : Integer.valueOf(0));
     if (!adaptor.insertRow("session_log", logEntry))
       log.fatal("could not log entry in session_log table!");
   }

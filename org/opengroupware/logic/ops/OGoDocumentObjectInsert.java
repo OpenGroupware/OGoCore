@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2008 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -169,8 +169,8 @@ public class OGoDocumentObjectInsert extends OGoOperation {
   
   /* prepare */
   
-  private static final Number zero = new Integer(0);
-  private static final Number one  = new Integer(1);
+  private static final Number zero = Integer.valueOf(0);
+  private static final Number one  = Integer.valueOf(1);
   
   /**
    * Prepare note insert.

@@ -270,7 +270,7 @@ CREATE TABLE company_assignment (
   sub_company_id        INTEGER      /* t_id */,
   is_headquarter        BOOLEAN      /* t_bool */,
   is_chief              BOOLEAN      /* t_bool */,
-  ffunction             VARCHAR(255) /* t_string */, /* sybase: function */
+  function              VARCHAR(255) /* t_string */, /* sybase: function */
   db_status             VARCHAR(50)  /* t_tinystring */
   ,
   start_date         timestamp with time zone,

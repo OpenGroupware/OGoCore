@@ -24,7 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.getobjects.eocontrol.EOEditingContext;
 import org.getobjects.foundation.UString;
-import org.postgresql.util.UnixCrypt;
+import org.apache.commons.codec.digest.UnixCrypt;
 
 public class OGoAccounts extends OGoContactDataSource {
   protected static final Log log = LogFactory.getLog("OGoAccounts");

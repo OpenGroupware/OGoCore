@@ -172,7 +172,7 @@ public class testctxauthzfetch {
     EOQualifier q;
     if (true) {
       /* fetch tasks created by me */
-      q = new EOKeyValueQualifier("isFolder", new Integer(0));
+      q = new EOKeyValueQualifier("isFolder", Integer.valueOf(0));
     }
     else
       q = null; /* fetch all */

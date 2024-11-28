@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2008-2009 Helge Hess
+  Copyright (C) 2008-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -25,6 +25,13 @@ import org.getobjects.foundation.NSTimeRange;
 /**
  * Implemented by objects which have a timerange attached. For example
  * company attributes or employment records.
+ * 
+ * Implementers:
+ * - OGoCompanyRelationship
+ * - OGoContactExtValue
+ * - OGoEmployment
+ * - OGoEvent
+ * - OGoProject
  * 
  * @author helge
  */

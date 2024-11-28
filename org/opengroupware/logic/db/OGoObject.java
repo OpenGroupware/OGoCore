@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2014 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -230,7 +230,7 @@ public abstract class OGoObject extends EOActiveRecord implements IOGoObject {
   
   /* saving */
   
-  private static final int one = new Integer(1);
+  private static final int one = Integer.valueOf(1);
   
   @Override
   public Exception validateForInsert() {
@@ -250,6 +250,8 @@ public abstract class OGoObject extends EOActiveRecord implements IOGoObject {
         this.takeValueForKey(now, "creationDate");
       if (lEntity.attributeNamed("lastmodified_date") != null)
         this.takeValueForKey(now, "lastmodified_date");
+      if (lEntity.attributeNamed("lastModified") != null)
+        this.takeValueForKey(now, "lastModified");
     }
     
     return null; /* no errors */
@@ -264,16 +266,19 @@ public abstract class OGoObject extends EOActiveRecord implements IOGoObject {
     if (lEntity != null) {
       if (lEntity.attributeNamed("objectVersion") != null) {
         int v = NSJavaRuntime.intValueForKey(this, "objectVersion") + 1;
-        this.takeValueForKey(new Integer(v), "objectVersion");
+        this.takeValueForKey(Integer.valueOf(v), "objectVersion");
       }
       
       if (lEntity.attributeNamed("db_status") != null)
         this.takeValueForKey("updated", "db_status");
 
       Date now = new Date();
+      if (lEntity.attributeNamed("lastModified") != null)
+        this.takeValueForKey(now, "lastModified");
       if (lEntity.attributeNamed("lastmodified_date") != null)
         this.takeValueForKey(now, "lastmodified_date");
       if (lEntity.attributeNamed("lastmodified") != null)
+        // hh(2024-11-12): Who is using this for what?
         this.takeValueForKey(now.getTime(), "lastmodified");
     }
     

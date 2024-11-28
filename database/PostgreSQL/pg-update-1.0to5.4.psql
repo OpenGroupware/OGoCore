@@ -1,7 +1,9 @@
 -- OpenGroupware.org database schema update script
--- (C) 2007-2008 Helge Hess
+-- (C) 2007-2024 Helge Hess
 -- this script updates the OGo database schema from v1.0 to v5.4
-
+-- 2024-11-13:
+-- looks like this doesn't have everything needed,
+-- and pg-update-1.x-to-5.5.psql needs to be run first.
 
 ALTER TABLE object_acl ALTER COLUMN object_id TYPE INT USING object_id::int;
 ALTER TABLE object_acl ALTER COLUMN auth_id   TYPE INT USING auth_id::int;
@@ -21,7 +23,7 @@ ALTER TABLE project_company_assignment
 ALTER TABLE project_company_assignment
  ADD COLUMN end_date   TIMESTAMP WITH TIME ZONE NULL;
 
-
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE company ADD COLUMN birthplace    VARCHAR(255) NULL;
 ALTER TABLE company ADD COLUMN birthname     VARCHAR(255) NULL;
 ALTER TABLE company ADD COLUMN family_status VARCHAR(255) NULL;
@@ -29,37 +31,44 @@ ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
 ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
 
 -- district of a city (eg Magdeburg "Nord")
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE address ADD COLUMN district    VARCHAR(255) NULL;
 
 -- field to connect documents and notes to contacts
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE document ADD COLUMN company_id INT NULL;
 
 -- prepare for project hierarchies
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE project ADD COLUMN parent_project_id INT NULL;
 
 
 -- ensure that a type is used only once per person/company (eg you can only have
 -- one 'bill' address, this is because OGo creates dictionaries based on the
 -- type)
+-- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
   UNIQUE ( company_id, type );
 
 -- both do not work on SX:
+-- nor elsewhere, there seems to be a bug in OGo that duplicates `email1` at
+-- least.
 ALTER TABLE telephone ADD CONSTRAINT company_unique_phonetype
   UNIQUE ( company_id, type );
 ALTER TABLE company_value ADD CONSTRAINT company_unique_valuetype
   UNIQUE ( company_id, attribute );
--- =>
+-- => those show dupes
 SELECT T1.company_id, T1.type, T1.telephone_id, T2.telephone_id
-FROM telephone T1 INNER JOIN telephone T2 ON
-( T1.company_id = T2.company_id AND T1.type = T2.type AND
-  NOT (T1.telephone_id = T2.telephone_id) );
+  FROM telephone T1 INNER JOIN telephone T2 
+    ON ( T1.company_id = T2.company_id AND T1.type = T2.type AND
+   NOT (T1.telephone_id = T2.telephone_id) );
 SELECT T1.company_id, T1.attribute, T1.company_value_id, T2.company_value_id
-FROM company_value T1 INNER JOIN company_value T2 ON
-( T1.company_id = T2.company_id AND T1.attribute = T2.attribute AND
+  FROM company_value T1 INNER JOIN company_value T2 
+    ON ( T1.company_id = T2.company_id AND T1.attribute = T2.attribute AND
   NOT (T1.company_value_id = T2.company_value_id) );
 
 
+-- Also in pg-update-1.x-to-5.5.psql
 CREATE TABLE login_token (
   token           VARCHAR(4096) PRIMARY KEY,
   account_id      INT   NOT NULL,
@@ -80,8 +89,7 @@ CREATE VIEW employment AS
     ca.sub_company_id AS person_id,
     ca.is_headquarter, ca.is_chief, ca."function",
     ca.db_status,
-    ca.start_date, ca.end_date,
-    ca.hoursperweek
+    ca.start_date, ca.end_date
   FROM company_assignment ca
   INNER JOIN enterprise e USING (company_id)
   INNER JOIN person     p ON (p.company_id = ca.sub_company_id);
@@ -90,12 +98,12 @@ CREATE RULE employment_add AS ON INSERT TO employment DO INSTEAD
   INSERT INTO company_assignment (
     company_assignment_id, company_id, sub_company_id,
     is_headquarter, is_chief, "function", db_status,
-    start_date, end_date, hoursperweek
+    start_date, end_date
   )
   VALUES (
     new.company_assignment_id, new.enterprise_id, new.person_id,
     new.is_headquarter, new.is_chief, new."function", new.db_status,
-    new.start_date, new.end_date, new.hoursperweek
+    new.start_date, new.end_date
   );
 
 CREATE RULE employment_set AS ON UPDATE TO employment DO INSTEAD
@@ -107,8 +115,7 @@ CREATE RULE employment_set AS ON UPDATE TO employment DO INSTEAD
       "function"     = new."function",
       db_status      = new.db_status,
       start_date     = new.start_date,
-      end_date       = new.end_date,
-      hoursperweek   = new.hoursperweek
+      end_date       = new.end_date
   WHERE company_assignment_id = old.company_assignment_id;
 
 CREATE RULE employment_delete AS ON DELETE TO employment DO INSTEAD
@@ -247,7 +254,7 @@ CREATE VIEW project_companies AS
 CREATE RULE project_companies_add AS ON INSERT TO project_companies DO INSTEAD
   INSERT INTO project_company_assignment (
     project_company_assignment_id, company_id, project_id, info, has_access,
-    access_right, db_status
+    access_right, db_status, start_date, end_date
   )
   VALUES (
     new.project_company_assignment_id, new.company_id, new.project_id, new.info,
@@ -279,23 +286,28 @@ CREATE VIEW project_acl AS
 
 -- fixup last modified dates / object_version
 
-UPDATE doc  SET object_version    = version_count WHERE object_version    IS NULL;
-UPDATE note SET lastmodified_date = creation_date WHERE lastmodified_date IS NULL;
+UPDATE doc  SET object_version    = version_count 
+ WHERE object_version    IS NULL;
+UPDATE note SET lastmodified_date = creation_date 
+ WHERE lastmodified_date IS NULL;
 
 UPDATE doc
 SET lastmodified_date =
-  (SELECT archive_date FROM document_version WHERE document_version.document_id = doc.document_id ORDER BY version DESC LIMIT 1)
+  (SELECT archive_date FROM document_version 
+   WHERE document_version.document_id = doc.document_id 
+   ORDER BY version DESC LIMIT 1)
 WHERE version_count > 0 AND lastmodified_date IS NULL;
 
 UPDATE job
-SET object_version =
-    (SELECT COUNT(*) FROM job_history WHERE job.job_id = job_history.job_id)
-WHERE object_version IS NULL;
+   SET object_version =
+     (SELECT COUNT(*) FROM job_history WHERE job.job_id = job_history.job_id)
+ WHERE object_version IS NULL;
 
 -- not sure whether last_modified is actually done in Windows time by ZideLook,
 -- this would be from January 1, 1601
 UPDATE job
-SET last_modified = 
+   SET last_modified = 
     (SELECT EXTRACT(EPOCH FROM action_date) FROM job_history 
-     WHERE job.job_id = job_history.job_id ORDER BY action_date DESC LIMIT 1)
-WHERE last_modified IS NULL;
+      WHERE job.job_id = job_history.job_id 
+      ORDER BY action_date DESC LIMIT 1)
+ WHERE last_modified IS NULL;

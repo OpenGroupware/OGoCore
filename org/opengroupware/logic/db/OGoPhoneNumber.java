@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007-2008 Helge Hess
+  Copyright (C) 2007-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -446,7 +446,7 @@ public class OGoPhoneNumber extends OGoObject
           (keyType, sequence != null ? sequence.intValue() : 0);
 
         sequence = sequence == null
-        ? UOGoObject.int1 : new Integer(sequence.intValue()+1);
+        ? UOGoObject.int1 : Integer.valueOf(sequence.intValue()+1);
         keyTypeToSequence.put(keyType, sequence);
       }
     }

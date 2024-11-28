@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2008 Helge Hess
+  Copyright (C) 2008-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -21,7 +21,7 @@
 package org.opengroupware.logic.auth;
 
 import java.security.Principal;
-import java.security.acl.Group;
+import java.nio.file.attribute.GroupPrincipal; // replacement for Group?
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -39,7 +39,7 @@ import org.getobjects.foundation.NSObject;
  * @author helge
  */
 public class OGoTeamPrincipal extends NSObject
-  implements IOGoPrincipal, Group
+  implements IOGoPrincipal, GroupPrincipal
 {
   // TBD: Not exactly sure whether this is right. I think the ACL package needs
   //      all members of the team to do its evaluations. We just fill in the

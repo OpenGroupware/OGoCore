@@ -167,6 +167,7 @@ public class OGoAddress extends OGoObject
   /* permissions */
   
   public void applyPermissions(String _perms) {
+    super.applyPermissions(_perms);
     if (_perms == null || _perms.length() == 0) {
       // TBD: use a special 'forbidden' value
       this.name1   = null;
@@ -222,6 +223,7 @@ public class OGoAddress extends OGoObject
     if (k == null || (len = k.length()) == 0)
       return null;
     
+    // hh(2024-11-12): Why is one leading digit preserved?
     /* cut off trailing digits (one leading digit is preserved) */
     while (len > 1 && Character.isDigit(k.charAt(len - 1))) {
       k = k.substring(0, len - 1);
@@ -364,7 +366,8 @@ public class OGoAddress extends OGoObject
     if (_type.equals("mailing"))  return labels_mailing;
 
     /* error, unexpected key (can happen if the user mapped additional ones) */
-    log.warn("unexpected internal phone type, returned as X-OGo-type: "+_type);
+    log.warn("unexpected internal address type, returned as X-OGo-type: "+
+             _type);
     return new String[] { "X-OGo-" + _type };
   }
 

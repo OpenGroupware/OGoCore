@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2008-2014 Helge Hess
+  Copyright (C) 2008-2024 Helge Hess
 
   This file is part of OpenGroupware.org (OGo)
 
@@ -175,8 +175,8 @@ public class OGoContactInsert extends OGoEOInsertOperation {
 
     return null;
   }
-  private final static Number zero = new Integer(0);
-  private final static Number one = new Integer(1);
+  private final static Number zero = Integer.valueOf(0);
+  private final static Number one = Integer.valueOf(1);
 
   @Override
   public Exception fixupObjectWithPrimarKey
