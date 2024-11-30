@@ -271,7 +271,8 @@ public class OGoObjectContext extends EOEditingContext {
   public String permissionsForObject(final Object _o) {
     return this.permissionsForGlobalID(this.globalIDForObject(_o));
   }
-  
+
+  // hh(2024-11-29): Not actually used anywhere?
   public List<?> listByRemovingForbiddenObjects(final List<?> _objects) {
     if (_objects == null)
       return null;
