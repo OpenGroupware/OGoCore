@@ -311,3 +311,17 @@ UPDATE job
       WHERE job.job_id = job_history.job_id 
       ORDER BY action_date DESC LIMIT 1)
  WHERE last_modified IS NULL;
+
+
+
+-- fixup email values w/o a proper type set (3)
+-- Also add a constraint to protect against that,
+-- we'll need to set whether that may break some
+-- OGo operations.
+UPDATE company_value 
+   SET type = 3
+ WHERE attribute = 'email1' AND type IS NULL;
+ALTER TABLE company_value 
+  ADD CONSTRAINT email_type 
+  CHECK (NOT (attribute LIKE 'email%') 
+         OR ((attribute LIKE 'email%') AND type = 3));
