@@ -1,9 +1,64 @@
 -- OpenGroupware.org database schema update script
 -- (C) 2007-2024 Helge Hess
 -- this script updates the OGo database schema from v1.0 to v5.4
--- 2024-11-13:
--- looks like this doesn't have everything needed,
--- and pg-update-1.x-to-5.5.psql needs to be run first.
+
+
+-- pg-update-1.x-to-5.5.psql, used to be a separate file
+
+ALTER TABLE object_acl 
+  ALTER COLUMN object_id TYPE INT USING object_id::int;
+ALTER TABLE object_acl 
+  ALTER COLUMN auth_id   TYPE INT USING auth_id::int;
+
+ALTER TABLE document ADD COLUMN company_id INT NULL;
+
+CREATE TABLE ctags (
+  entity VARCHAR NOT NULL,
+  ctag   INTEGER NOT NULL DEFAULT 0
+);
+
+ALTER TABLE ctags 
+  ADD CONSTRAINT ctag_unique_entity UNIQUE (entity);
+
+INSERT INTO ctags (entity) VALUES ('Person'); 
+INSERT INTO ctags (entity) VALUES ('Enterprise');
+INSERT INTO ctags (entity) VALUES ('Date');
+INSERT INTO ctags (entity) VALUES ('Job');
+INSERT INTO ctags (entity) VALUES ('Team');
+
+ALTER TABLE company ADD COLUMN birthplace    VARCHAR(255) NULL;
+ALTER TABLE company ADD COLUMN birthname     VARCHAR(255) NULL;
+ALTER TABLE company ADD COLUMN family_status VARCHAR(255) NULL;
+ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
+ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
+
+-- district of a city (eg Magdeburg "Nord")
+ALTER TABLE address ADD COLUMN district    VARCHAR(255) NULL;
+-- ensure that a type is used only once per person/company (eg you can only have
+-- one 'bill' address, this is because OGo creates dictionaries based on the
+-- type)
+ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
+  UNIQUE ( company_id, type );
+
+
+-- prepare for project hierarchies
+ALTER TABLE project ADD COLUMN parent_project_id INT NULL;
+
+CREATE TABLE login_token (
+  token           VARCHAR(4096) PRIMARY KEY,
+  account_id      INT   NOT NULL,
+  environment     TEXT  NULL,
+  info            TEXT  NULL,
+  creation_date   TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  touch_date      TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  timeout         INT DEFAULT 3600 NOT NULL,
+  expiration_date TIMESTAMP WITH TIME ZONE NULL
+);
+
+ALTER TABLE job  ADD COLUMN owner_id INT;
+UPDATE job SET owner_id = creator_id;
+
+-- pg-update-1.0to5.4.psql, used to be a separate file
 
 ALTER TABLE object_acl ALTER COLUMN object_id TYPE INT USING object_id::int;
 ALTER TABLE object_acl ALTER COLUMN auth_id   TYPE INT USING auth_id::int;
@@ -23,32 +78,10 @@ ALTER TABLE project_company_assignment
 ALTER TABLE project_company_assignment
  ADD COLUMN end_date   TIMESTAMP WITH TIME ZONE NULL;
 
--- Also in pg-update-1.x-to-5.5.psql
-ALTER TABLE company ADD COLUMN birthplace    VARCHAR(255) NULL;
-ALTER TABLE company ADD COLUMN birthname     VARCHAR(255) NULL;
-ALTER TABLE company ADD COLUMN family_status VARCHAR(255) NULL;
-ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
-ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
-
--- district of a city (eg Magdeburg "Nord")
--- Also in pg-update-1.x-to-5.5.psql
-ALTER TABLE address ADD COLUMN district    VARCHAR(255) NULL;
-
 -- field to connect documents and notes to contacts
 -- Also in pg-update-1.x-to-5.5.psql
 ALTER TABLE document ADD COLUMN company_id INT NULL;
 
--- prepare for project hierarchies
--- Also in pg-update-1.x-to-5.5.psql
-ALTER TABLE project ADD COLUMN parent_project_id INT NULL;
-
-
--- ensure that a type is used only once per person/company (eg you can only have
--- one 'bill' address, this is because OGo creates dictionaries based on the
--- type)
--- Also in pg-update-1.x-to-5.5.psql
-ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
-  UNIQUE ( company_id, type );
 
 -- both do not work on SX:
 -- nor elsewhere, there seems to be a bug in OGo that duplicates `email1` at
@@ -57,7 +90,7 @@ ALTER TABLE telephone ADD CONSTRAINT company_unique_phonetype
   UNIQUE ( company_id, type );
 ALTER TABLE company_value ADD CONSTRAINT company_unique_valuetype
   UNIQUE ( company_id, attribute );
--- => those show dupes
+-- => those show dupes, cleanup DB to import
 SELECT T1.company_id, T1.type, T1.telephone_id, T2.telephone_id
   FROM telephone T1 INNER JOIN telephone T2 
     ON ( T1.company_id = T2.company_id AND T1.type = T2.type AND
@@ -68,20 +101,9 @@ SELECT T1.company_id, T1.attribute, T1.company_value_id, T2.company_value_id
   NOT (T1.company_value_id = T2.company_value_id) );
 
 
--- Also in pg-update-1.x-to-5.5.psql
-CREATE TABLE login_token (
-  token           VARCHAR(4096) PRIMARY KEY,
-  account_id      INT   NOT NULL,
-  environment     TEXT  NULL,
-  info            TEXT  NULL,
-  creation_date   TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-  touch_date      TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-  timeout         INT DEFAULT 3600 NOT NULL,
-  expiration_date TIMESTAMP WITH TIME ZONE NULL
-);
-
-
 -- TBD: we should probably include the full join info (ie company data)
+--      well, maybe a smaller record is faster for in-object processing,
+--      this can also have a relationship to the two company objects!
 CREATE VIEW employment AS
   SELECT
     ca.company_assignment_id,
