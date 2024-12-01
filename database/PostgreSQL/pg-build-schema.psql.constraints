@@ -25,6 +25,10 @@ ALTER TABLE company_value ADD CONSTRAINT
     REFERENCES company(company_id);
 ALTER TABLE company_value ADD CONSTRAINT company_unique_valuetype
   UNIQUE ( company_id, attribute );
+ALTER TABLE company_value 
+  ADD CONSTRAINT email_type 
+  CHECK (NOT (attribute LIKE 'email%') 
+         OR ((attribute LIKE 'email%') AND type = 3));
 
 -- table company_category
 
