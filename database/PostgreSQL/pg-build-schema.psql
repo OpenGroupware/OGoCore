@@ -2,615 +2,618 @@
 -- (C) 2000-2005 SKYRIX Software AG
 
 CREATE TABLE staff (
-  staff_id    int not null,
-  company_id  int not null,
-  description varchar(255),
-  login       varchar(255),
-  is_team     smallint,
-  is_account  smallint,
-  db_status   varchar(50),
-  constraint  pk_staff primary key (staff_id),
-  constraint  unique_company_id unique(company_id));
+  staff_id    INT NOT NULL,
+  company_id  INT NOT NULL,
+  description VARCHAR(255),
+  login       VARCHAR(255),
+  is_team     SMALLINT,
+  is_account  SMALLINT,
+  db_status   VARCHAR(50),
+  CONSTRAINT  pk_staff PRIMARY KEY (staff_id),
+  CONSTRAINT  unique_company_id UNIQUE(company_id));
 
 CREATE TABLE company (
-  company_id          int not null,
+  company_id          INT NOT NULL,
 
-  object_version      int,
-  owner_id            int,
-  contact_id          int,   
-  template_user_id    int,   
-  is_private          smallint,
-  is_person           smallint,
-  is_readonly         smallint,      
-  is_enterprise       smallint,
-  is_account          smallint,
-  is_intra_account    smallint,
-  is_extra_account    smallint,
-  is_trust            smallint,
-  is_team             smallint,
-  is_location_team    smallint,
-  is_customer         smallint,
+  object_version      INT,
+  owner_id            INT,
+  contact_id          INT,   
+  template_user_id    INT,   
+  is_private          SMALLINT,
+  is_person           SMALLINT,
+  is_readonly         SMALLINT,      
+  is_enterprise       SMALLINT,
+  is_account          SMALLINT,
+  is_intra_account    SMALLINT,
+  is_extra_account    SMALLINT,
+  is_trust            SMALLINT,
+  is_team             SMALLINT,
+  is_location_team    SMALLINT,
+  is_customer         SMALLINT,
   
-  number              varchar(100),
-  description         varchar(255),
-  priority            varchar(50),
-  keywords            varchar(255),
+  number              VARCHAR(100),
+  description         VARCHAR(255),
+  priority            VARCHAR(50),
+  keywords            VARCHAR(255),
 
-  url                 varchar(255),
-  email               varchar(100), 
-  type                varchar(50),
-  bank                varchar(100),
-  bank_code           varchar(50),
-  account             varchar(50),
-  payment             varchar(50),
+  url                 VARCHAR(255),
+  email               VARCHAR(100), 
+  type                VARCHAR(50),
+  bank                VARCHAR(100),
+  bank_code           VARCHAR(50),
+  account             VARCHAR(50),
+  payment             VARCHAR(50),
 
-  is_locked           smallint,
-  is_template_user    smallint,
-  can_change_password smallint,
-  login               varchar(50),
-  password            varchar(255),
-  pop3_account        varchar(50),
+  is_locked           SMALLINT,
+  is_template_user    SMALLINT,
+  can_change_password SMALLINT,
+  login               VARCHAR(50),
+  password            VARCHAR(255),
+  pop3_account        VARCHAR(50),
 
-  name                varchar(50),
-  middlename          varchar(50), 
-  firstname           varchar(50),
-  salutation          varchar(50),
-  degree              varchar(50),
-  birthday            timestamp with time zone,
-  sex                 varchar(10),
+  name                VARCHAR(50),
+  middlename          VARCHAR(50), 
+  firstname           VARCHAR(50),
+  salutation          VARCHAR(50),
+  degree              VARCHAR(50),
+  birthday            TIMESTAMP WITH TIME ZONE,
+  sex                 VARCHAR(10),
 
-  source_url          varchar(255),
-  db_status           varchar(50),
+  source_url          VARCHAR(255),
+  db_status           VARCHAR(50),
 
-  sensitivity         smallint,                 -- sensitivity
-  boss_name           varchar(255),             -- boss' name
-  partner_name        varchar(255),             -- partners' name
-  assistant_name      varchar(255),             -- assistants' name 
-  department          varchar(255),             -- department
-  office              varchar(255),             -- office (office number)
-  occupation          varchar(255),             -- occupation
-  anniversary         timestamp with time zone, -- anniversary
-  dir_server          varchar(255),             -- directory serv. (NetMeeting)
-  email_alias         varchar(255),             -- email alias (NetMeeting)
-  freebusy_url        varchar(255),             -- free/busy URL
+  sensitivity         SMALLINT,                 -- sensitivity
+  boss_name           VARCHAR(255),             -- boss' name
+  partner_name        VARCHAR(255),             -- partners' name
+  assistant_name      VARCHAR(255),             -- assistants' name 
+  department          VARCHAR(255),             -- department
+  office              VARCHAR(255),             -- office (office number)
+  occupation          VARCHAR(255),             -- occupation
+  anniversary         TIMESTAMP WITH TIME ZONE, -- anniversary
+  dir_server          VARCHAR(255),             -- directory serv. (NetMeeting)
+  email_alias         VARCHAR(255),             -- email alias (NetMeeting)
+  freebusy_url        VARCHAR(255),             -- free/busy URL
 
-  fileas              varchar(255),             -- file as/save as
-  name_title          varchar(255),             -- name title (e.g. Prof.)
-  name_affix          varchar(255),             -- name affix (e.g. jun.)
-  im_address          varchar(255),             -- Instant Messenger address
-  associated_contacts varchar(255),             -- associated contacts
-  associated_categories varchar(255),           -- associated categories
-  associated_company  varchar(255),             -- associated company
+  fileas              VARCHAR(255),             -- file as/save as
+  name_title          VARCHAR(255),             -- name title (e.g. Prof.)
+  name_affix          VARCHAR(255),             -- name affix (e.g. jun.)
+  im_address          VARCHAR(255),             -- Instant Messenger address
+  associated_contacts VARCHAR(255),             -- associated contacts
+  associated_categories VARCHAR(255),           -- associated categories
+  associated_company  VARCHAR(255),             -- associated company
 
-  show_email_as       varchar(255),             -- email show as attr 
-  show_email2_as      varchar(255),             -- email show as attr 
-  show_email3_as      varchar(255),             -- email show as attr 
+  show_email_as       VARCHAR(255),             -- email show as attr 
+  show_email2_as      VARCHAR(255),             -- email show as attr 
+  show_email3_as      VARCHAR(255),             -- email show as attr 
   
-  birthplace          varchar(255),
-  birthname           varchar(255),
-  family_status       varchar(255),
-  citizenship         varchar(255),
-  dayofdeath          timestamp with time zone,
+  birthplace          VARCHAR(255),
+  birthname           VARCHAR(255),
+  family_status       VARCHAR(255),
+  citizenship         VARCHAR(255),
+  dayofdeath          TIMESTAMP WITH TIME ZONE,
   
-  constraint          pk_company primary key (company_id),
-  constraint          unique_company_number unique(number),
-  constraint          unique_company_login unique(login)
+  CONSTRAINT          pk_company PRIMARY KEY (company_id),
+  CONSTRAINT          unique_company_number UNIQUE(number),
+  CONSTRAINT          unique_company_login  UNIQUE(login)
 );
 
 CREATE TABLE company_info (
-  company_info_id int         not null,
-  company_id      int         not null, 
-  comment         text      ,
-  db_status       varchar(50),
-  constraint pk_company_info primary key (company_info_id));
+  company_info_id INT NOT NULL,
+  company_id      INT NOT NULL, 
+  comment         TEXT,
+  db_status       VARCHAR(50),
+  CONSTRAINT pk_company_info PRIMARY KEY (company_info_id)
+);
 
 
 -- Note: attribute_type is not mapped in model!
 --       neither are: value_date, value_int, category
 -- Likely reason: those columns where added to mirror obj_property
 CREATE TABLE company_value (
-  company_value_id   int         not null,
-  company_id         int,
-  attribute          varchar(255),
-  attribute_type     varchar(50),
-  value_string       varchar(255),
-  value_date         timestamp with time zone,
-  value_int          int,
-  is_enum            smallint,
-  category           varchar(255),
-  uid                int, 
-  label              varchar(255),
-  type               int,
-  is_label_localized smallint,
-  db_status          varchar(50),
+  company_value_id   INT NOT NULL,
+  company_id         INT,
+  attribute          VARCHAR(255),
+  attribute_type     VARCHAR(50),
+  value_string       VARCHAR(255),
+  value_date         TIMESTAMP WITH TIME ZONE,
+  value_int          INT,
+  is_enum            SMALLINT,
+  category           VARCHAR(255),
+  uid                INT, 
+  label              VARCHAR(255),
+  type               INT,
+  is_label_localized SMALLINT,
+  db_status          VARCHAR(50),
   
-  start_date         timestamp with time zone,
-  end_date           timestamp with time zone,
+  start_date         TIMESTAMP WITH TIME ZONE,
+  end_date           TIMESTAMP WITH TIME ZONE,
   
-  constraint pk_company_value primary key (company_value_id));
+  CONSTRAINT pk_company_value PRIMARY KEY (company_value_id)
+);
 
 CREATE TABLE company_category (
-  company_category_id int         not null,
-  object_version      int       ,
-  category            varchar(255)    ,
-  db_status           varchar(50),
-  constraint pk_company_category primary key (company_category_id));
+  company_category_id   INT NOT NULL,
+  object_version        INT,
+  category              VARCHAR(255),
+  db_status             VARCHAR(50),
+  CONSTRAINT pk_company_category PRIMARY KEY (company_category_id));
 
 CREATE TABLE company_assignment (
-  company_assignment_id int         not null,
-  company_id            int,
-  sub_company_id        int,
-  is_headquarter        smallint,
-  is_chief              smallint,
-  function              varchar(255),
-  db_status             varchar(50),
+  company_assignment_id INT NOT NULL,
+  company_id            INT,
+  sub_company_id        INT,
+  is_headquarter        SMALLINT,
+  is_chief              SMALLINT,
+  function              VARCHAR(255),
+  db_status             VARCHAR(50),
   
-  start_date         timestamp with time zone,
-  end_date           timestamp with time zone,
+  start_date            TIMESTAMP WITH TIME ZONE,
+  end_date              TIMESTAMP WITH TIME ZONE,
   
-  constraint pk_company_assignment primary key (company_assignment_id));
+  CONSTRAINT pk_company_assignment PRIMARY KEY (company_assignment_id)
+);
 
 CREATE TABLE appointment_resource (
-  appointment_resource_id int         not null,
-  object_version          int       ,
-  name                    varchar(255)     not null,
-  email                   varchar(255)    ,
-  email_subject           varchar(255)    ,
-  category                varchar(255)    ,
-  notification_time       int       ,
-  db_status               varchar(50),
-  constraint pkx_company_category primary key (appointment_resource_id),
-  constraint unique_aptresname_idx unique(name));
+  appointment_resource_id INT NOT NULL,
+  object_version          INT,
+  name                    VARCHAR(255) NOT NULL,
+  email                   VARCHAR(255),
+  email_subject           VARCHAR(255),
+  category                VARCHAR(255),
+  notification_time       INT,
+  db_status               VARCHAR(50),
+  CONSTRAINT pkx_company_category PRIMARY KEY (appointment_resource_id),
+  CONSTRAINT unique_aptresname_idx UNIQUE(name));
 
 CREATE TABLE date_x (
-  date_id                int not null,
-  object_version         int,
-  owner_id               int,
-  access_team_id         int,
-  parent_date_id         int,
+  date_id                INT NOT NULL,
+  object_version         INT,
+  owner_id               INT,
+  access_team_id         INT,
+  parent_date_id         INT,
 
-  start_date             timestamp with time zone  not null,
-  end_date               timestamp with time zone  not null,
-  cycle_end_date         timestamp with time zone,
-  type                   varchar(255),    -- repetition type
-  title                  varchar(255) not null,
-  location               varchar(255),
-  absence                varchar(255),
-  resource_names         varchar(255),
-  write_access_list      varchar(255),
-  is_absence             smallint,
-  is_attendance          smallint,
-  is_conflict_disabled   smallint,
-  travel_duration_before int,
-  travel_duration_after  int,
-  notification_time      int,
-  db_status              varchar(50),
-  apt_type               varchar(100),    -- appointment type (birthday...)
-  calendar_name          varchar(255),
-  source_url             varchar(255),
-  fbtype                 varchar(50),     -- free/busy type
+  start_date             TIMESTAMP WITH TIME ZONE  NOT NULL,
+  end_date               TIMESTAMP WITH TIME ZONE  NOT NULL,
+  cycle_end_date         TIMESTAMP WITH TIME ZONE,
+  type                   VARCHAR(255),    -- repetition type
+  title                  VARCHAR(255) NOT NULL,
+  location               VARCHAR(255),
+  absence                VARCHAR(255),
+  resource_names         VARCHAR(255),
+  write_access_list      VARCHAR(255),
+  is_absence             SMALLINT,
+  is_attendance          SMALLINT,
+  is_conflict_disabled   SMALLINT,
+  travel_duration_before INT,
+  travel_duration_after  INT,
+  notification_time      INT,
+  db_status              VARCHAR(50),
+  apt_type               VARCHAR(100),    -- appointment type (birthday...)
+  calendar_name          VARCHAR(255),
+  source_url             VARCHAR(255),
+  fbtype                 VARCHAR(50),     -- free/busy type
 
-  sensitivity            smallint,        -- sensitivity
-  busy_type              smallint,        -- busy type
-  importance             smallint,        -- importance
-  last_modified          int,             -- timestamp of last modification
-  evo_reminder           varchar(255),    -- Evolution reminder settings
-  ol_reminder            varchar(255),    -- Outlook reminder settings
-  online_meeting         varchar(255),    -- CSV for online meeting values
-  associated_contacts    varchar(255),    -- Outlook associated_contacts
-  keywords               varchar(255),    -- Outlook keywords
+  sensitivity            SMALLINT,        -- sensitivity
+  busy_type              SMALLINT,        -- busy type
+  importance             SMALLINT,        -- importance
+  last_modified          INT,             -- timestamp of last modification
+  evo_reminder           VARCHAR(255),    -- Evolution reminder settings
+  ol_reminder            VARCHAR(255),    -- Outlook reminder settings
+  online_meeting         VARCHAR(255),    -- CSV for online meeting values
+  associated_contacts    VARCHAR(255),    -- Outlook associated_contacts
+  keywords               VARCHAR(255),    -- Outlook keywords
 
-  constraint             pk_date primary key (date_id));
+  CONSTRAINT             pk_date PRIMARY KEY (date_id));
 
 CREATE TABLE date_info (
-  date_info_id int not null,
-  date_id      int not null,
-  comment      text,
-  db_status    varchar(50),
-  constraint   pk_date_info primary key (date_info_id));
+  date_info_id INT NOT NULL,
+  date_id      INT NOT NULL,
+  comment      TEXT,
+  db_status    VARCHAR(50),
+  CONSTRAINT   pk_date_info PRIMARY KEY (date_info_id));
 
 CREATE TABLE date_company_assignment (
-  date_company_assignment_id int not null,
-  company_id                 int,
-  date_id                    int,
-  is_staff                   smallint,
-  is_new                     smallint,
-  partstatus                 varchar(50),
-  role                       varchar(50),
-  comment                    varchar(255),
-  rsvp                       smallint,
-  db_status                  varchar(50),
-  outlook_key                varchar(255),
-  constraint                 pk_date_company_assignment primary key
+  date_company_assignment_id INT NOT NULL,
+  company_id                 INT,
+  date_id                    INT,
+  is_staff                   SMALLINT,
+  is_new                     SMALLINT,
+  partstatus                 VARCHAR(50),
+  role                       VARCHAR(50),
+  comment                    VARCHAR(255),
+  rsvp                       SMALLINT,
+  db_status                  VARCHAR(50),
+  outlook_key                VARCHAR(255),
+  CONSTRAINT                 pk_date_company_assignment PRIMARY KEY
                              (date_company_assignment_id));
 
 CREATE TABLE project (
-  project_id        int not null,
-  object_version    int,
-  owner_id          int not null,
-  team_id           int,
-  number            varchar(100),
-  name              varchar(255),
-  start_date        timestamp with time zone,
-  end_date          timestamp with time zone,
-  status            varchar(255),
-  is_fake           smallint,
-  db_status         varchar(50),
-  kind              varchar(50),
-  url               varchar(100),
-  parent_project_id int,
-  constraint        pk_project primary key (project_id),
-  constraint        unique_project_number unique(number));
+  project_id        INT NOT NULL,
+  object_version    INT,
+  owner_id          INT NOT NULL,
+  team_id           INT,
+  number            VARCHAR(100),
+  name              VARCHAR(255),
+  start_date        TIMESTAMP WITH TIME ZONE,
+  end_date          TIMESTAMP WITH TIME ZONE,
+  status            VARCHAR(255),
+  is_fake           SMALLINT,
+  db_status         VARCHAR(50),
+  kind              VARCHAR(50),
+  url               VARCHAR(100),
+  parent_project_id INT,
+  CONSTRAINT        pk_project PRIMARY KEY (project_id),
+  CONSTRAINT        unique_project_number UNIQUE(number));
 
 CREATE TABLE object_acl (
-  object_acl_id int not null,
-  sort_key      int not null,
-  action        varchar(10) not null,
-  object_id     int not null,
-  auth_id       int not null,
-  permissions   varchar(50));
+  object_acl_id INT NOT NULL,
+  sort_key      INT NOT NULL,
+  action        VARCHAR(10) NOT NULL,
+  object_id     INT NOT NULL,
+  auth_id       INT NOT NULL,
+  permissions   VARCHAR(50));
 
 CREATE TABLE project_company_assignment (
-  project_company_assignment_id int not null,
-  company_id                    int,
-  project_id                    int,
-  info                          varchar(255),
-  has_access                    smallint,
-  access_right                  varchar(50),
-  db_status                     varchar(50),
+  project_company_assignment_id INT NOT NULL,
+  company_id                    INT,
+  project_id                    INT,
+  info                          VARCHAR(255),
+  has_access                    SMALLINT,
+  access_right                  VARCHAR(50),
+  db_status                     VARCHAR(50),
   
-  start_date                    timestamp with time zone,
-  end_date                      timestamp with time zone,
+  start_date                    TIMESTAMP WITH TIME ZONE,
+  end_date                      TIMESTAMP WITH TIME ZONE,
   
-  constraint                    pk_project_company_assignment
-                                primary key (project_company_assignment_id));
+  CONSTRAINT                    pk_project_company_assignment
+                                PRIMARY KEY (project_company_assignment_id));
 
 CREATE TABLE document (
-  document_id        int not null,
-  object_version     int,
-  project_id         int,
-  parent_document_id int,
-  date_id            int,
-  first_owner_id     int,
-  current_owner_id   int,
-  version_count      int,
-  file_size          int,
-  is_note            smallint,
-  is_folder          smallint,
-  is_object_link     smallint,
-  is_index_doc       smallint,
-  title              varchar(255),
-  abstract           varchar(255),
-  file_type          varchar(255),
-  object_link        varchar(255),
-  creation_date      timestamp with time zone,
-  lastmodified_date  timestamp with time zone,
-  status             varchar(50),
-  db_status          varchar(50),
-  contact            varchar(255),
-  company_id         int,
-  constraint         pk_document primary key (document_id));
+  document_id        INT NOT NULL,
+  object_version     INT,
+  project_id         INT,
+  parent_document_id INT,
+  date_id            INT,
+  first_owner_id     INT,
+  current_owner_id   INT,
+  version_count      INT,
+  file_size          INT,
+  is_note            SMALLINT,
+  is_folder          SMALLINT,
+  is_object_link     SMALLINT,
+  is_index_doc       SMALLINT,
+  title              VARCHAR(255),
+  abstract           VARCHAR(255),
+  file_type          VARCHAR(255),
+  object_link        VARCHAR(255),
+  creation_date      TIMESTAMP WITH TIME ZONE,
+  lastmodified_date  TIMESTAMP WITH TIME ZONE,
+  status             VARCHAR(50),
+  db_status          VARCHAR(50),
+  contact            VARCHAR(255),
+  company_id         INT,
+  CONSTRAINT         pk_document PRIMARY KEY (document_id));
 
 CREATE TABLE document_version (
-  document_version_id int not null,
-  object_version      int,
-  document_id         int,
-  last_owner_id       int,
-  title               varchar(255),
-  abstract            varchar(255),
-  file_type           varchar(255),
-  version             int,
-  file_size           int,
-  creation_date       timestamp with time zone,
-  archive_date        timestamp with time zone,
-  is_packed           smallint,
-  change_text         text,
-  db_status           varchar(50),
-  contact             varchar(255),
-  constraint          pk_document_version primary key (document_version_id));
+  document_version_id INT NOT NULL,
+  object_version      INT,
+  document_id         INT,
+  last_owner_id       INT,
+  title               VARCHAR(255),
+  abstract            VARCHAR(255),
+  file_type           VARCHAR(255),
+  version             INT,
+  file_size           INT,
+  creation_date       TIMESTAMP WITH TIME ZONE,
+  archive_date        TIMESTAMP WITH TIME ZONE,
+  is_packed           SMALLINT,
+  change_text         TEXT,
+  db_status           VARCHAR(50),
+  contact             VARCHAR(255),
+  CONSTRAINT          pk_document_version PRIMARY KEY (document_version_id));
 
 CREATE TABLE document_editing (
-  document_editing_id int not null,
-  object_version      int,
-  document_id         int,
-  current_owner_id    int,
-  title               varchar(255),
-  abstract            varchar(255),
-  file_type           varchar(255),
-  file_size           int,
-  version             int,
-  is_attach_changed   smallint,
-  checkout_date       timestamp with time zone,
-  status              varchar(50),
-  db_status           varchar(50),
-  contact             varchar(255),
-  constraint          pk_document_editing primary key (document_editing_id));
+  document_editing_id INT NOT NULL,
+  object_version      INT,
+  document_id         INT,
+  current_owner_id    INT,
+  title               VARCHAR(255),
+  abstract            VARCHAR(255),
+  file_type           VARCHAR(255),
+  file_size           INT,
+  version             INT,
+  is_attach_changed   SMALLINT,
+  checkout_date       TIMESTAMP WITH TIME ZONE,
+  status              VARCHAR(50),
+  db_status           VARCHAR(50),
+  contact             VARCHAR(255),
+  CONSTRAINT          pk_document_editing PRIMARY KEY (document_editing_id));
 
 CREATE TABLE address (
-  address_id     int not null,
-  object_version int,
-  company_id     int,
-  name1          varchar(255),
-  name2          varchar(255),
-  name3          varchar(255),
-  street         varchar(255),
-  zip            varchar(50),
-  zipcity        varchar(255),
-  country        varchar(100),
-  state          varchar(100),
-  type           varchar(50) not null,
-  db_status      varchar(50),
-  source_url     varchar(255),
-  district       varchar(255),
-  constraint     pk_address primary key (address_id));
+  address_id     INT NOT NULL,
+  object_version INT,
+  company_id     INT,
+  name1          VARCHAR(255),
+  name2          VARCHAR(255),
+  name3          VARCHAR(255),
+  street         VARCHAR(255),
+  zip            VARCHAR(50),
+  zipcity        VARCHAR(255),
+  country        VARCHAR(100),
+  state          VARCHAR(100),
+  type           VARCHAR(50) NOT NULL,
+  db_status      VARCHAR(50),
+  source_url     VARCHAR(255),
+  district       VARCHAR(255),
+  CONSTRAINT     pk_address PRIMARY KEY (address_id));
 
 CREATE TABLE telephone (
-  telephone_id   int not null,
-  object_version int,
-  company_id     int,
-  number         varchar(255),
-  real_number    varchar(255),
-  type           varchar(50) not null,
-  info           varchar(255),
-  url            varchar(255),
-  db_status      varchar(50),
-  constraint     pk_telephone primary key (telephone_id));
+  telephone_id   INT NOT NULL,
+  object_version INT,
+  company_id     INT,
+  number         VARCHAR(255),
+  real_number    VARCHAR(255),
+  type           VARCHAR(50) NOT NULL,
+  info           VARCHAR(255),
+  url            VARCHAR(255),
+  db_status      VARCHAR(50),
+  CONSTRAINT     pk_telephone PRIMARY KEY (telephone_id));
 
 CREATE TABLE job (
-  job_id               int not null,
-  object_version       int,
-  parent_job_id        int,
-  project_id           int,
-  creator_id           int,
-  owner_id             int,
-  executant_id         int,
-  name                 varchar(255) not null,
-  start_date           timestamp with time zone not null,
-  end_date             timestamp with time zone not null,
-  notify_x             int,
-  is_control_job       smallint,
-  is_team_job          smallint,
-  is_new               smallint,
-  job_status           varchar(255),
-  category             varchar(255),
-  priority             int,
-  db_status            varchar(50),
-  kind                 varchar(50),
-  keywords             varchar(255),
-  source_url           varchar(255),
-  sensitivity          smallint,
-  job_comment          text,
-  completion_date      timestamp with time zone,
-  percent_complete     smallint,
-  actual_work          smallint,
-  total_work           smallint,
-  last_modified        int,
-  accounting_info      varchar(255),
-  kilometers           varchar(255),
-  associated_companies varchar(255),
-  associated_contacts  varchar(255),
-  timer_date           timestamp with time zone,
-  constraint           pk_job primary key (job_id));
+  job_id               INT NOT NULL,
+  object_version       INT,
+  parent_job_id        INT,
+  project_id           INT,
+  creator_id           INT,
+  owner_id             INT,
+  executant_id         INT,
+  name                 VARCHAR(255) NOT NULL,
+  start_date           TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_date             TIMESTAMP WITH TIME ZONE NOT NULL,
+  notify_x             INT,
+  is_control_job       SMALLINT,
+  is_team_job          SMALLINT,
+  is_new               SMALLINT,
+  job_status           VARCHAR(255),
+  category             VARCHAR(255),
+  priority             INT,
+  db_status            VARCHAR(50),
+  kind                 VARCHAR(50),
+  keywords             VARCHAR(255),
+  source_url           VARCHAR(255),
+  sensitivity          SMALLINT,
+  job_comment          TEXT,
+  completion_date      TIMESTAMP WITH TIME ZONE,
+  percent_complete     SMALLINT,
+  actual_work          SMALLINT,
+  total_work           SMALLINT,
+  last_modified        INT,
+  accounting_info      VARCHAR(255),
+  kilometers           VARCHAR(255),
+  associated_companies VARCHAR(255),
+  associated_contacts  VARCHAR(255),
+  timer_date           TIMESTAMP WITH TIME ZONE,
+  CONSTRAINT           pk_job PRIMARY KEY (job_id));
 
 CREATE TABLE job_history (
-  job_history_id int not null,
-  object_version int,
-  job_id         int not null,
-  actor_id       int,
-  action         varchar(50),
-  action_date    timestamp with time zone,
-  job_status     varchar(50),
-  db_status      varchar(50),
-  constraint     pk_job_history primary key (job_history_id));
+  job_history_id INT NOT NULL,
+  object_version INT,
+  job_id         INT NOT NULL,
+  actor_id       INT,
+  action         VARCHAR(50),
+  action_date    TIMESTAMP WITH TIME ZONE,
+  job_status     VARCHAR(50),
+  db_status      VARCHAR(50),
+  CONSTRAINT     pk_job_history PRIMARY KEY (job_history_id));
 
 CREATE TABLE job_history_info (
-  job_history_info_id int not null,
-  job_history_id      int not null,
-  comment             text,
-  db_status           varchar(50),
-  constraint          pk_job_history_info primary key (job_history_info_id));
+  job_history_info_id INT NOT NULL,
+  job_history_id      INT NOT NULL,
+  comment             TEXT,
+  db_status           VARCHAR(50),
+  CONSTRAINT          pk_job_history_info PRIMARY KEY (job_history_info_id));
 
 CREATE TABLE resource (
-  resource_id    int not null,
-  resource_name  varchar(255) not null,
-  token          varchar(255),
-  object_id      int,
-  quantity       int,
-  comment        text,
-  standard_costs numeric(19,2),
-  type           int not null,
-  db_status      varchar(50),
-  object_version int,
-  constraint     pk_resource_id primary key (resource_id));
+  resource_id    INT NOT NULL,
+  resource_name  VARCHAR(255) NOT NULL,
+  token          VARCHAR(255),
+  object_id      INT,
+  quantity       INT,
+  comment        TEXT,
+  standard_costs NUMERIC(19,2),
+  type           INT NOT NULL,
+  db_status      VARCHAR(50),
+  object_version INT,
+  CONSTRAINT     pk_resource_id PRIMARY KEY (resource_id));
 
 CREATE TABLE job_resource_assignment (
-  job_resource_assignment_id int not null,
-  resource_id                int,
-  job_id                     int,
-  operative_part             int,
-  db_status                  varchar(50),
-  constraint                 pk_job_resource_id primary key 
+  job_resource_assignment_id INT NOT NULL,
+  resource_id                INT,
+  job_id                     INT,
+  operative_part             INT,
+  db_status                  VARCHAR(50),
+  CONSTRAINT                 pk_job_resource_id PRIMARY KEY 
                              (job_resource_assignment_id));
 
 CREATE TABLE news_article (
-  news_article_id  int not null,
-  object_version   int,
-  name             varchar(255),
-  caption          varchar(255),
-  is_index_article smallint,
-  creation_date    timestamp with time zone,
-  db_status        varchar(50),
-  constraint       pk_news_article primary key (news_article_id));
+  news_article_id  INT NOT NULL,
+  object_version   INT,
+  name             VARCHAR(255),
+  caption          VARCHAR(255),
+  is_index_article SMALLINT,
+  creation_date    TIMESTAMP WITH TIME ZONE,
+  db_status        VARCHAR(50),
+  CONSTRAINT       pk_news_article PRIMARY KEY (news_article_id));
 
 CREATE TABLE news_article_link (
-  news_article_link_id int not null,
-  object_version       int,
-  news_article_id      int,
-  sub_news_article_id  int,
-  constraint           pk_article_link primary key (news_article_link_id));
+  news_article_link_id INT NOT NULL,
+  object_version       INT,
+  news_article_id      INT,
+  sub_news_article_id  INT,
+  CONSTRAINT           pk_article_link PRIMARY KEY (news_article_link_id));
 
 CREATE TABLE invoice (
-  invoice_id        int not null,
-  debitor_id        int not null,
-  parent_invoice_id int,
-  invoice_nr        varchar(255) not null,
-  invoice_date      timestamp with time zone,
-  kind              varchar(100),    
-  status            varchar(100) not null,  
-  net_amount        numeric(19,4),
-  gross_amount      numeric(19,4),
-  paid              numeric(19,4),
-  comment           text,
-  object_version    int,
-  db_status         varchar(50)  ,
-  constraint        pk_invoice primary key (invoice_id));
+  invoice_id        INT NOT NULL,
+  debitor_id        INT NOT NULL,
+  parent_invoice_id INT,
+  invoice_nr        VARCHAR(255) NOT NULL,
+  invoice_date      TIMESTAMP WITH TIME ZONE,
+  kind              VARCHAR(100),    
+  status            VARCHAR(100) NOT NULL,  
+  net_amount        NUMERIC(19,4),
+  gross_amount      NUMERIC(19,4),
+  paid              NUMERIC(19,4),
+  comment           TEXT,
+  object_version    INT,
+  db_status         VARCHAR(50)  ,
+  CONSTRAINT        pk_invoice PRIMARY KEY (invoice_id));
 
 CREATE TABLE article_category (
-  article_category_id int not null,
-  category_name       varchar(255) not null,
-  category_abbrev     varchar(255),
-  constraint          pk_article_category primary key (article_category_id));
+  article_category_id INT NOT NULL,
+  category_name       VARCHAR(255) NOT NULL,
+  category_abbrev     VARCHAR(255),
+  CONSTRAINT          pk_article_category PRIMARY KEY (article_category_id));
 
 CREATE TABLE article_unit (
-  article_unit_id    int not null,
-  format             varchar(50),
-  singular_unit      varchar(255),
-  plural_unit        varchar(255),
-  constraint         pk_url_x primary key (article_unit_id));
+  article_unit_id    INT NOT NULL,
+  format             VARCHAR(50),
+  singular_unit      VARCHAR(255),
+  plural_unit        VARCHAR(255),
+  CONSTRAINT         pk_url_x PRIMARY KEY (article_unit_id));
 
 CREATE TABLE article (
-  article_id          int not null,
-  article_unit_id     int,
-  article_category_id int,
-  object_version      int,
-  article_name        varchar(255) not null,
-  article_nr          varchar(255) not null,
-  article_text        text,
-  status              varchar(50),
-  price               numeric(19,4),
-  vat                 numeric(19,4),
-  vat_group           varchar(50),
-  db_status           varchar(50),
-  constraint          pk_article primary key (article_id));
+  article_id          INT NOT NULL,
+  article_unit_id     INT,
+  article_category_id INT,
+  object_version      INT,
+  article_name        VARCHAR(255) NOT NULL,
+  article_nr          VARCHAR(255) NOT NULL,
+  article_text        TEXT,
+  status              VARCHAR(50),
+  price               NUMERIC(19,4),
+  vat                 NUMERIC(19,4),
+  vat_group           VARCHAR(50),
+  db_status           VARCHAR(50),
+  CONSTRAINT          pk_article PRIMARY KEY (article_id));
 
 CREATE TABLE invoice_article_assignment (
-  invoice_article_assignment_id int not null,
-  invoice_id                    int not null,
-  article_id                    int not null,
-  article_count                 numeric(19,4) not null,
-  object_version                int,
-  net_amount                    numeric(19,4),
-  vat                           numeric(19,8),
-  comment                       text,
-  db_status                     varchar(50),
-  constraint                    pk_invoice_article_assignment primary key 
+  invoice_article_assignment_id INT NOT NULL,
+  invoice_id                    INT NOT NULL,
+  article_id                    INT NOT NULL,
+  article_count                 NUMERIC(19,4) NOT NULL,
+  object_version                INT,
+  net_amount                    NUMERIC(19,4),
+  vat                           NUMERIC(19,8),
+  comment                       TEXT,
+  db_status                     VARCHAR(50),
+  CONSTRAINT                    pk_invoice_article_assignment PRIMARY KEY 
                                 (invoice_article_assignment_id));
 
 CREATE TABLE invoice_account (
-  invoice_account_id int not null,
-  enterprise_id      int not null,
-  account_nr         varchar(50) not null,
-  balance            numeric(19,4),
-  object_version     int,
-  db_status          varchar(50),
-  constraint         pk_invoice_account primary key (invoice_account_id));
+  invoice_account_id INT NOT NULL,
+  enterprise_id      INT NOT NULL,
+  account_nr         VARCHAR(50) NOT NULL,
+  balance            NUMERIC(19,4),
+  object_version     INT,
+  db_status          VARCHAR(50),
+  CONSTRAINT         pk_invoice_account PRIMARY KEY (invoice_account_id));
 
 CREATE TABLE invoice_action (
-  invoice_action_id int not null,
-  account_id        int not null,
-  invoice_id        int,
-  document_id       int,
-  action_date       timestamp with time zone,
-  action_kind       varchar(100) not null,
-  log_text          text,
-  object_version    int,
-  db_status         varchar(50),
-  constraint        pk_invoice_action primary key (invoice_action_id));
+  invoice_action_id INT NOT NULL,
+  account_id        INT NOT NULL,
+  invoice_id        INT,
+  document_id       INT,
+  action_date       TIMESTAMP WITH TIME ZONE,
+  action_kind       VARCHAR(100) NOT NULL,
+  log_text          TEXT,
+  object_version    INT,
+  db_status         VARCHAR(50),
+  CONSTRAINT        pk_invoice_action PRIMARY KEY (invoice_action_id));
 
 CREATE TABLE invoice_accounting (
-  invoice_accounting_id int not null,
-  action_id             int not null,
-  debit                 numeric(19,4),
-  balance               numeric(19,4),
-  object_version        int,
-  db_status             varchar(50),
-  constraint            pk_invoice_accounting primary key 
+  invoice_accounting_id INT NOT NULL,
+  action_id             INT NOT NULL,
+  debit                 NUMERIC(19,4),
+  balance               NUMERIC(19,4),
+  object_version        INT,
+  db_status             VARCHAR(50),
+  CONSTRAINT            pk_invoice_accounting PRIMARY KEY 
                         (invoice_accounting_id));
 
 CREATE TABLE job_assignment (
-  job_assignment_id int not null,
-  parent_job_id     int not null,
-  child_job_id      int not null,
-  position_x        int,
-  assignment_kind   varchar(50),
-  db_status         varchar(50),
-  constraint        pk_job_assignment primary key (job_assignment_id));
+  job_assignment_id INT NOT NULL,
+  parent_job_id     INT NOT NULL,
+  child_job_id      INT NOT NULL,
+  position_x        INT,
+  assignment_kind   VARCHAR(50),
+  db_status         VARCHAR(50),
+  CONSTRAINT        pk_job_assignment PRIMARY KEY (job_assignment_id));
 
 CREATE TABLE project_info (
-  project_info_id int not null,
-  project_id      int not null, 
-  comment         text,
-  db_status       varchar(50),
-  constraint      pk_project_info primary key (project_info_id));
+  project_info_id INT NOT NULL,
+  project_id      INT NOT NULL, 
+  comment         TEXT,
+  db_status       VARCHAR(50),
+  CONSTRAINT      pk_project_info PRIMARY KEY (project_info_id));
 
 CREATE TABLE log (
-  log_id        int not null,
-  creation_date timestamp with time zone not null,
-  object_id     int not null,
-  log_text      text not null,
-  action        varchar(100) not null,
-  account_id    int,
-  constraint    pk_log primary key (log_id));
+  log_id        INT NOT NULL,
+  creation_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  object_id     INT NOT NULL,
+  log_text      TEXT NOT NULL,
+  action        VARCHAR(100) NOT NULL,
+  account_id    INT,
+  CONSTRAINT    pk_log PRIMARY KEY (log_id));
 
 CREATE TABLE session_log (
-  session_log_id int not null,
-  account_id     int not null,
-  log_date       timestamp with time zone not null,
-  action         varchar(255) not null,
-  constraint     pk_session_log primary key (session_log_id));
+  session_log_id INT NOT NULL,
+  account_id     INT NOT NULL,
+  log_date       TIMESTAMP WITH TIME ZONE NOT NULL,
+  action         VARCHAR(255) NOT NULL,
+  CONSTRAINT     pk_session_log PRIMARY KEY (session_log_id));
 
 CREATE TABLE obj_info (
-  obj_id     int not null,
-  obj_type   varchar(255) not null,
-  constraint pk_obj_info primary key (obj_id));
+  obj_id     INT NOT NULL,
+  obj_type   VARCHAR(255) NOT NULL,
+  CONSTRAINT pk_obj_info PRIMARY KEY (obj_id));
 
 CREATE TABLE obj_property (
-  obj_property_id  int not null,
-  obj_id           int not null,
-  obj_type         varchar(255),
-  access_key       int,     
-  value_key        varchar(255) not null, 
-  namespace_prefix varchar(255),     
-  preferred_type   varchar(255) not null, 
-  value_string     varchar(255),     
-  value_int        int,     
-  value_float      numeric(19,8),
-  value_date       timestamp with time zone,
-  value_oid        varchar(255),
-  blob_size        int,
-  value_blob       text,
-  constraint       pk_obj_property primary key (obj_property_id));
+  obj_property_id  INT NOT NULL,
+  obj_id           INT NOT NULL,
+  obj_type         VARCHAR(255),
+  access_key       INT,     
+  value_key        VARCHAR(255) NOT NULL, 
+  namespace_prefix VARCHAR(255),     
+  preferred_type   VARCHAR(255) NOT NULL, 
+  value_string     VARCHAR(255),     
+  value_int        INT,     
+  value_float      NUMERIC(19,8),
+  value_date       TIMESTAMP WITH TIME ZONE,
+  value_oid        VARCHAR(255),
+  blob_size        INT,
+  value_blob       TEXT,
+  CONSTRAINT       pk_obj_property PRIMARY KEY (obj_property_id));
 
 CREATE TABLE obj_link (
-  obj_link_id int          not null,
-  source_id   int          not null,
-  source_type varchar(50)  null,
-  target      varchar(255) not null,
+  obj_link_id int          NOT NULL,
+  source_id   int          NOT NULL,
+  source_type VARCHAR(50)  null,
+  target      VARCHAR(255) NOT NULL,
   target_id   int          null,
-  target_type varchar(50)  null,
-  link_type   varchar(50)  null,
-  label       varchar(255) null);
+  target_type VARCHAR(50)  null,
+  link_type   VARCHAR(50)  null,
+  label       VARCHAR(255) null);
 
 CREATE TABLE object_model (
-  db_version int not null,
-  model_name varchar(255) not null);
+  db_version INT NOT NULL,
+  model_name VARCHAR(255) not null);
 
 INSERT INTO object_model(db_version, model_name) VALUES ( 3, 'OpenGroupware.org_PostgreSQL');
 
 CREATE TABLE table_version (
-  table_name    varchar(255) not null,
-  table_version int not null,
-  constraint    pk_table_version primary key (table_name));
+  table_name    VARCHAR(255) NOT NULL,
+  table_version INT NOT NULL,
+  CONSTRAINT    pk_table_version PRIMARY KEY (table_name));
 
 CREATE TABLE person ()     INHERITS(company);
 CREATE TABLE enterprise () INHERITS(company);
@@ -858,142 +861,142 @@ CREATE VIEW project_acl AS
 -- PDA
 
 CREATE TABLE palm_address (
-  company_id                    int not null,
-  device_id                     varchar(50) not null,
-  palm_address_id               int not null,
-  palm_id                       int,
-  category_index                int,
-  is_deleted                    smallint not null,
-  is_modified                   smallint not null,
-  is_archived                   smallint not null,
-  is_new                        smallint not null,
-  is_private                    smallint not null,
-  md5hash                       varchar(50) not null,
-  address                       varchar(255),
-  city                          varchar(255),
-  company                       varchar(255),
-  country                       varchar(255),
-  display_phone                 int not null,
-  firstname                     varchar(255),
-  lastname                      varchar(255),
-  note                          text,
-  phone0                        varchar(255),
-  phone1                        varchar(255),
-  phone2                        varchar(255),
-  phone3                        varchar(255),
-  phone4                        varchar(255),
-  phone_label_id0               int not null,
-  phone_label_id1               int not null,
-  phone_label_id2               int not null,
-  phone_label_id3               int not null,
-  phone_label_id4               int not null,
-  state                         varchar(255),
-  title                         varchar(255),
-  zipcode                       varchar(255),
-  custom1                       varchar(255),
-  custom2                       varchar(255),
-  custom3                       varchar(255),
-  custom4                       varchar(255),
-  skyrix_id                     int,
-  skyrix_sync                   int,
-  skyrix_version                int,
-  skyrix_type                   varchar(10),
-  object_version                int,
-  skyrix_palm_version           int,
-  constraint                    pk_palm_address primary key (palm_address_id)
+  company_id                    INT NOT NULL,
+  device_id                     VARCHAR(50) NOT NULL,
+  palm_address_id               INT NOT NULL,
+  palm_id                       INT,
+  category_index                INT,
+  is_deleted                    SMALLINT NOT NULL,
+  is_modified                   SMALLINT NOT NULL,
+  is_archived                   SMALLINT NOT NULL,
+  is_new                        SMALLINT NOT NULL,
+  is_private                    SMALLINT NOT NULL,
+  md5hash                       VARCHAR(50) NOT NULL,
+  address                       VARCHAR(255),
+  city                          VARCHAR(255),
+  company                       VARCHAR(255),
+  country                       VARCHAR(255),
+  display_phone                 INT NOT NULL,
+  firstname                     VARCHAR(255),
+  lastname                      VARCHAR(255),
+  note                          TEXT,
+  phone0                        VARCHAR(255),
+  phone1                        VARCHAR(255),
+  phone2                        VARCHAR(255),
+  phone3                        VARCHAR(255),
+  phone4                        VARCHAR(255),
+  phone_label_id0               INT NOT NULL,
+  phone_label_id1               INT NOT NULL,
+  phone_label_id2               INT NOT NULL,
+  phone_label_id3               INT NOT NULL,
+  phone_label_id4               INT NOT NULL,
+  state                         VARCHAR(255),
+  title                         VARCHAR(255),
+  zipcode                       VARCHAR(255),
+  custom1                       VARCHAR(255),
+  custom2                       VARCHAR(255),
+  custom3                       VARCHAR(255),
+  custom4                       VARCHAR(255),
+  skyrix_id                     INT,
+  skyrix_sync                   INT,
+  skyrix_version                INT,
+  skyrix_type                   VARCHAR(10),
+  object_version                INT,
+  skyrix_palm_version           INT,
+  CONSTRAINT                    pk_palm_address PRIMARY KEY (palm_address_id)
 );
 
 CREATE TABLE palm_date (
-  company_id                    int not null,
-  device_id                     varchar(50) not null,
-  palm_date_id                  int not null,
-  palm_id                       int,
-  category_index                int,
-  is_deleted                    smallint not null,
-  is_modified                   smallint not null,
-  is_archived                   smallint not null,
-  is_new                        smallint not null,
-  is_private                    smallint not null,
-  md5hash                       varchar(50) not null,
-  alarm_advance_time            int not null,
-  alarm_advance_unit            int not null,
-  description                   varchar(255) not null,
-  enddate                       timestamp with time zone,
-  is_alarmed                    smallint not null,
-  is_untimed                    smallint not null,
-  note                          text,
-  repeat_enddate                timestamp with time zone,
-  repeat_frequency              int,
-  repeat_on                     int,
-  repeat_start_week             int,
-  repeat_type                   int,
-  startdate                     timestamp with time zone,
-  exceptions                    text,
-  skyrix_id                     int,
-  skyrix_sync                   int,
-  skyrix_version                int,
-  object_version                int,
-  skyrix_palm_version           int,
-  constraint pk_palm_date primary key (palm_date_id)
+  company_id                    INT NOT NULL,
+  device_id                     VARCHAR(50) NOT NULL,
+  palm_date_id                  INT NOT NULL,
+  palm_id                       INT,
+  category_index                INT,
+  is_deleted                    SMALLINT NOT NULL,
+  is_modified                   SMALLINT NOT NULL,
+  is_archived                   SMALLINT NOT NULL,
+  is_new                        SMALLINT NOT NULL,
+  is_private                    SMALLINT NOT NULL,
+  md5hash                       VARCHAR(50) NOT NULL,
+  alarm_advance_time            INT NOT NULL,
+  alarm_advance_unit            INT NOT NULL,
+  description                   VARCHAR(255) NOT NULL,
+  enddate                       TIMESTAMP WITH TIME ZONE,
+  is_alarmed                    SMALLINT NOT NULL,
+  is_untimed                    SMALLINT NOT NULL,
+  note                          TEXT,
+  repeat_enddate                TIMESTAMP WITH TIME ZONE,
+  repeat_frequency              INT,
+  repeat_on                     INT,
+  repeat_start_week             INT,
+  repeat_type                   INT,
+  startdate                     TIMESTAMP WITH TIME ZONE,
+  exceptions                    TEXT,
+  skyrix_id                     INT,
+  skyrix_sync                   INT,
+  skyrix_version                INT,
+  object_version                INT,
+  skyrix_palm_version           INT,
+  CONSTRAINT pk_palm_date PRIMARY KEY (palm_date_id)
 );
 
 CREATE TABLE palm_memo (
-  company_id     int not null,
-  device_id      varchar(50) not null,
-  palm_memo_id   int not null,
-  palm_id        int,
-  category_index int,
-  is_deleted     smallint not null,
-  is_modified    smallint not null,
-  is_archived    smallint not null,
-  is_new         smallint not null,
-  is_private     smallint not null,
-  md5hash        varchar(50) not null,
-  memo           text not null,
-  skyrix_id      int,
-  skyrix_sync    int,
-  skyrix_version int,
-  object_version                int,
-  skyrix_palm_version           int,
-  constraint     pk_palm_memo primary key (palm_memo_id)
+  company_id     INT NOT NULL,
+  device_id      VARCHAR(50) NOT NULL,
+  palm_memo_id   INT NOT NULL,
+  palm_id        INT,
+  category_index INT,
+  is_deleted     SMALLINT NOT NULL,
+  is_modified    SMALLINT NOT NULL,
+  is_archived    SMALLINT NOT NULL,
+  is_new         SMALLINT NOT NULL,
+  is_private     SMALLINT NOT NULL,
+  md5hash        VARCHAR(50) NOT NULL,
+  memo           TEXT NOT NULL,
+  skyrix_id      INT,
+  skyrix_sync    INT,
+  skyrix_version INT,
+  object_version                INT,
+  skyrix_palm_version           INT,
+  CONSTRAINT     pk_palm_memo PRIMARY KEY (palm_memo_id)
 );
 
 CREATE TABLE palm_todo (
-  company_id     int not null,
-  device_id      varchar(50) not null,
-  palm_todo_id   int not null,
-  palm_id        int,
-  category_index int,
-  is_deleted     smallint not null,
-  is_modified    smallint not null,
-  is_archived    smallint not null,
-  is_new         smallint not null,
-  is_private     smallint not null,
-  md5hash        varchar(50) not null,
-  description    varchar(255) not null,
-  duedate        timestamp with time zone,
-  note           text,
-  priority       int not null,
-  is_completed   smallint not null,
-  skyrix_id      int,
-  skyrix_sync    int,
-  skyrix_version int,
-  object_version                int,
-  skyrix_palm_version           int,
-  constraint     pk_palm_todo primary key (palm_todo_id)
+  company_id     INT NOT NULL,
+  device_id      VARCHAR(50) NOT NULL,
+  palm_todo_id   INT NOT NULL,
+  palm_id        INT,
+  category_index INT,
+  is_deleted     SMALLINT NOT NULL,
+  is_modified    SMALLINT NOT NULL,
+  is_archived    SMALLINT NOT NULL,
+  is_new         SMALLINT NOT NULL,
+  is_private     SMALLINT NOT NULL,
+  md5hash        VARCHAR(50) NOT NULL,
+  description    VARCHAR(255) NOT NULL,
+  duedate        TIMESTAMP WITH TIME ZONE,
+  note           TEXT,
+  priority       INT NOT NULL,
+  is_completed   SMALLINT NOT NULL,
+  skyrix_id      INT,
+  skyrix_sync    INT,
+  skyrix_version INT,
+  object_version                INT,
+  skyrix_palm_version           INT,
+  CONSTRAINT     pk_palm_todo PRIMARY KEY (palm_todo_id)
 );
 
 CREATE TABLE palm_category (
-  company_id       int not null,
-  device_id        varchar(50) not null,
-  palm_category_id int not null,
-  palm_id          int,
-  palm_table       varchar(10) not null,
-  is_modified      smallint not null,
-  md5hash          varchar(50) not null,
-  category_index   int not null,
-  category_name    varchar(255) not null,
-  constraint       pk_palm_category primary key (palm_category_id)
+  company_id       INT NOT NULL,
+  device_id        VARCHAR(50) NOT NULL,
+  palm_category_id INT NOT NULL,
+  palm_id          INT,
+  palm_table       VARCHAR(10) NOT NULL,
+  is_modified      SMALLINT NOT NULL,
+  md5hash          VARCHAR(50) NOT NULL,
+  category_index   INT NOT NULL,
+  category_name    VARCHAR(255) NOT NULL,
+  CONSTRAINT       pk_palm_category PRIMARY KEY (palm_category_id)
 );
 
 -- End PDA
