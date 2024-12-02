@@ -140,12 +140,12 @@ CREATE TABLE company_category (
 
 CREATE TABLE company_assignment (
   company_assignment_id INT NOT NULL,
-  company_id            INT,
-  sub_company_id        INT,
+  company_id            INT NOT NULL,
+  sub_company_id        INT NOT NULL,
   is_headquarter        SMALLINT,
   is_chief              SMALLINT,
   function              VARCHAR(255),
-  db_status             VARCHAR(50),
+  db_status             VARCHAR(50) NOT NULL,
   
   start_date            TIMESTAMP WITH TIME ZONE,
   end_date              TIMESTAMP WITH TIME ZONE,
@@ -163,7 +163,8 @@ CREATE TABLE appointment_resource (
   notification_time       INT,
   db_status               VARCHAR(50),
   CONSTRAINT pkx_company_category PRIMARY KEY (appointment_resource_id),
-  CONSTRAINT unique_aptresname_idx UNIQUE(name));
+  CONSTRAINT unique_aptresname_idx UNIQUE(name)
+);
 
 CREATE TABLE date_x (
   date_id                INT NOT NULL,
