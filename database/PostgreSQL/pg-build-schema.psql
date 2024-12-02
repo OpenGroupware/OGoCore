@@ -252,22 +252,24 @@ CREATE TABLE object_acl (
   action        VARCHAR(10) NOT NULL,
   object_id     INT NOT NULL,
   auth_id       INT NOT NULL,
-  permissions   VARCHAR(50));
+  permissions   VARCHAR(50)
+);
 
 CREATE TABLE project_company_assignment (
   project_company_assignment_id INT NOT NULL,
-  company_id                    INT,
-  project_id                    INT,
+  company_id                    INT NOT NULL,
+  project_id                    INT NOT NULL,
   info                          VARCHAR(255),
-  has_access                    SMALLINT,
+  has_access                    SMALLINT NOT NULL,
   access_right                  VARCHAR(50),
-  db_status                     VARCHAR(50),
+  db_status                     VARCHAR(50) NOT NULL,
   
   start_date                    TIMESTAMP WITH TIME ZONE,
   end_date                      TIMESTAMP WITH TIME ZONE,
   
-  CONSTRAINT                    pk_project_company_assignment
-                                PRIMARY KEY (project_company_assignment_id));
+  CONSTRAINT pk_project_company_assignment
+     PRIMARY KEY (project_company_assignment_id)
+);
 
 CREATE TABLE document (
   document_id        INT NOT NULL,
