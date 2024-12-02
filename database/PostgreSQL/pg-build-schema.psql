@@ -15,8 +15,8 @@ CREATE TABLE staff (
 CREATE TABLE company (
   company_id          INT NOT NULL,
 
-  object_version      INT,
-  owner_id            INT,
+  object_version      INT NOT NULL,
+  owner_id            INT NOT NULL,
   contact_id          INT,   
   template_user_id    INT,   
   is_private          SMALLINT,
@@ -60,7 +60,7 @@ CREATE TABLE company (
   sex                 VARCHAR(10),
 
   source_url          VARCHAR(255),
-  db_status           VARCHAR(50),
+  db_status           VARCHAR(50) NOT NULL,
 
   sensitivity         SMALLINT,                 -- sensitivity
   boss_name           VARCHAR(255),             -- boss' name

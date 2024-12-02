@@ -347,3 +347,15 @@ ALTER TABLE company_value
   ADD CONSTRAINT email_type 
   CHECK (NOT (attribute LIKE 'email%') 
          OR ((attribute LIKE 'email%') AND type = 3));
+
+-- All company rows have owner_id's, except the root user itself...,
+-- let that recurse, should be fine.
+UPDATE company SET owner_id = 10000 
+ WHERE login = 'root' AND company_id = 10000 AND owner_id IS NULL;
+
+
+-- add more column NOT NULL constraints
+
+ALTER TABLE company  ALTER COLUMN owner_id       SET NOT NULL;
+ALTER TABLE company  ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE company  ALTER COLUMN db_status      SET NOT NULL;
