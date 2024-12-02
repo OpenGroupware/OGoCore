@@ -302,6 +302,14 @@ CREATE TABLE document (
   contact            VARCHAR(255),
   company_id         INT,
   
+  -- 2024-12-02: new, allow inline storage of TEXT.
+  -- this can be a prefix, or the actual content, or sth else.
+  -- since old clients won't know about this and always access the file,
+  -- this tracks the object_version of the last write.
+  text_content       TEXT NULL,
+  text_content_type  SMALLINT,
+  text_content_object_version INT, -- the version the content is based upon
+  
   CONSTRAINT         pk_document PRIMARY KEY (document_id)
 );
 
