@@ -273,35 +273,43 @@ CREATE TABLE project_company_assignment (
 
 CREATE TABLE document (
   document_id        INT NOT NULL,
-  object_version     INT,
+  object_version     INT, -- this is NULL in folders
   project_id         INT,
   parent_document_id INT,
   date_id            INT,
+  
   first_owner_id     INT,
-  current_owner_id   INT,
+  current_owner_id   INT NOT NULL,
+  
   version_count      INT,
+  
   file_size          INT,
   is_note            SMALLINT,
   is_folder          SMALLINT,
   is_object_link     SMALLINT,
   is_index_doc       SMALLINT,
+  
   title              VARCHAR(255),
   abstract           VARCHAR(255),
   file_type          VARCHAR(255),
   object_link        VARCHAR(255),
-  creation_date      TIMESTAMP WITH TIME ZONE,
+  
+  creation_date      TIMESTAMP WITH TIME ZONE NOT NULL,
   lastmodified_date  TIMESTAMP WITH TIME ZONE,
   status             VARCHAR(50),
-  db_status          VARCHAR(50),
+  db_status          VARCHAR(50) NOT NULL,
+  
   contact            VARCHAR(255),
   company_id         INT,
-  CONSTRAINT         pk_document PRIMARY KEY (document_id));
+  
+  CONSTRAINT         pk_document PRIMARY KEY (document_id)
+);
 
 CREATE TABLE document_version (
   document_version_id INT NOT NULL,
   object_version      INT,
-  document_id         INT,
-  last_owner_id       INT,
+  document_id         INT NOT NULL,
+  last_owner_id       INT NOT NULL,
   title               VARCHAR(255),
   abstract            VARCHAR(255),
   file_type           VARCHAR(255),
@@ -311,14 +319,15 @@ CREATE TABLE document_version (
   archive_date        TIMESTAMP WITH TIME ZONE,
   is_packed           SMALLINT,
   change_text         TEXT,
-  db_status           VARCHAR(50),
+  db_status           VARCHAR(50) NOT NULL,
   contact             VARCHAR(255),
-  CONSTRAINT          pk_document_version PRIMARY KEY (document_version_id));
+  CONSTRAINT          pk_document_version PRIMARY KEY (document_version_id)
+);
 
 CREATE TABLE document_editing (
   document_editing_id INT NOT NULL,
   object_version      INT,
-  document_id         INT,
+  document_id         INT NOT NULL,
   current_owner_id    INT,
   title               VARCHAR(255),
   abstract            VARCHAR(255),
@@ -328,7 +337,7 @@ CREATE TABLE document_editing (
   is_attach_changed   SMALLINT,
   checkout_date       TIMESTAMP WITH TIME ZONE,
   status              VARCHAR(50),
-  db_status           VARCHAR(50),
+  db_status           VARCHAR(50) NOT NULL,
   contact             VARCHAR(255),
   CONSTRAINT          pk_document_editing PRIMARY KEY (document_editing_id));
 

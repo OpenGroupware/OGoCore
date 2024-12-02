@@ -368,3 +368,12 @@ ALTER TABLE project_company_assignment ALTER COLUMN db_status  SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN company_id SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN project_id SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN has_access SET NOT NULL;
+
+ALTER TABLE document         ALTER COLUMN db_status     SET NOT NULL;
+ALTER TABLE document         ALTER COLUMN creation_date SET NOT NULL;
+ALTER TABLE document         ALTER COLUMN db_status     SET NOT NULL;
+ALTER TABLE document_editing ALTER COLUMN document_id   SET NOT NULL;
+ALTER TABLE document_editing ALTER COLUMN db_status     SET NOT NULL;
+ALTER TABLE document_version ALTER COLUMN document_id   SET NOT NULL;
+ALTER TABLE document_version ALTER COLUMN db_status     SET NOT NULL;
+ALTER TABLE document_version ALTER COLUMN last_owner_id SET NOT NULL;
