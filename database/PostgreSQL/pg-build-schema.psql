@@ -278,7 +278,7 @@ CREATE TABLE document (
   parent_document_id INT,
   date_id            INT,
   
-  first_owner_id     INT,
+  first_owner_id     INT NOT NULL,
   current_owner_id   INT NOT NULL,
   
   version_count      INT,
