@@ -360,12 +360,12 @@ public class OGoAuthzFetchContext extends NSObject {
     final EOEntity   aclEntity = db.entityNamed("ACLEntries");
     EOAccessDataSource ads = new EOAdaptorDataSource(db.adaptor(), aclEntity);
     
-    List<Map<String, Object>> results = ads.fetchObjects
+    List<Map<String, Object>> aclForPrincipalsAndGlobalIDs = ads.fetchObjects
       ("authzFetch", "authIds", this.authIds, "ids", pkeysToProcess);
-    if (results == null) return ads.consumeLastException();
+    if (aclForPrincipalsAndGlobalIDs == null) return ads.consumeLastException();
     
-    for (int i = results.size() - 1; i >= 0; i--) {
-      final Map<String, Object> ace   = results.get(i);
+    for (int i = aclForPrincipalsAndGlobalIDs.size() - 1; i >= 0; i--) {
+      final Map<String, Object> ace = aclForPrincipalsAndGlobalIDs.get(i);
       final String perms = (String)ace.get("permissions");
       final Number oid   = (Number)ace.get("object_id"); // watch for Go changes
       if (perms == null || oid == null) {
@@ -374,7 +374,6 @@ public class OGoAuthzFetchContext extends NSObject {
       }
       
       EOKeyGlobalID gid = pkeyToGlobalID.get(oid);
-
       /* there where results for the GID, remember this fact */
       this.gidHasACL.put(gid, true);
       pkeysToProcess.remove(oid);
@@ -401,7 +400,8 @@ public class OGoAuthzFetchContext extends NSObject {
       if (log.isDebugEnabled())
         log.debug("      fetch-acl-count: #" + pkeysToProcess.size());
       
-      results = ads.fetchObjects("authzCountFetch", "ids", pkeysToProcess);
+      List<Map<String, Object>> results = 
+         ads.fetchObjects("objectIdsWithACL", "ids", pkeysToProcess);
       if (results == null) return ads.consumeLastException();
       
       for (int i = results.size() - 1; i >= 0; i--) {

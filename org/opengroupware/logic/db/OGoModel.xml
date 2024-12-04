@@ -24,7 +24,9 @@
     
     <!-- fetch specification -->
     
-    <fetch name="authzCountFetch" flags="readonly,rawrows,allbinds">
+    <!-- hh(2024-12-03): not used right now, but should be used for has-acl
+         check! -->
+    <fetch name="objectIdsWithACL" flags="readonly,rawrows,allbinds">
       <!--
         Required Parameters:
         - 'ids'
