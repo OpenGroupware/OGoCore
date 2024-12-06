@@ -1695,15 +1695,14 @@
         Required Parameters:
         - 'ids'
         - 'authIds'
-        
-        We need to be either the owner or be in the access team to have
-        any access at all.
-        TBD: would be good to get account-ids and team-ids separately
         -->
       <attributes>id,ownerId,accessTeamId,writeAccessList</attributes>
       <qualifier>
-        (id IN $ids) OR (ownerId IN $authIds) OR (accessTeamId IN $authIds)
-        </qualifier>
+        <!-- TODO: more efficient raw query, we have to join the attendees
+                   to restrict access, as being an attendee always gives
+                   access -->
+        id IN $ids
+      </qualifier>
     </fetch>
 
     <fetch name="upcomingEvents" requiresAllBindings="true" limit="4">
@@ -1749,6 +1748,16 @@
         is_new      SMALLINT
         outlook_key VARCHAR(255)
       -->
+      
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids' (event IDs!)
+        - 'authIds'
+        -->
+      <attributes>id,eventId,role,companyId,isTeamAttendee</attributes>
+      <qualifier>(eventId IN $ids) AND (companyId IN $authIds)</qualifier>
+    </fetch>
   </entity>
   
   
