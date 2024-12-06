@@ -356,6 +356,10 @@ UPDATE company SET owner_id = 10000
 
 -- add more column NOT NULL constraints
 
+ALTER TABLE date_x   ALTER COLUMN owner_id       SET NOT NULL;
+ALTER TABLE date_x   ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE date_x   ALTER COLUMN db_status      SET NOT NULL;
+
 ALTER TABLE company  ALTER COLUMN owner_id       SET NOT NULL;
 ALTER TABLE company  ALTER COLUMN object_version SET NOT NULL;
 ALTER TABLE company  ALTER COLUMN db_status      SET NOT NULL;
@@ -386,5 +390,3 @@ ALTER TABLE document_version ALTER COLUMN last_owner_id  SET NOT NULL;
 ALTER TABLE document ADD COLUMN text_content                TEXT     NULL;
 ALTER TABLE document ADD COLUMN text_content_type           SMALLINT NULL;
 ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
-
-ALTER TABLE date_x ALTER COLUMN owner_id SET NOT NULL;

@@ -168,7 +168,7 @@ CREATE TABLE appointment_resource (
 
 CREATE TABLE date_x (
   date_id                INT NOT NULL,
-  object_version         INT,
+  object_version         INT NOT NULL,
   owner_id               INT NOT NULL,
   access_team_id         INT,
   parent_date_id         INT,
@@ -188,7 +188,7 @@ CREATE TABLE date_x (
   travel_duration_before INT,
   travel_duration_after  INT,
   notification_time      INT,
-  db_status              VARCHAR(50),
+  db_status              VARCHAR(50) NOT NULL,
   apt_type               VARCHAR(100),    -- appointment type (birthday...)
   calendar_name          VARCHAR(255),
   source_url             VARCHAR(255),
