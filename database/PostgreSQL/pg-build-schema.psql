@@ -169,7 +169,7 @@ CREATE TABLE appointment_resource (
 CREATE TABLE date_x (
   date_id                INT NOT NULL,
   object_version         INT,
-  owner_id               INT,
+  owner_id               INT NOT NULL,
   access_team_id         INT,
   parent_date_id         INT,
 

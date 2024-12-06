@@ -386,3 +386,5 @@ ALTER TABLE document_version ALTER COLUMN last_owner_id  SET NOT NULL;
 ALTER TABLE document ADD COLUMN text_content                TEXT     NULL;
 ALTER TABLE document ADD COLUMN text_content_type           SMALLINT NULL;
 ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
+
+ALTER TABLE date_x ALTER COLUMN owner_id SET NOT NULL;
