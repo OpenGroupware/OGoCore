@@ -381,12 +381,12 @@ CREATE TABLE telephone (
 
 CREATE TABLE job (
   job_id               INT NOT NULL,
-  object_version       INT,
+  object_version       INT NOT NULL,
   parent_job_id        INT,
   project_id           INT,
-  creator_id           INT,
-  owner_id             INT,
-  executant_id         INT,
+  creator_id           INT NOT NULL,
+  owner_id             INT NOT NULL,
+  executant_id         INT, -- TBD: NOT NULL?
   name                 VARCHAR(255) NOT NULL,
   start_date           TIMESTAMP WITH TIME ZONE NOT NULL,
   end_date             TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -397,7 +397,7 @@ CREATE TABLE job (
   job_status           VARCHAR(255),
   category             VARCHAR(255),
   priority             INT,
-  db_status            VARCHAR(50),
+  db_status            VARCHAR(50) NOT NULL,
   kind                 VARCHAR(50),
   keywords             VARCHAR(255),
   source_url           VARCHAR(255),
@@ -424,7 +424,8 @@ CREATE TABLE job_history (
   action_date    TIMESTAMP WITH TIME ZONE,
   job_status     VARCHAR(50),
   db_status      VARCHAR(50),
-  CONSTRAINT     pk_job_history PRIMARY KEY (job_history_id));
+  CONSTRAINT     pk_job_history PRIMARY KEY (job_history_id)
+);
 
 CREATE TABLE job_history_info (
   job_history_info_id INT NOT NULL,
