@@ -1733,9 +1733,12 @@
     <attribute name="rsvp"    type="SMALLINT"/>
     
     <!-- join -->
-    <attribute name="companyId"      column="company_id" type="INT"      />
-    <attribute name="isTeamAttendee" column="is_staff"   type="SMALLINT" />
-    <attribute name="eventId"        column="date_id"    type="INT"      />
+    <attribute name="companyId" column="company_id" type="INT"      />
+    <!-- I think this says whether the company-id is internal or external,
+         i.e. whether it is an account or a regular contact. (hh 2024-12-07)
+      -->
+    <attribute name="isStaff"   column="is_staff"   type="SMALLINT" />
+    <attribute name="eventId"   column="date_id"    type="INT"      />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
