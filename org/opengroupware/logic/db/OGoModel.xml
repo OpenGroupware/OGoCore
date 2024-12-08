@@ -1802,7 +1802,7 @@
       1-always notify
       2-notify-on-done/accept
     -->
-    <attribute name="notifictionType" column="notify_x"   type="SMALLINT" />
+    <attribute name="notificationType" column="notify_x"   type="SMALLINT" />
     
     <!-- contact references -->
     <attribute name="creatorId"      column="creator_id"       type="INT" />
