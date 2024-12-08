@@ -356,6 +356,16 @@ UPDATE company SET owner_id = 10000
 
 -- add more column NOT NULL constraints
 
+ALTER TABLE date_x   ALTER COLUMN owner_id       SET NOT NULL;
+ALTER TABLE date_x   ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE date_x   ALTER COLUMN db_status      SET NOT NULL;
+
+ALTER TABLE job      ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE job      ALTER COLUMN db_status      SET NOT NULL;
+ALTER TABLE job      ALTER COLUMN creator_id     SET NOT NULL;
+ALTER TABLE job      ALTER COLUMN owner_id       SET NOT NULL;
+ALTER TABLE job      ALTER COLUMN executant_id   SET NOT NULL;
+
 ALTER TABLE company  ALTER COLUMN owner_id       SET NOT NULL;
 ALTER TABLE company  ALTER COLUMN object_version SET NOT NULL;
 ALTER TABLE company  ALTER COLUMN db_status      SET NOT NULL;
