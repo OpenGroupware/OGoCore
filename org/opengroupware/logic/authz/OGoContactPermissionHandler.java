@@ -71,7 +71,7 @@ import org.opengroupware.logic.db.OGoDatabase;
  * <li><code>l</code> - list
  * <li><code>b</code> - business contact data (phone/address)
  * <li><code>p</code> - private contact data (phone/address)
- * <li><code>i</code> - IM data
+ * <li><code>I</code> - IM data
  * <li><code>P</code> - private data like birthday etc
  * <li><code>M</code> - mobile number
  * <li><code>s</code> - may send private messages
@@ -106,8 +106,8 @@ public class OGoContactPermissionHandler extends NSObject implements
   public static final String primaryContactPermissions        = "r";
   public static final String authorizedContactPermissions     = "r";
 
-  public static final String rPermissions                     = "rlbpiPM";
-  public static final String wPermissions                     = "rwlbpiPMsc";
+  public static final String rPermissions                     = "rlbpIPM";
+  public static final String wPermissions                     = "rwlbpIPMsc";
 
   public static String resolveCompoundPermissions(String _perm) {
     if (_perm == null)

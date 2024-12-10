@@ -128,7 +128,7 @@ public abstract class OGoContact extends OGoObject implements IOGoTaggedObject {
    *   <li><code>l</code> - list (implied by others)  
    *   <li><code>b</code> - business contact data (phone/address)
    *   <li><code>p</code> - private contact data (phone/address)
-   *   <li><code>i</code> - IM data
+   *   <li><code>I</code> - IM data
    *   <li><code>P</code> - private data like birthday etc
    *   <li><code>M</code> - mobile number
    *   <li><code>s</code> - may send private messages
