@@ -1,161 +1,168 @@
 -- OpenGroupware.org database schema constraint creation script
+-- hh(2024-12-01): This used to be separate, because very old databases had
+--                 various issues related to constraints. Today this should
+--                 probably be merged into the main schema builder.
 
 -- table staff
 
 -- table company
-ALTER TABLE company ADD constraint 
-        company2owner foreign key (owner_id) 
-        references staff(company_id);
+ALTER TABLE company ADD CONSTRAINT 
+        company2owner FOREIGN KEY (owner_id) 
+        REFERENCES staff(company_id);
 ALTER TABLE company ADD constraint
-        company2contact foreign key (contact_id) 
-        references staff(company_id);
+        company2contact FOREIGN KEY (contact_id) 
+        REFERENCES staff(company_id);
 
 -- table company_info
 -- problem with inheritance
---ALTER TABLE company_info ADD constraint
- --   company_info2company foreign key (company_id) 
- --   references company(company_id);
+--ALTER TABLE company_info ADD CONSTRAINT
+ --   company_info2company FOREIGN KEY (company_id) 
+ --   REFERENCES company(company_id);
 
 -- table company_value
-ALTER TABLE company_value ADD constraint
-   company_value2company foreign key (company_id) 
-    references company(company_id);
+ALTER TABLE company_value ADD CONSTRAINT
+   company_value2company FOREIGN KEY (company_id) 
+    REFERENCES company(company_id);
 ALTER TABLE company_value ADD CONSTRAINT company_unique_valuetype
   UNIQUE ( company_id, attribute );
+ALTER TABLE company_value 
+  ADD CONSTRAINT email_type 
+  CHECK (NOT (attribute LIKE 'email%') 
+         OR ((attribute LIKE 'email%') AND type = 3));
 
 -- table company_category
 
 -- table company_assignment
-ALTER TABLE company_assignment ADD constraint
-    company_assignment2company foreign key (company_id) 
-    references company(company_id);
-ALTER TABLE company_assignment ADD constraint
-    company_assignment2sub_company foreign key (sub_company_id) 
-    references company(company_id);
+ALTER TABLE company_assignment ADD CONSTRAINT
+    company_assignment2company FOREIGN KEY (company_id) 
+    REFERENCES company(company_id);
+ALTER TABLE company_assignment ADD CONSTRAINT
+    company_assignment2sub_company FOREIGN KEY (sub_company_id) 
+    REFERENCES company(company_id);
 
 -- table appointment_resource
 
 -- table date_x
-ALTER TABLE date_x ADD constraint 
-    date2date foreign key (parent_date_id) references date_x(date_id);
-ALTER TABLE date_x ADD constraint 
-    date2owner foreign key (owner_id) references staff(company_id);
-ALTER TABLE date_x ADD constraint
-    date2access_team foreign key (access_team_id) 
-    references staff(company_id);
+ALTER TABLE date_x ADD CONSTRAINT 
+    date2date FOREIGN KEY (parent_date_id) REFERENCES date_x(date_id);
+ALTER TABLE date_x ADD CONSTRAINT 
+    date2owner FOREIGN KEY (owner_id) REFERENCES staff(company_id);
+ALTER TABLE date_x ADD CONSTRAINT
+    date2access_team FOREIGN KEY (access_team_id) 
+    REFERENCES staff(company_id);
 
 -- table date_info
-ALTER TABLE date_info ADD constraint
-    date_info2date foreign key (date_id) references date_x(date_id);
+ALTER TABLE date_info ADD CONSTRAINT
+    date_info2date FOREIGN KEY (date_id) REFERENCES date_x(date_id);
 
 -- table date_company_assignment
-ALTER TABLE date_company_assignment ADD constraint
-    date_company_assign2company foreign key (company_id) 
-    references company(company_id);
-ALTER TABLE date_company_assignment ADD constraint
-    date_company_assign2date foreign key (date_id) 
-    references date_x(date_id);
+ALTER TABLE date_company_assignment ADD CONSTRAINT
+    date_company_assign2company FOREIGN KEY (company_id) 
+    REFERENCES company(company_id);
+ALTER TABLE date_company_assignment ADD CONSTRAINT
+    date_company_assign2date FOREIGN KEY (date_id) 
+    REFERENCES date_x(date_id);
 
 -- table project
-ALTER TABLE project ADD constraint
-    project2owner foreign key (owner_id) references staff(company_id);
-ALTER TABLE project ADD constraint
-    project2team foreign key (team_id) references staff(company_id);
+ALTER TABLE project ADD CONSTRAINT
+    project2owner FOREIGN KEY (owner_id) REFERENCES staff(company_id);
+ALTER TABLE project ADD CONSTRAINT
+    project2team FOREIGN KEY (team_id) REFERENCES staff(company_id);
 
 -- table object_acl
 
 -- table project_company_assignment
-ALTER TABLE project_company_assignment ADD constraint
-    project_company_assign2company foreign key (company_id) 
-    references company(company_id);
-ALTER TABLE project_company_assignment ADD constraint
-    project_company_assign2project foreign key (project_id) 
-    references project(project_id);
+ALTER TABLE project_company_assignment ADD CONSTRAINT
+    project_company_assign2company FOREIGN KEY (company_id) 
+    REFERENCES company(company_id);
+ALTER TABLE project_company_assignment ADD CONSTRAINT
+    project_company_assign2project FOREIGN KEY (project_id) 
+    REFERENCES project(project_id);
 
 -- table document
-ALTER TABLE document ADD constraint
-    document2document foreign key (parent_document_id) 
-    references document(document_id);
-ALTER TABLE document ADD constraint
-    document2project foreign key (project_id) 
-    references project(project_id);
-ALTER TABLE document ADD constraint
-    document2date foreign key (date_id) 
-    references date_x(date_id);
-ALTER TABLE document ADD constraint
-    document2first_owner foreign key (first_owner_id) 
-    references staff(company_id);
-ALTER TABLE document ADD constraint
-    document2current_owner foreign key (current_owner_id) 
-    references staff(company_id);
+ALTER TABLE document ADD CONSTRAINT
+    document2document FOREIGN KEY (parent_document_id) 
+    REFERENCES document(document_id);
+ALTER TABLE document ADD CONSTRAINT
+    document2project FOREIGN KEY (project_id) 
+    REFERENCES project(project_id);
+ALTER TABLE document ADD CONSTRAINT
+    document2date FOREIGN KEY (date_id) 
+    REFERENCES date_x(date_id);
+ALTER TABLE document ADD CONSTRAINT
+    document2first_owner FOREIGN KEY (first_owner_id) 
+    REFERENCES staff(company_id);
+ALTER TABLE document ADD CONSTRAINT
+    document2current_owner FOREIGN KEY (current_owner_id) 
+    REFERENCES staff(company_id);
 
 -- table document_version
-ALTER TABLE document_version ADD constraint
-    document_version2document foreign key (document_id) 
-    references document(document_id);
-ALTER TABLE document_version ADD constraint
-    document_version2last_owner foreign key (last_owner_id) 
-    references staff(company_id);
+ALTER TABLE document_version ADD CONSTRAINT
+    document_version2document FOREIGN KEY (document_id) 
+    REFERENCES document(document_id);
+ALTER TABLE document_version ADD CONSTRAINT
+    document_version2last_owner FOREIGN KEY (last_owner_id) 
+    REFERENCES staff(company_id);
 
 -- table document_editing
-ALTER TABLE document_editing ADD constraint
-    document_editing2current_owner foreign key (current_owner_id) 
-    references staff(company_id);
-ALTER TABLE document_editing ADD constraint
-    document_editing2document foreign key (document_id) 
-    references document(document_id);
+ALTER TABLE document_editing ADD CONSTRAINT
+    document_editing2current_owner FOREIGN KEY (current_owner_id) 
+    REFERENCES staff(company_id);
+ALTER TABLE document_editing ADD CONSTRAINT
+    document_editing2document FOREIGN KEY (document_id) 
+    REFERENCES document(document_id);
 
 -- table address
-ALTER TABLE address ADD constraint
-    address2company foreign key (company_id) references company(company_id);
+ALTER TABLE address ADD CONSTRAINT
+    address2company FOREIGN KEY (company_id) REFERENCES company(company_id);
 ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
   UNIQUE ( company_id, type );
 
 -- table telephone
 ALTER TABLE telephone ADD constraint
-    telephone2company foreign key (company_id) references company(company_id);
+    telephone2company FOREIGN KEY (company_id) REFERENCES company(company_id);
 ALTER TABLE telephone ADD CONSTRAINT company_unique_phonetype
   UNIQUE ( company_id, type );
 
 -- table job
-ALTER TABLE job ADD constraint 
-  job2project foreign key (project_id) references project(project_id);
-ALTER TABLE job ADD constraint
-  job2creator foreign key (creator_id) references staff(company_id);
-ALTER TABLE job ADD constraint
-  job2executant foreign key (executant_id) references staff(company_id);
-ALTER TABLE job ADD constraint
-  job2job foreign key (parent_job_id) references job(job_id);
+ALTER TABLE job ADD CONSTRAINT 
+  job2project FOREIGN KEY (project_id) REFERENCES project(project_id);
+ALTER TABLE job ADD CONSTRAINT
+  job2creator FOREIGN KEY (creator_id) REFERENCES staff(company_id);
+ALTER TABLE job ADD CONSTRAINT
+  job2executant FOREIGN KEY (executant_id) REFERENCES staff(company_id);
+ALTER TABLE job ADD CONSTRAINT
+  job2job FOREIGN KEY (parent_job_id) REFERENCES job(job_id);
 
 -- table job_history
-ALTER TABLE job_history ADD constraint
-  job_history2job foreign key (job_id) references job(job_id);
-ALTER TABLE job_history ADD constraint
-  job_history2actor foreign key (actor_id) references staff(company_id);
+ALTER TABLE job_history ADD CONSTRAINT
+  job_history2job FOREIGN KEY (job_id) REFERENCES job(job_id);
+ALTER TABLE job_history ADD CONSTRAINT
+  job_history2actor FOREIGN KEY (actor_id) REFERENCES staff(company_id);
 
 -- table job_history_info
-ALTER TABLE job_history_info ADD constraint
-    job_history_info2job_history foreign key (job_history_id) 
-    references job_history(job_history_id);
+ALTER TABLE job_history_info ADD CONSTRAINT
+    job_history_info2job_history FOREIGN KEY (job_history_id) 
+    REFERENCES job_history(job_history_id);
 
 -- table resource
 
 -- table job_resource_assignment
-ALTER TABLE job_resource_assignment ADD constraint
-  job_resource2resource foreign key (resource_id) 
-  references resource(resource_id);
-ALTER TABLE job_resource_assignment ADD constraint
-  job_resource2job foreign key (job_id) references job(job_id);
+ALTER TABLE job_resource_assignment ADD CONSTRAINT
+  job_resource2resource FOREIGN KEY (resource_id) 
+  REFERENCES resource(resource_id);
+ALTER TABLE job_resource_assignment ADD CONSTRAINT
+  job_resource2job FOREIGN KEY (job_id) REFERENCES job(job_id);
 
 -- table news_article
 
 -- table news_article_link
-ALTER TABLE news_article_link ADD constraint
-    n_article_link2news_article foreign key (news_article_id) 
-    references news_article(news_article_id);
-ALTER TABLE news_article_link ADD constraint
-    n_article_link2news_article2 foreign key (sub_news_article_id) 
-    references news_article(news_article_id);
+ALTER TABLE news_article_link ADD CONSTRAINT
+    n_article_link2news_article FOREIGN KEY (news_article_id) 
+    REFERENCES news_article(news_article_id);
+ALTER TABLE news_article_link ADD CONSTRAINT
+    n_article_link2news_article2 FOREIGN KEY (sub_news_article_id) 
+    REFERENCES news_article(news_article_id);
 
 -- table invoice
 
@@ -174,17 +181,17 @@ ALTER TABLE news_article_link ADD constraint
 -- table invoice_accounting
 
 -- table job_assignment
-ALTER TABLE job_assignment ADD constraint
-    parent_job_assignment2job foreign key (parent_job_id) 
-    references job(job_id);
-ALTER TABLE job_assignment ADD constraint
-    child_job_assignment2job foreign key (child_job_id)
-    references job(job_id);
+ALTER TABLE job_assignment ADD CONSTRAINT
+    parent_job_assignment2job FOREIGN KEY (parent_job_id) 
+    REFERENCES job(job_id);
+ALTER TABLE job_assignment ADD CONSTRAINT
+    child_job_assignment2job FOREIGN KEY (child_job_id)
+    REFERENCES job(job_id);
 
 -- table project_info
-ALTER TABLE project_info ADD constraint
-    project_info2project foreign key (project_id) 
-    references project(project_id);
+ALTER TABLE project_info ADD CONSTRAINT
+    project_info2project FOREIGN KEY (project_id) 
+    REFERENCES project(project_id);
 
 -- table log
 

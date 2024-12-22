@@ -522,7 +522,7 @@ public class OGoEOInsertOperation extends OGoCompoundOperation
           return error;
       }
       
-      if ((error = this.fixupObjectWithPrimarKey(eo, _tx, _oc)) != null) {
+      if ((error = this.fixupObjectWithPrimaryKey(eo, _tx, _oc)) != null) {
         log.error("object fixup failed", error);
         return error;
       }
@@ -658,7 +658,7 @@ public class OGoEOInsertOperation extends OGoCompoundOperation
    * @param _oc - object context
    * @return null if preparation was OK, the error otherwise
    */
-  public Exception fixupObjectWithPrimarKey
+  public Exception fixupObjectWithPrimaryKey
     (final EOEnterpriseObject _eo,
      final OGoOperationTransaction _tx, final OGoObjectContext _oc)
   {

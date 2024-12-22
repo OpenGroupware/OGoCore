@@ -70,7 +70,7 @@ public class OGoProjectInsert extends OGoEOInsertOperation {
   // TBD: autocreate the required document hierarchy
   
   @Override
-  public Exception fixupObjectWithPrimarKey
+  public Exception fixupObjectWithPrimaryKey
     (final EOEnterpriseObject _eo,
      final OGoOperationTransaction _tx, final OGoObjectContext _ctx)
   {

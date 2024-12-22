@@ -86,7 +86,7 @@ public class OGoProjectOwnedObjectPermissionHandler extends NSObject
     }
 
     // TBD: rather simplistic ...
-    _ac.recordPermissionsForGlobalID("rw", _gid);
+    _ac.recordPermissionsForGlobalID(canAccessProject ? "rw" : "", _gid);
     return true;
   }
 

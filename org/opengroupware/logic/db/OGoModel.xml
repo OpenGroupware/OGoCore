@@ -24,7 +24,9 @@
     
     <!-- fetch specification -->
     
-    <fetch name="authzCountFetch" flags="readonly,rawrows,allbinds">
+    <!-- hh(2024-12-03): not used right now, but should be used for has-acl
+         check! -->
+    <fetch name="objectIdsWithACL" flags="readonly,rawrows,allbinds">
       <!--
         Required Parameters:
         - 'ids'
@@ -1693,15 +1695,14 @@
         Required Parameters:
         - 'ids'
         - 'authIds'
-        
-        We need to be either the owner or be in the access team to have
-        any access at all.
-        TBD: would be good to get account-ids and team-ids separately
         -->
       <attributes>id,ownerId,accessTeamId,writeAccessList</attributes>
       <qualifier>
-        (id IN $ids) OR (ownerId IN $authIds) OR (accessTeamId IN $authIds)
-        </qualifier>
+        <!-- TODO: more efficient raw query, we have to join the attendees
+                   to restrict access, as being an attendee always gives
+                   access -->
+        id IN $ids
+      </qualifier>
     </fetch>
 
     <fetch name="upcomingEvents" requiresAllBindings="true" limit="4">
@@ -1732,9 +1733,12 @@
     <attribute name="rsvp"    type="SMALLINT"/>
     
     <!-- join -->
-    <attribute name="companyId"      column="company_id" type="INT"      />
-    <attribute name="isTeamAttendee" column="is_staff"   type="SMALLINT" />
-    <attribute name="eventId"        column="date_id"    type="INT"      />
+    <attribute name="companyId" column="company_id" type="INT"      />
+    <!-- I think this says whether the company-id is internal or external,
+         i.e. whether it is an account or a regular contact. (hh 2024-12-07)
+      -->
+    <attribute name="isStaff"   column="is_staff"   type="SMALLINT" />
+    <attribute name="eventId"   column="date_id"    type="INT"      />
     
     <!-- derived other columns from the information schema -->
     <attribute columnNameLike="*" />
@@ -1747,6 +1751,16 @@
         is_new      SMALLINT
         outlook_key VARCHAR(255)
       -->
+      
+    <fetch name="authzFetch" flags="readonly,rawrows,allbinds">
+      <!--
+        Required Parameters:
+        - 'ids' (event IDs!)
+        - 'authIds'
+        -->
+      <attributes>id,eventId,role,companyId,isTeamAttendee</attributes>
+      <qualifier>(eventId IN $ids) AND (companyId IN $authIds)</qualifier>
+    </fetch>
   </entity>
   
   
@@ -1800,7 +1814,7 @@
       1-always notify
       2-notify-on-done/accept
     -->
-    <attribute name="notifictionType" column="notify_x"   type="SMALLINT" />
+    <attribute name="notificationType" column="notify_x"   type="SMALLINT" />
     
     <!-- contact references -->
     <attribute name="creatorId"      column="creator_id"       type="INT" />
