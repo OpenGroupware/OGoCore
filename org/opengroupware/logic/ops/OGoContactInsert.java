@@ -179,7 +179,7 @@ public class OGoContactInsert extends OGoEOInsertOperation {
   private final static Number one = Integer.valueOf(1);
 
   @Override
-  public Exception fixupObjectWithPrimarKey
+  public Exception fixupObjectWithPrimaryKey
     (final EOEnterpriseObject _eo,
      final OGoOperationTransaction _tx, final OGoObjectContext _ctx)
   {
