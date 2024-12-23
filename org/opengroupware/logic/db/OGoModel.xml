@@ -323,7 +323,7 @@
     <attribute name="companyId" column="company_id"      />
     <attribute name="value"     column="comment"         />
     
-    <to-one name="person" to="Teams" join="companyId,id" />
+    <to-one name="team" to="Teams" join="companyId,id" />
 
     <fetch name="default" limit="1000">
     </fetch>
