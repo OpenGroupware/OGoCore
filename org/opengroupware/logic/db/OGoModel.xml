@@ -2192,11 +2192,10 @@
 
     <to-many name="acl"      to="ACLEntries"       join="id,objectId" />
 
-    <!-- TBD: this is buggy, somehow it does not work -->
     <to-one  name="parentDocument" to="Documents"  join="parentId,id" />
     <to-one  name="parentNote"     to="Notes"      join="parentId,id" />
-    <to-one  name="attachments"    to="Documents"  join="id,parentId" />
-    <to-one  name="comments"       to="Notes"      join="id,parentId" />
+    <to-many name="attachments"    to="Documents"  join="id,parentId" />
+    <to-many name="comments"       to="Notes"      join="id,parentId" />
     <!-- childNodes aka 'replies' -->
 
     <!-- fetch specifications -->
