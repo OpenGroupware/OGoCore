@@ -10,7 +10,8 @@ CREATE TABLE staff (
   is_account  SMALLINT,
   db_status   VARCHAR(50),
   CONSTRAINT  pk_staff PRIMARY KEY (staff_id),
-  CONSTRAINT  unique_company_id UNIQUE(company_id));
+  CONSTRAINT  unique_company_id UNIQUE(company_id)
+);
 
 CREATE TABLE company (
   company_id          INT NOT NULL,
@@ -136,7 +137,8 @@ CREATE TABLE company_category (
   object_version        INT,
   category              VARCHAR(255),
   db_status             VARCHAR(50),
-  CONSTRAINT pk_company_category PRIMARY KEY (company_category_id));
+  CONSTRAINT pk_company_category PRIMARY KEY (company_category_id)
+);
 
 CREATE TABLE company_assignment (
   company_assignment_id INT NOT NULL,
@@ -204,14 +206,16 @@ CREATE TABLE date_x (
   associated_contacts    VARCHAR(255),    -- Outlook associated_contacts
   keywords               VARCHAR(255),    -- Outlook keywords
 
-  CONSTRAINT             pk_date PRIMARY KEY (date_id));
+  CONSTRAINT             pk_date PRIMARY KEY (date_id)
+);
 
 CREATE TABLE date_info (
   date_info_id INT NOT NULL,
   date_id      INT NOT NULL,
   comment      TEXT,
   db_status    VARCHAR(50),
-  CONSTRAINT   pk_date_info PRIMARY KEY (date_info_id));
+  CONSTRAINT   pk_date_info PRIMARY KEY (date_info_id)
+);
 
 CREATE TABLE date_company_assignment (
   date_company_assignment_id INT NOT NULL,
@@ -226,7 +230,8 @@ CREATE TABLE date_company_assignment (
   db_status                  VARCHAR(50),
   outlook_key                VARCHAR(255),
   CONSTRAINT                 pk_date_company_assignment PRIMARY KEY
-                             (date_company_assignment_id));
+                             (date_company_assignment_id)
+);
 
 CREATE TABLE project (
   project_id        INT NOT NULL,
@@ -238,13 +243,14 @@ CREATE TABLE project (
   start_date        TIMESTAMP WITH TIME ZONE,
   end_date          TIMESTAMP WITH TIME ZONE,
   status            VARCHAR(255),
-  is_fake           SMALLINT,
+  is_fake           SMALLINT, -- whether this is the doc store for a company
   db_status         VARCHAR(50),
   kind              VARCHAR(50),
   url               VARCHAR(100),
   parent_project_id INT,
   CONSTRAINT        pk_project PRIMARY KEY (project_id),
-  CONSTRAINT        unique_project_number UNIQUE(number));
+  CONSTRAINT        unique_project_number UNIQUE(number)
+);
 
 CREATE TABLE object_acl (
   object_acl_id INT NOT NULL,
@@ -347,7 +353,8 @@ CREATE TABLE document_editing (
   status              VARCHAR(50),
   db_status           VARCHAR(50) NOT NULL,
   contact             VARCHAR(255),
-  CONSTRAINT          pk_document_editing PRIMARY KEY (document_editing_id));
+  CONSTRAINT          pk_document_editing PRIMARY KEY (document_editing_id)
+);
 
 CREATE TABLE address (
   address_id     INT NOT NULL,
@@ -365,7 +372,8 @@ CREATE TABLE address (
   db_status      VARCHAR(50),
   source_url     VARCHAR(255),
   district       VARCHAR(255),
-  CONSTRAINT     pk_address PRIMARY KEY (address_id));
+  CONSTRAINT     pk_address PRIMARY KEY (address_id)
+);
 
 CREATE TABLE telephone (
   telephone_id   INT NOT NULL,
@@ -377,7 +385,8 @@ CREATE TABLE telephone (
   info           VARCHAR(255),
   url            VARCHAR(255),
   db_status      VARCHAR(50),
-  CONSTRAINT     pk_telephone PRIMARY KEY (telephone_id));
+  CONSTRAINT     pk_telephone PRIMARY KEY (telephone_id)
+);
 
 CREATE TABLE job (
   job_id               INT NOT NULL,
@@ -413,7 +422,8 @@ CREATE TABLE job (
   associated_companies VARCHAR(255),
   associated_contacts  VARCHAR(255),
   timer_date           TIMESTAMP WITH TIME ZONE,
-  CONSTRAINT           pk_job PRIMARY KEY (job_id));
+  CONSTRAINT           pk_job PRIMARY KEY (job_id)
+);
 
 CREATE TABLE job_history (
   job_history_id INT NOT NULL,
@@ -432,7 +442,8 @@ CREATE TABLE job_history_info (
   job_history_id      INT NOT NULL,
   comment             TEXT,
   db_status           VARCHAR(50),
-  CONSTRAINT          pk_job_history_info PRIMARY KEY (job_history_info_id));
+  CONSTRAINT          pk_job_history_info PRIMARY KEY (job_history_info_id)
+);
 
 CREATE TABLE resource (
   resource_id    INT NOT NULL,
@@ -445,7 +456,8 @@ CREATE TABLE resource (
   type           INT NOT NULL,
   db_status      VARCHAR(50),
   object_version INT,
-  CONSTRAINT     pk_resource_id PRIMARY KEY (resource_id));
+  CONSTRAINT     pk_resource_id PRIMARY KEY (resource_id)
+);
 
 CREATE TABLE job_resource_assignment (
   job_resource_assignment_id INT NOT NULL,
@@ -454,7 +466,8 @@ CREATE TABLE job_resource_assignment (
   operative_part             INT,
   db_status                  VARCHAR(50),
   CONSTRAINT                 pk_job_resource_id PRIMARY KEY 
-                             (job_resource_assignment_id));
+                             (job_resource_assignment_id)
+);
 
 CREATE TABLE news_article (
   news_article_id  INT NOT NULL,
@@ -464,14 +477,16 @@ CREATE TABLE news_article (
   is_index_article SMALLINT,
   creation_date    TIMESTAMP WITH TIME ZONE,
   db_status        VARCHAR(50),
-  CONSTRAINT       pk_news_article PRIMARY KEY (news_article_id));
+  CONSTRAINT       pk_news_article PRIMARY KEY (news_article_id)
+);
 
 CREATE TABLE news_article_link (
   news_article_link_id INT NOT NULL,
   object_version       INT,
   news_article_id      INT,
   sub_news_article_id  INT,
-  CONSTRAINT           pk_article_link PRIMARY KEY (news_article_link_id));
+  CONSTRAINT           pk_article_link PRIMARY KEY (news_article_link_id)
+);
 
 CREATE TABLE invoice (
   invoice_id        INT NOT NULL,
@@ -487,20 +502,23 @@ CREATE TABLE invoice (
   comment           TEXT,
   object_version    INT,
   db_status         VARCHAR(50)  ,
-  CONSTRAINT        pk_invoice PRIMARY KEY (invoice_id));
+  CONSTRAINT        pk_invoice PRIMARY KEY (invoice_id)
+);
 
 CREATE TABLE article_category (
   article_category_id INT NOT NULL,
   category_name       VARCHAR(255) NOT NULL,
   category_abbrev     VARCHAR(255),
-  CONSTRAINT          pk_article_category PRIMARY KEY (article_category_id));
+  CONSTRAINT          pk_article_category PRIMARY KEY (article_category_id)
+);
 
 CREATE TABLE article_unit (
   article_unit_id    INT NOT NULL,
   format             VARCHAR(50),
   singular_unit      VARCHAR(255),
   plural_unit        VARCHAR(255),
-  CONSTRAINT         pk_url_x PRIMARY KEY (article_unit_id));
+  CONSTRAINT         pk_url_x PRIMARY KEY (article_unit_id)
+);
 
 CREATE TABLE article (
   article_id          INT NOT NULL,
@@ -515,7 +533,8 @@ CREATE TABLE article (
   vat                 NUMERIC(19,4),
   vat_group           VARCHAR(50),
   db_status           VARCHAR(50),
-  CONSTRAINT          pk_article PRIMARY KEY (article_id));
+  CONSTRAINT          pk_article PRIMARY KEY (article_id)
+);
 
 CREATE TABLE invoice_article_assignment (
   invoice_article_assignment_id INT NOT NULL,
@@ -528,7 +547,8 @@ CREATE TABLE invoice_article_assignment (
   comment                       TEXT,
   db_status                     VARCHAR(50),
   CONSTRAINT                    pk_invoice_article_assignment PRIMARY KEY 
-                                (invoice_article_assignment_id));
+                                (invoice_article_assignment_id)
+);
 
 CREATE TABLE invoice_account (
   invoice_account_id INT NOT NULL,
@@ -537,7 +557,8 @@ CREATE TABLE invoice_account (
   balance            NUMERIC(19,4),
   object_version     INT,
   db_status          VARCHAR(50),
-  CONSTRAINT         pk_invoice_account PRIMARY KEY (invoice_account_id));
+  CONSTRAINT         pk_invoice_account PRIMARY KEY (invoice_account_id)
+);
 
 CREATE TABLE invoice_action (
   invoice_action_id INT NOT NULL,
@@ -549,7 +570,8 @@ CREATE TABLE invoice_action (
   log_text          TEXT,
   object_version    INT,
   db_status         VARCHAR(50),
-  CONSTRAINT        pk_invoice_action PRIMARY KEY (invoice_action_id));
+  CONSTRAINT        pk_invoice_action PRIMARY KEY (invoice_action_id)
+);
 
 CREATE TABLE invoice_accounting (
   invoice_accounting_id INT NOT NULL,
@@ -559,7 +581,8 @@ CREATE TABLE invoice_accounting (
   object_version        INT,
   db_status             VARCHAR(50),
   CONSTRAINT            pk_invoice_accounting PRIMARY KEY 
-                        (invoice_accounting_id));
+                        (invoice_accounting_id)
+);
 
 CREATE TABLE job_assignment (
   job_assignment_id INT NOT NULL,
@@ -568,14 +591,16 @@ CREATE TABLE job_assignment (
   position_x        INT,
   assignment_kind   VARCHAR(50),
   db_status         VARCHAR(50),
-  CONSTRAINT        pk_job_assignment PRIMARY KEY (job_assignment_id));
+  CONSTRAINT        pk_job_assignment PRIMARY KEY (job_assignment_id)
+);
 
 CREATE TABLE project_info (
   project_info_id INT NOT NULL,
   project_id      INT NOT NULL, 
   comment         TEXT,
   db_status       VARCHAR(50),
-  CONSTRAINT      pk_project_info PRIMARY KEY (project_info_id));
+  CONSTRAINT      pk_project_info PRIMARY KEY (project_info_id)
+);
 
 CREATE TABLE log (
   log_id        INT NOT NULL,
@@ -584,19 +609,22 @@ CREATE TABLE log (
   log_text      TEXT NOT NULL,
   action        VARCHAR(100) NOT NULL,
   account_id    INT,
-  CONSTRAINT    pk_log PRIMARY KEY (log_id));
+  CONSTRAINT    pk_log PRIMARY KEY (log_id)
+);
 
 CREATE TABLE session_log (
   session_log_id INT NOT NULL,
   account_id     INT NOT NULL,
   log_date       TIMESTAMP WITH TIME ZONE NOT NULL,
   action         VARCHAR(255) NOT NULL,
-  CONSTRAINT     pk_session_log PRIMARY KEY (session_log_id));
+  CONSTRAINT     pk_session_log PRIMARY KEY (session_log_id)
+);
 
 CREATE TABLE obj_info (
   obj_id     INT NOT NULL,
   obj_type   VARCHAR(255) NOT NULL,
-  CONSTRAINT pk_obj_info PRIMARY KEY (obj_id));
+  CONSTRAINT pk_obj_info PRIMARY KEY (obj_id)
+);
 
 CREATE TABLE obj_property (
   obj_property_id  INT NOT NULL,
@@ -613,7 +641,8 @@ CREATE TABLE obj_property (
   value_oid        VARCHAR(255),
   blob_size        INT,
   value_blob       TEXT,
-  CONSTRAINT       pk_obj_property PRIMARY KEY (obj_property_id));
+  CONSTRAINT       pk_obj_property PRIMARY KEY (obj_property_id)
+);
 
 CREATE TABLE obj_link (
   obj_link_id int          NOT NULL,
@@ -623,26 +652,30 @@ CREATE TABLE obj_link (
   target_id   int          null,
   target_type VARCHAR(50)  null,
   link_type   VARCHAR(50)  null,
-  label       VARCHAR(255) null);
+  label       VARCHAR(255) null
+);
 
 CREATE TABLE object_model (
   db_version INT NOT NULL,
-  model_name VARCHAR(255) not null);
+  model_name VARCHAR(255) not null
+);
 
-INSERT INTO object_model(db_version, model_name) VALUES ( 3, 'OpenGroupware.org_PostgreSQL');
+INSERT INTO object_model(db_version, model_name)
+     VALUES ( 3, 'OpenGroupware.org_PostgreSQL');
 
 CREATE TABLE table_version (
   table_name    VARCHAR(255) NOT NULL,
   table_version INT NOT NULL,
-  CONSTRAINT    pk_table_version PRIMARY KEY (table_name));
+  CONSTRAINT    pk_table_version PRIMARY KEY (table_name)
+);
 
 CREATE TABLE person ()     INHERITS(company);
 CREATE TABLE enterprise () INHERITS(company);
 CREATE TABLE trust ()      INHERITS(company);
 CREATE TABLE team ()       INHERITS(company);
 
-CREATE TABLE note () INHERITS(document);
-CREATE TABLE doc ()  INHERITS(document);
+CREATE TABLE note ()       INHERITS(document);
+CREATE TABLE doc ()        INHERITS(document);
 
 -- CTags
 
@@ -651,8 +684,7 @@ CREATE TABLE ctags (
   ctag  INTEGER NOT NULL DEFAULT 0
 );
 
-ALTER TABLE ctags ADD CONSTRAINT ctag_unique_entity
-  UNIQUE (entity);
+ALTER TABLE ctags ADD CONSTRAINT ctag_unique_entity UNIQUE (entity);
 
 INSERT INTO ctags (entity) VALUES ('Person'); 
 INSERT INTO ctags (entity) VALUES ('Enterprise');
