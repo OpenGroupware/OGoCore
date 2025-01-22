@@ -222,7 +222,7 @@ CREATE TABLE date_company_assignment (
   company_id                 INT,
   date_id                    INT,
   is_staff                   SMALLINT,
-  is_new                     SMALLINT,
+  is_new                     SMALLINT, -- seems to be unused
   partstatus                 VARCHAR(50),
   role                       VARCHAR(50),
   comment                    VARCHAR(255),
@@ -402,7 +402,7 @@ CREATE TABLE job (
   notify_x             INT,
   is_control_job       SMALLINT,
   is_team_job          SMALLINT,
-  is_new               SMALLINT,
+  is_new               SMALLINT, -- seems to be unused
   job_status           VARCHAR(255),
   category             VARCHAR(255),
   priority             INT,
@@ -1190,7 +1190,6 @@ CREATE INDEX telephone__real_number ON telephone(real_number);
 CREATE INDEX job__keywords      ON job(keywords);
 CREATE INDEX is_control_job_idx ON job(is_control_job);
 CREATE INDEX is_team_job_idx    ON job(is_team_job);
-CREATE INDEX is_new_idx         ON job(is_new);
 CREATE INDEX priority_idx       ON job(priority);
 CREATE INDEX job_kind_idx       ON job(kind);
 CREATE INDEX job_status_idx     ON job(job_status);
