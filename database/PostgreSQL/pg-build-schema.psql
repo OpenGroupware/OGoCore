@@ -1331,52 +1331,52 @@ CREATE INDEX palmtodo_skyrix_idx ON palm_todo (skyrix_id);
 -- table versions -------------------------------------------------------------
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('_model', 41);
+  VALUES ('_model', 55);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('staff', 41);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company', 45);
+  VALUES ('company', 55);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('company_info', 42);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company_value', 41);
+  VALUES ('company_value', 54);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('company_category', 41);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company_assignment', 41);
+  VALUES ('company_assignment', 55);
 
 INSERT INTO table_version (table_name, table_version)
   VALUES ('appointment_resource', 41);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('appointment', 47);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('date', 47);
+  VALUES ('date', 55); -- actually date_x
 INSERT INTO table_version (table_name, table_version)
   VALUES ('date_info', 42);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('date_company_assignment', 43);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('project', 41);
+  VALUES ('project', 54);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('project_info', 42);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('project_company_assignment', 41);
+  VALUES ('project_company_assignment', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('document', 41);
+  VALUES ('document', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('document_version', 42);
+  VALUES ('document_version', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('document_editing', 41);
+  VALUES ('document_editing', 55);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('address', 42);
+  VALUES ('address', 54);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('telephone', 41);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('job', 46);
+  VALUES ('job', 55);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('job_history', 41);
 INSERT INTO table_version (table_name, table_version)

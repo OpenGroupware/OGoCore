@@ -396,3 +396,23 @@ ALTER TABLE document_version ALTER COLUMN last_owner_id  SET NOT NULL;
 ALTER TABLE document ADD COLUMN text_content                TEXT     NULL;
 ALTER TABLE document ADD COLUMN text_content_type           SMALLINT NULL;
 ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
+
+
+-- Bump versions
+-- 54 - things we changed in 2015
+-- 55 - things changed end of 2024
+UPDATE table_version SET table_version = 55 WHERE table_name = '_model';
+UPDATE table_version SET table_version = 55 WHERE table_name = 'company';
+UPDATE table_version SET table_version = 54 WHERE table_name = 'company_value';
+UPDATE table_version SET table_version = 55 
+ WHERE table_name = 'company_assignment';
+UPDATE table_version SET table_version = 55 WHERE table_name = 'date';
+UPDATE table_version SET table_version = 55 WHERE table_name = 'job';
+UPDATE table_version SET table_version = 54 WHERE table_name = 'project';
+UPDATE table_version SET table_version = 55
+ WHERE table_name = 'project_company_assignment';
+UPDATE table_version SET table_version = 55 WHERE table_name = 'document';
+UPDATE table_version SET table_version = 55
+ WHERE table_name = 'document_version';
+UPDATE table_version SET table_version = 55
+ WHERE table_name = 'document_editing';
