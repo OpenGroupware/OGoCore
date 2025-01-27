@@ -59,6 +59,8 @@ ALTER TABLE job ADD COLUMN owner_id INT;
 UPDATE job SET owner_id = creator_id WHERE owner_id IS NULL;
 ALTER TABLE job ADD COLUMN date_id INT;
 
+ALTER TABLE date_x ADD COLUMN project_id INT;
+
 -- pg-update-1.0to5.4.psql, used to be a separate file
 
 ALTER TABLE object_acl ALTER COLUMN object_id TYPE INT USING object_id::int;
@@ -442,14 +444,15 @@ ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
 
 
 -- Bump versions
--- 54 - things we changed in 2015
--- 55 - things changed end of 2024
+-- 54  - things we changed in 2015
+-- 55  - things changed end of 2024
+-- 56+ - things changed in 2025
 UPDATE table_version SET table_version = 55 WHERE table_name = '_model';
 UPDATE table_version SET table_version = 55 WHERE table_name = 'company';
 UPDATE table_version SET table_version = 54 WHERE table_name = 'company_value';
 UPDATE table_version SET table_version = 55 
  WHERE table_name = 'company_assignment';
-UPDATE table_version SET table_version = 55 WHERE table_name = 'date';
+UPDATE table_version SET table_version = 56 WHERE table_name = 'date';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
 UPDATE table_version SET table_version = 54 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 55
