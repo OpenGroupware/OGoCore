@@ -11,6 +11,7 @@ ALTER TABLE object_acl
   ALTER COLUMN auth_id   TYPE INT USING auth_id::int;
 
 ALTER TABLE document ADD COLUMN company_id INT NULL;
+ALTER TABLE document ADD COLUMN job_id     INT NULL;
 
 CREATE TABLE ctags (
   entity VARCHAR NOT NULL,
@@ -457,7 +458,7 @@ UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
 UPDATE table_version SET table_version = 54 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';
-UPDATE table_version SET table_version = 55 WHERE table_name = 'document';
+UPDATE table_version SET table_version = 56 WHERE table_name = 'document';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_version';
 UPDATE table_version SET table_version = 55

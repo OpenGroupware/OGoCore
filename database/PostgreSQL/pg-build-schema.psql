@@ -283,7 +283,8 @@ CREATE TABLE document (
   object_version     INT, -- this is NULL in folders
   project_id         INT,
   parent_document_id INT,
-  date_id            INT,
+  date_id            INT, -- attach notes and files to events
+  job_id             INT, -- attach notes and files to tasks
   
   first_owner_id     INT NOT NULL,
   current_owner_id   INT NOT NULL,
