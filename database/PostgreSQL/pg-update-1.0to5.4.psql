@@ -186,6 +186,48 @@ CREATE RULE company_hierarchy_delete AS ON DELETE TO company_hierarchy DO INSTEA
   DELETE FROM company_assignment
   WHERE company_assignment_id = old.company_assignment_id;
 
+-- TBD: we should probably include the full join info (ie company data)
+CREATE VIEW person_relationship AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS person_id,
+    ca.sub_company_id AS related_person_id,
+    -- TBD: ca.is_headquarter, ca.is_chief, 
+    ca."function" AS relationship,
+    ca.db_status,
+    ca.start_date, ca.end_date
+  FROM company_assignment ca
+  INNER JOIN person e USING (company_id)
+  INNER JOIN person p ON (p.company_id = ca.sub_company_id);
+
+CREATE RULE person_relationship_add AS 
+    ON INSERT TO person_relationship DO INSTEAD
+  INSERT INTO company_assignment (
+    company_assignment_id, company_id, sub_company_id,
+    "function", db_status,
+    start_date, end_date
+  )
+  VALUES (
+    new.company_assignment_id, new.person_id, new.related_person_id,
+    new.relationship, new.db_status,
+    new.start_date, new.end_date
+  );
+
+CREATE RULE person_relationship_set AS 
+    ON UPDATE TO person_relationship DO INSTEAD
+  UPDATE company_assignment
+  SET company_id     = new.person_id,
+      sub_company_id = new.related_person_id,
+      "function"     = new."relationship",
+      db_status      = new.db_status,
+      start_date     = new.start_date,
+      end_date       = new.end_date
+  WHERE company_assignment_id = old.company_assignment_id;
+
+CREATE RULE person_relationship_delete AS 
+    ON DELETE TO person_relationship DO INSTEAD
+  DELETE FROM company_assignment
+        WHERE company_assignment_id = old.company_assignment_id;
 
 
 -- TBD: we should probably include the full join info (ie team data)
