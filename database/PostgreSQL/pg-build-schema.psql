@@ -393,6 +393,7 @@ CREATE TABLE job (
   object_version       INT NOT NULL,
   parent_job_id        INT,
   project_id           INT,
+  date_id              INT,
   creator_id           INT NOT NULL,
   owner_id             INT NOT NULL,
   executant_id         INT, -- TBD: NOT NULL?
@@ -407,7 +408,7 @@ CREATE TABLE job (
   category             VARCHAR(255),
   priority             INT,
   db_status            VARCHAR(50) NOT NULL,
-  kind                 VARCHAR(50),
+  kind                 VARCHAR(50), -- 01_root_process, 00_template
   keywords             VARCHAR(255),
   source_url           VARCHAR(255),
   sensitivity          SMALLINT,

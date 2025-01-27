@@ -55,8 +55,9 @@ CREATE TABLE login_token (
   expiration_date TIMESTAMP WITH TIME ZONE NULL
 );
 
-ALTER TABLE job  ADD COLUMN owner_id INT;
-UPDATE job SET owner_id = creator_id;
+ALTER TABLE job ADD COLUMN owner_id INT;
+UPDATE job SET owner_id = creator_id WHERE owner_id IS NULL;
+ALTER TABLE job ADD COLUMN date_id INT;
 
 -- pg-update-1.0to5.4.psql, used to be a separate file
 
@@ -449,7 +450,7 @@ UPDATE table_version SET table_version = 54 WHERE table_name = 'company_value';
 UPDATE table_version SET table_version = 55 
  WHERE table_name = 'company_assignment';
 UPDATE table_version SET table_version = 55 WHERE table_name = 'date';
-UPDATE table_version SET table_version = 55 WHERE table_name = 'job';
+UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
 UPDATE table_version SET table_version = 54 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';
