@@ -1101,9 +1101,10 @@ CREATE TABLE palm_category (
 
 INSERT INTO person (company_id, login, name, description, is_account, 
                     is_intra_account, is_extra_account, is_person, number, 
-                    is_private, is_readonly, db_status, object_version) 
+                    is_private, is_readonly, db_status, object_version, 
+                    owner_id) 
   VALUES (10000, 'root', 'root', 'Administrator', 1, 1, 0, 1, 'LS10000', 0, 1,
-          'inserted', 1);
+          'inserted', 1, 10000);
 
 INSERT INTO staff (staff_id, company_id, is_account) 
   VALUES (10001, 10000, 1);
