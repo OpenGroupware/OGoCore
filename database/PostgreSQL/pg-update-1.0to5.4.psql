@@ -370,6 +370,9 @@ UPDATE job
    SET object_version =
      (SELECT COUNT(*) FROM job_history WHERE job.job_id = job_history.job_id)
  WHERE object_version IS NULL;
+UPDATE job_history
+    SET object_version = 1
+  WHERE object_version IS NULL;
 
 -- not sure whether last_modified is actually done in Windows time by ZideLook,
 -- this would be from January 1, 1601
@@ -402,19 +405,20 @@ UPDATE company SET owner_id = 10000
 
 -- add more column NOT NULL constraints
 
-ALTER TABLE date_x   ALTER COLUMN owner_id       SET NOT NULL;
-ALTER TABLE date_x   ALTER COLUMN object_version SET NOT NULL;
-ALTER TABLE date_x   ALTER COLUMN db_status      SET NOT NULL;
+ALTER TABLE date_x      ALTER COLUMN owner_id       SET NOT NULL;
+ALTER TABLE date_x      ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE date_x      ALTER COLUMN db_status      SET NOT NULL;
 
-ALTER TABLE job      ALTER COLUMN object_version SET NOT NULL;
-ALTER TABLE job      ALTER COLUMN db_status      SET NOT NULL;
-ALTER TABLE job      ALTER COLUMN creator_id     SET NOT NULL;
-ALTER TABLE job      ALTER COLUMN owner_id       SET NOT NULL;
-ALTER TABLE job      ALTER COLUMN executant_id   SET NOT NULL;
+ALTER TABLE job         ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE job         ALTER COLUMN db_status      SET NOT NULL;
+ALTER TABLE job         ALTER COLUMN creator_id     SET NOT NULL;
+ALTER TABLE job         ALTER COLUMN owner_id       SET NOT NULL;
+ALTER TABLE job         ALTER COLUMN executant_id   SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN object_version SET NOT NULL;
 
-ALTER TABLE company  ALTER COLUMN owner_id       SET NOT NULL;
-ALTER TABLE company  ALTER COLUMN object_version SET NOT NULL;
-ALTER TABLE company  ALTER COLUMN db_status      SET NOT NULL;
+ALTER TABLE company     ALTER COLUMN owner_id       SET NOT NULL;
+ALTER TABLE company     ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE company     ALTER COLUMN db_status      SET NOT NULL;
 
 ALTER TABLE company_assignment ALTER COLUMN company_id     SET NOT NULL;
 ALTER TABLE company_assignment ALTER COLUMN sub_company_id SET NOT NULL;
@@ -455,6 +459,7 @@ UPDATE table_version SET table_version = 55
  WHERE table_name = 'company_assignment';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'date';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
+UPDATE table_version SET table_version = 56 WHERE table_name = 'job_history';
 UPDATE table_version SET table_version = 54 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';

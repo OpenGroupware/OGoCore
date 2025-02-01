@@ -430,7 +430,7 @@ CREATE TABLE job (
 
 CREATE TABLE job_history (
   job_history_id INT NOT NULL,
-  object_version INT,
+  object_version INT NOT NULL,
   job_id         INT NOT NULL,
   actor_id       INT,
   action         VARCHAR(50),
@@ -1423,7 +1423,7 @@ INSERT INTO table_version (table_name, table_version)
 INSERT INTO table_version (table_name, table_version)
   VALUES ('job', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('job_history', 41);
+  VALUES ('job_history', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('job_history_info', 42);
 
