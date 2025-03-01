@@ -126,7 +126,7 @@ CREATE TABLE company_value (
   label              VARCHAR(255),
   type               INT, -- DB's contain email1 values w/ NULL type, FIXME
   is_label_localized SMALLINT,
-  db_status          VARCHAR(50),
+  db_status          VARCHAR(50) NOT NULL,
   
   start_date         TIMESTAMP WITH TIME ZONE,
   end_date           TIMESTAMP WITH TIME ZONE,
@@ -138,7 +138,7 @@ CREATE TABLE company_category (
   company_category_id   INT NOT NULL,
   object_version        INT, -- this is NULL in databases, FIXME
   category              VARCHAR(255),
-  db_status             VARCHAR(50),
+  db_status             VARCHAR(50) NOT NULL,
   CONSTRAINT pk_company_category PRIMARY KEY (company_category_id)
 );
 
@@ -216,21 +216,24 @@ CREATE TABLE date_info (
   date_info_id INT NOT NULL,
   date_id      INT NOT NULL,
   comment      TEXT,
-  db_status    VARCHAR(50),
+  db_status    VARCHAR(50) NOT NULL,
   CONSTRAINT   pk_date_info PRIMARY KEY (date_info_id)
 );
 
 CREATE TABLE date_company_assignment (
   date_company_assignment_id INT NOT NULL,
-  company_id                 INT,
-  date_id                    INT,
-  is_staff                   SMALLINT,
+  company_id                 INT NOT NULL,
+  date_id                    INT NOT NULL,
+
+  -- 0 or 1, whether this is an account or a regular contact
+  is_staff                   SMALLINT NOT NULL, 
+  
   is_new                     SMALLINT, -- seems to be unused
   partstatus                 VARCHAR(50),
   role                       VARCHAR(50),
   comment                    VARCHAR(255),
   rsvp                       SMALLINT,
-  db_status                  VARCHAR(50),
+  db_status                  VARCHAR(50) NOT NULL,
   outlook_key                VARCHAR(255),
   CONSTRAINT                 pk_date_company_assignment PRIMARY KEY
                              (date_company_assignment_id)
@@ -1387,9 +1390,9 @@ INSERT INTO table_version (table_name, table_version)
 INSERT INTO table_version (table_name, table_version)
   VALUES ('company_info', 42);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company_value', 54);
+  VALUES ('company_value', 56);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company_category', 41);
+  VALUES ('company_category', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('company_assignment', 55);
 
@@ -1398,11 +1401,11 @@ INSERT INTO table_version (table_name, table_version)
 INSERT INTO table_version (table_name, table_version)
   VALUES ('appointment', 47);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('date', 55); -- actually date_x
+  VALUES ('date', 56); -- actually date_x
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('date_info', 42);
+  VALUES ('date_info', 56);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('date_company_assignment', 43);
+  VALUES ('date_company_assignment', 55);
 
 INSERT INTO table_version (table_name, table_version)
   VALUES ('project', 54);
