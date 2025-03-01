@@ -157,46 +157,53 @@ CREATE TABLE company_assignment (
   CONSTRAINT pk_company_assignment PRIMARY KEY (company_assignment_id)
 );
 
+-- The appointment resources are (unforuntately) not relationally connected but
+-- the names are stored as a CSV in date_x.resource_names.
 CREATE TABLE appointment_resource (
   appointment_resource_id INT NOT NULL,
-  object_version          INT,
+  object_version          INT, -- is NULL in DB, FIXME
   name                    VARCHAR(255) NOT NULL,
   email                   VARCHAR(255),
   email_subject           VARCHAR(255),
-  category                VARCHAR(255),
+  category                VARCHAR(255), -- Resource category, e.g. 'Cars'
   notification_time       INT,
   db_status               VARCHAR(50),
   CONSTRAINT pkx_company_category PRIMARY KEY (appointment_resource_id),
   CONSTRAINT unique_aptresname_idx UNIQUE(name)
 );
 
+-- Table for OGo events. Why the `_x`? Legacy Postgres issue, when "date" was
+-- a keyword and that couldn't be worked around easily ...
 CREATE TABLE date_x (
   date_id                INT NOT NULL,
   object_version         INT NOT NULL,
   owner_id               INT NOT NULL,
   access_team_id         INT,
-  parent_date_id         INT,
-  project_id             INT,
+  parent_date_id         INT, -- this is the id of the recurrence master
+  project_id             INT, -- events can also be connected using notes!
 
   start_date             TIMESTAMP WITH TIME ZONE  NOT NULL,
   end_date               TIMESTAMP WITH TIME ZONE  NOT NULL,
   cycle_end_date         TIMESTAMP WITH TIME ZONE,
-  type                   VARCHAR(255),    -- repetition type
+  type                   VARCHAR(255),    -- recurrence type
   title                  VARCHAR(255) NOT NULL,
   location               VARCHAR(255),
-  absence                VARCHAR(255),
-  resource_names         VARCHAR(255),
+  absence                VARCHAR(255), -- also: `is_absence`
+  resource_names         VARCHAR(255), -- CSV of `appointment_resource` names
   write_access_list      VARCHAR(255),
-  is_absence             SMALLINT,
+  is_absence             SMALLINT,     -- also: `absence` (the reason)
   is_attendance          SMALLINT,
   is_conflict_disabled   SMALLINT,
   travel_duration_before INT,
   travel_duration_after  INT,
   notification_time      INT,
+  
   db_status              VARCHAR(50) NOT NULL,
+  
   apt_type               VARCHAR(100),    -- appointment type (birthday...)
-  calendar_name          VARCHAR(255),
-  source_url             VARCHAR(255),
+  
+  calendar_name          VARCHAR(255),    -- kinda useless, sync-calendar name
+  source_url             VARCHAR(255),    -- external system sync-id
   fbtype                 VARCHAR(50),     -- free/busy type
 
   sensitivity            SMALLINT,        -- sensitivity
@@ -453,6 +460,7 @@ CREATE TABLE job_history_info (
   CONSTRAINT          pk_job_history_info PRIMARY KEY (job_history_info_id)
 );
 
+-- unused?
 CREATE TABLE resource (
   resource_id    INT NOT NULL,
   resource_name  VARCHAR(255) NOT NULL,
