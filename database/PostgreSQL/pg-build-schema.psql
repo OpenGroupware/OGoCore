@@ -137,7 +137,7 @@ CREATE TABLE company_value (
 CREATE TABLE company_category (
   company_category_id   INT NOT NULL,
   object_version        INT, -- this is NULL in databases, FIXME
-  category              VARCHAR(255),
+  category              VARCHAR(255) NOT NULL,
   db_status             VARCHAR(50) NOT NULL,
   CONSTRAINT pk_company_category PRIMARY KEY (company_category_id)
 );
@@ -641,7 +641,7 @@ CREATE TABLE project_info (
   project_info_id INT NOT NULL,
   project_id      INT NOT NULL, 
   comment         TEXT,
-  db_status       VARCHAR(50),
+  db_status       VARCHAR(50) NOT NULL,
   CONSTRAINT      pk_project_info PRIMARY KEY (project_info_id)
 );
 
@@ -1449,7 +1449,7 @@ INSERT INTO table_version (table_name, table_version)
 INSERT INTO table_version (table_name, table_version)
   VALUES ('project', 54);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('project_info', 42);
+  VALUES ('project_info', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('project_company_assignment', 55);
 INSERT INTO table_version (table_name, table_version)

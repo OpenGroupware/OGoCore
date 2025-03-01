@@ -443,11 +443,13 @@ ALTER TABLE company     ALTER COLUMN db_status      SET NOT NULL;
 
 ALTER TABLE company_value    ALTER COLUMN db_status SET NOT NULL;
 ALTER TABLE company_category ALTER COLUMN db_status SET NOT NULL;
+ALTER TABLE company_category ALTER COLUMN category  SET NOT NULL;
 
 ALTER TABLE company_assignment ALTER COLUMN company_id     SET NOT NULL;
 ALTER TABLE company_assignment ALTER COLUMN sub_company_id SET NOT NULL;
 ALTER TABLE company_assignment ALTER COLUMN db_status      SET NOT NULL;
 
+ALTER TABLE project_info               ALTER COLUMN db_status  SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN db_status  SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN company_id SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN project_id SET NOT NULL;
@@ -493,6 +495,7 @@ UPDATE table_version SET table_version = 56
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job_history';
 UPDATE table_version SET table_version = 54 WHERE table_name = 'project';
+UPDATE table_version SET table_version = 56 WHERE table_name = 'project_info';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'document';
