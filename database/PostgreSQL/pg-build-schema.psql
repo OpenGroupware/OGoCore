@@ -398,6 +398,13 @@ CREATE TABLE address (
   db_status      VARCHAR(50) NOT NULL,
   source_url     VARCHAR(255), -- external sync URL
   
+  -- structured location
+  latitude           FLOAT8,
+  longitude          FLOAT8,
+  radius             FLOAT8, -- it could be other shapes
+  title              TEXT,
+  structured_version INT, -- the `object_version` the structured loc relates to
+  
   CONSTRAINT     pk_address PRIMARY KEY (address_id)
 );
 

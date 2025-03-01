@@ -35,6 +35,12 @@ ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
 
 -- district of a city (eg Magdeburg "Nord")
 ALTER TABLE address ADD COLUMN district VARCHAR(255) NULL;
+ALTER TABLE address ADD COLUMN latitude       FLOAT8 NULL;
+ALTER TABLE address ADD COLUMN longitude      FLOAT8 NULL;
+ALTER TABLE address ADD COLUMN radius         FLOAT8 NULL;
+ALTER TABLE address ADD COLUMN title          TEXT   NULL;
+ALTER TABLE address ADD COLUMN structured_version INT NULL;
+
 -- ensure that a type is used only once per person/company (eg you can only have
 -- one 'bill' address, this is because OGo creates dictionaries based on the
 -- type)
