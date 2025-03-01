@@ -102,7 +102,7 @@ CREATE TABLE company_info (
   company_info_id INT NOT NULL,
   company_id      INT NOT NULL, 
   comment         TEXT,
-  db_status       VARCHAR(50),
+  db_status       VARCHAR(50), -- this is NULL in databases, FIXME
   CONSTRAINT pk_company_info PRIMARY KEY (company_info_id)
 );
 
@@ -113,8 +113,10 @@ CREATE TABLE company_info (
 CREATE TABLE company_value (
   company_value_id   INT NOT NULL,
   company_id         INT,
+  -- those do not seem to be used:
   attribute          VARCHAR(255),
   attribute_type     VARCHAR(50),
+  -- only the value_string is usually filled?
   value_string       VARCHAR(255),
   value_date         TIMESTAMP WITH TIME ZONE,
   value_int          INT,
@@ -122,7 +124,7 @@ CREATE TABLE company_value (
   category           VARCHAR(255),
   uid                INT, 
   label              VARCHAR(255),
-  type               INT,
+  type               INT, -- DB's contain email1 values w/ NULL type, FIXME
   is_label_localized SMALLINT,
   db_status          VARCHAR(50),
   
@@ -134,7 +136,7 @@ CREATE TABLE company_value (
 
 CREATE TABLE company_category (
   company_category_id   INT NOT NULL,
-  object_version        INT,
+  object_version        INT, -- this is NULL in databases, FIXME
   category              VARCHAR(255),
   db_status             VARCHAR(50),
   CONSTRAINT pk_company_category PRIMARY KEY (company_category_id)
