@@ -69,8 +69,10 @@ UPDATE job SET owner_id = creator_id WHERE owner_id IS NULL;
 ALTER TABLE job ADD COLUMN date_id INT;
 ALTER TABLE job ADD COLUMN url     TEXT;
 
-ALTER TABLE date_x ADD COLUMN project_id INT;
-ALTER TABLE date_x ADD COLUMN url        TEXT;
+ALTER TABLE date_x ADD COLUMN project_id          INT;
+ALTER TABLE date_x ADD COLUMN url                 TEXT;
+ALTER TABLE date_x ADD COLUMN location_id         INT;
+ALTER TABLE date_x ADD COLUMN location_id_version INT;
 
 -- pg-update-1.0to5.4.psql, used to be a separate file
 

@@ -187,13 +187,20 @@ CREATE TABLE date_x (
   cycle_end_date         TIMESTAMP WITH TIME ZONE,
   type                   VARCHAR(255),    -- recurrence type
   title                  VARCHAR(255) NOT NULL,
+  
   location               VARCHAR(255),
-  absence                VARCHAR(255), -- also: `is_absence`
+  location_id            INT, -- `address_id`
+  location_id_version    INT, -- the `object_version` when the loc_id was set
+  
   resource_names         VARCHAR(255), -- CSV of `appointment_resource` names
   write_access_list      VARCHAR(255),
+  
+  absence                VARCHAR(255), -- also: `is_absence`
   is_absence             SMALLINT,     -- also: `absence` (the reason)
   is_attendance          SMALLINT,
+  
   is_conflict_disabled   SMALLINT NOT NULL, -- 0/1 TBD:
+  
   travel_duration_before INT,
   travel_duration_after  INT,
   notification_time      INT,
