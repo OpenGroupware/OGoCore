@@ -167,7 +167,7 @@ CREATE TABLE appointment_resource (
   email_subject           VARCHAR(255),
   category                VARCHAR(255), -- Resource category, e.g. 'Cars'
   notification_time       INT,
-  db_status               VARCHAR(50),
+  db_status               VARCHAR(50) NOT NULL,
   CONSTRAINT pkx_company_category PRIMARY KEY (appointment_resource_id),
   CONSTRAINT unique_aptresname_idx UNIQUE(name)
 );
@@ -193,7 +193,7 @@ CREATE TABLE date_x (
   write_access_list      VARCHAR(255),
   is_absence             SMALLINT,     -- also: `absence` (the reason)
   is_attendance          SMALLINT,
-  is_conflict_disabled   SMALLINT,
+  is_conflict_disabled   SMALLINT NOT NULL, -- 0/1 TBD:
   travel_duration_before INT,
   travel_duration_after  INT,
   notification_time      INT,
@@ -1405,7 +1405,7 @@ INSERT INTO table_version (table_name, table_version)
   VALUES ('company_assignment', 55);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('appointment_resource', 41);
+  VALUES ('appointment_resource', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('appointment', 47);
 INSERT INTO table_version (table_name, table_version)
