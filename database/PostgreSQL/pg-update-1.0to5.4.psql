@@ -34,10 +34,12 @@ ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
 ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
 
 -- district of a city (eg Magdeburg "Nord")
-ALTER TABLE address ADD COLUMN district    VARCHAR(255) NULL;
+ALTER TABLE address ADD COLUMN district VARCHAR(255) NULL;
 -- ensure that a type is used only once per person/company (eg you can only have
 -- one 'bill' address, this is because OGo creates dictionaries based on the
 -- type)
+-- Note(2025-03-01): This does NOT make NULL/type combo's unique, which fits
+--                   our usecase of detached addresses.
 ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
   UNIQUE ( company_id, type );
 
@@ -427,6 +429,8 @@ ALTER TABLE job         ALTER COLUMN executant_id   SET NOT NULL;
 ALTER TABLE job         ALTER COLUMN priority       SET NOT NULL;
 ALTER TABLE job_history ALTER COLUMN object_version SET NOT NULL;
 
+ALTER TABLE address     ALTER COLUMN db_status      SET NOT NULL;
+
 ALTER TABLE company     ALTER COLUMN owner_id       SET NOT NULL;
 ALTER TABLE company     ALTER COLUMN object_version SET NOT NULL;
 ALTER TABLE company     ALTER COLUMN db_status      SET NOT NULL;
@@ -467,6 +471,7 @@ ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
 -- 55  - things changed end of 2024
 -- 56+ - things changed in 2025
 UPDATE table_version SET table_version = 55 WHERE table_name = '_model';
+UPDATE table_version SET table_version = 56 WHERE table_name = 'address';
 UPDATE table_version SET table_version = 55 WHERE table_name = 'company';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'company_value';
 UPDATE table_version SET table_version = 56

@@ -374,20 +374,30 @@ CREATE TABLE document_editing (
 
 CREATE TABLE address (
   address_id     INT NOT NULL,
-  object_version INT,
+  object_version INT, -- NULL in DB's, FIXME
+  
+  -- 2025-03-01: So far addresses always have been attached to company records,
+  --             but going forward we can keep them standalone as structured
+  --             addresses. This is `NULL` for such.
+  -- Note the `company_unique_adrtype` constraint does not constraint NULL
+  -- `company_id`'s, so that's good.
   company_id     INT,
+  
   name1          VARCHAR(255),
   name2          VARCHAR(255),
   name3          VARCHAR(255),
   street         VARCHAR(255),
   zip            VARCHAR(50),
-  zipcity        VARCHAR(255),
+  zipcity        VARCHAR(255), -- city, not sure why this is called zipcity
   country        VARCHAR(100),
   state          VARCHAR(100),
-  type           VARCHAR(50) NOT NULL,
-  db_status      VARCHAR(50),
-  source_url     VARCHAR(255),
   district       VARCHAR(255),
+  
+  type           VARCHAR(50) NOT NULL, -- bill,ship, or a V:HOME like type
+  
+  db_status      VARCHAR(50) NOT NULL,
+  source_url     VARCHAR(255), -- external sync URL
+  
   CONSTRAINT     pk_address PRIMARY KEY (address_id)
 );
 
@@ -1397,6 +1407,10 @@ CREATE INDEX palmtodo_md5hash_idx ON palm_todo (md5hash);
 CREATE INDEX palmtodo_skyrix_idx ON palm_todo (skyrix_id);
 
 -- table versions -------------------------------------------------------------
+-- Bump versions
+-- 54  - things we changed in 2015
+-- 55  - things changed end of 2024
+-- 56+ - things changed in 2025
 
 INSERT INTO table_version (table_name, table_version)
   VALUES ('_model', 55);
@@ -1439,7 +1453,7 @@ INSERT INTO table_version (table_name, table_version)
   VALUES ('document_editing', 55);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('address', 54);
+  VALUES ('address', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('telephone', 41);
 
