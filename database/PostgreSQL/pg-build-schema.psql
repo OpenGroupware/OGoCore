@@ -10,7 +10,8 @@ CREATE TABLE staff (
   is_account  SMALLINT,
   db_status   VARCHAR(50),
   CONSTRAINT  pk_staff PRIMARY KEY (staff_id),
-  CONSTRAINT  unique_company_id UNIQUE(company_id));
+  CONSTRAINT  unique_company_id UNIQUE(company_id)
+);
 
 CREATE TABLE company (
   company_id          INT NOT NULL,
@@ -101,7 +102,7 @@ CREATE TABLE company_info (
   company_info_id INT NOT NULL,
   company_id      INT NOT NULL, 
   comment         TEXT,
-  db_status       VARCHAR(50),
+  db_status       VARCHAR(50), -- this is NULL in databases, FIXME
   CONSTRAINT pk_company_info PRIMARY KEY (company_info_id)
 );
 
@@ -112,8 +113,10 @@ CREATE TABLE company_info (
 CREATE TABLE company_value (
   company_value_id   INT NOT NULL,
   company_id         INT,
+  -- those do not seem to be used:
   attribute          VARCHAR(255),
   attribute_type     VARCHAR(50),
+  -- only the value_string is usually filled?
   value_string       VARCHAR(255),
   value_date         TIMESTAMP WITH TIME ZONE,
   value_int          INT,
@@ -121,9 +124,9 @@ CREATE TABLE company_value (
   category           VARCHAR(255),
   uid                INT, 
   label              VARCHAR(255),
-  type               INT,
+  type               INT, -- DB's contain email1 values w/ NULL type, FIXME
   is_label_localized SMALLINT,
-  db_status          VARCHAR(50),
+  db_status          VARCHAR(50) NOT NULL,
   
   start_date         TIMESTAMP WITH TIME ZONE,
   end_date           TIMESTAMP WITH TIME ZONE,
@@ -133,10 +136,11 @@ CREATE TABLE company_value (
 
 CREATE TABLE company_category (
   company_category_id   INT NOT NULL,
-  object_version        INT,
-  category              VARCHAR(255),
-  db_status             VARCHAR(50),
-  CONSTRAINT pk_company_category PRIMARY KEY (company_category_id));
+  object_version        INT, -- this is NULL in databases, FIXME
+  category              VARCHAR(255) NOT NULL,
+  db_status             VARCHAR(50) NOT NULL,
+  CONSTRAINT pk_company_category PRIMARY KEY (company_category_id)
+);
 
 CREATE TABLE company_assignment (
   company_assignment_id INT NOT NULL,
@@ -153,45 +157,60 @@ CREATE TABLE company_assignment (
   CONSTRAINT pk_company_assignment PRIMARY KEY (company_assignment_id)
 );
 
+-- The appointment resources are (unforuntately) not relationally connected but
+-- the names are stored as a CSV in date_x.resource_names.
 CREATE TABLE appointment_resource (
   appointment_resource_id INT NOT NULL,
-  object_version          INT,
+  object_version          INT, -- is NULL in DB, FIXME
   name                    VARCHAR(255) NOT NULL,
   email                   VARCHAR(255),
   email_subject           VARCHAR(255),
-  category                VARCHAR(255),
+  category                VARCHAR(255), -- Resource category, e.g. 'Cars'
   notification_time       INT,
-  db_status               VARCHAR(50),
+  db_status               VARCHAR(50) NOT NULL,
   CONSTRAINT pkx_company_category PRIMARY KEY (appointment_resource_id),
   CONSTRAINT unique_aptresname_idx UNIQUE(name)
 );
 
+-- Table for OGo events. Why the `_x`? Legacy Postgres issue, when "date" was
+-- a keyword and that couldn't be worked around easily ...
 CREATE TABLE date_x (
   date_id                INT NOT NULL,
   object_version         INT NOT NULL,
   owner_id               INT NOT NULL,
   access_team_id         INT,
-  parent_date_id         INT,
+  parent_date_id         INT, -- this is the id of the recurrence master
+  project_id             INT, -- events can also be connected using notes!
 
   start_date             TIMESTAMP WITH TIME ZONE  NOT NULL,
   end_date               TIMESTAMP WITH TIME ZONE  NOT NULL,
   cycle_end_date         TIMESTAMP WITH TIME ZONE,
-  type                   VARCHAR(255),    -- repetition type
+  type                   VARCHAR(255),    -- recurrence type
   title                  VARCHAR(255) NOT NULL,
+  
   location               VARCHAR(255),
-  absence                VARCHAR(255),
-  resource_names         VARCHAR(255),
+  location_id            INT, -- `address_id`
+  location_id_version    INT, -- the `object_version` when the loc_id was set
+  
+  resource_names         VARCHAR(255), -- CSV of `appointment_resource` names
   write_access_list      VARCHAR(255),
-  is_absence             SMALLINT,
+  
+  absence                VARCHAR(255), -- also: `is_absence`
+  is_absence             SMALLINT,     -- also: `absence` (the reason)
   is_attendance          SMALLINT,
-  is_conflict_disabled   SMALLINT,
+  
+  is_conflict_disabled   SMALLINT NOT NULL, -- 0/1 TBD:
+  
   travel_duration_before INT,
   travel_duration_after  INT,
   notification_time      INT,
+  
   db_status              VARCHAR(50) NOT NULL,
+  
   apt_type               VARCHAR(100),    -- appointment type (birthday...)
-  calendar_name          VARCHAR(255),
-  source_url             VARCHAR(255),
+  
+  calendar_name          VARCHAR(255),    -- kinda useless, sync-calendar name
+  source_url             VARCHAR(255),    -- external system sync-id
   fbtype                 VARCHAR(50),     -- free/busy type
 
   sensitivity            SMALLINT,        -- sensitivity
@@ -203,30 +222,38 @@ CREATE TABLE date_x (
   online_meeting         VARCHAR(255),    -- CSV for online meeting values
   associated_contacts    VARCHAR(255),    -- Outlook associated_contacts
   keywords               VARCHAR(255),    -- Outlook keywords
+  
+  url                    TEXT,            -- a URL associated w/ the event
 
-  CONSTRAINT             pk_date PRIMARY KEY (date_id));
+  CONSTRAINT             pk_date PRIMARY KEY (date_id)
+);
 
 CREATE TABLE date_info (
   date_info_id INT NOT NULL,
   date_id      INT NOT NULL,
   comment      TEXT,
-  db_status    VARCHAR(50),
-  CONSTRAINT   pk_date_info PRIMARY KEY (date_info_id));
+  db_status    VARCHAR(50) NOT NULL,
+  CONSTRAINT   pk_date_info PRIMARY KEY (date_info_id)
+);
 
 CREATE TABLE date_company_assignment (
   date_company_assignment_id INT NOT NULL,
-  company_id                 INT,
-  date_id                    INT,
-  is_staff                   SMALLINT,
-  is_new                     SMALLINT,
+  company_id                 INT NOT NULL,
+  date_id                    INT NOT NULL,
+
+  -- 0 or 1, whether this is an account or a regular contact
+  is_staff                   SMALLINT NOT NULL, 
+  
+  is_new                     SMALLINT, -- seems to be unused
   partstatus                 VARCHAR(50),
   role                       VARCHAR(50),
   comment                    VARCHAR(255),
   rsvp                       SMALLINT,
-  db_status                  VARCHAR(50),
+  db_status                  VARCHAR(50) NOT NULL,
   outlook_key                VARCHAR(255),
   CONSTRAINT                 pk_date_company_assignment PRIMARY KEY
-                             (date_company_assignment_id));
+                             (date_company_assignment_id)
+);
 
 CREATE TABLE project (
   project_id        INT NOT NULL,
@@ -238,13 +265,14 @@ CREATE TABLE project (
   start_date        TIMESTAMP WITH TIME ZONE,
   end_date          TIMESTAMP WITH TIME ZONE,
   status            VARCHAR(255),
-  is_fake           SMALLINT,
+  is_fake           SMALLINT, -- whether this is the doc store for a company
   db_status         VARCHAR(50),
   kind              VARCHAR(50),
   url               VARCHAR(100),
   parent_project_id INT,
   CONSTRAINT        pk_project PRIMARY KEY (project_id),
-  CONSTRAINT        unique_project_number UNIQUE(number));
+  CONSTRAINT        unique_project_number UNIQUE(number)
+);
 
 CREATE TABLE object_acl (
   object_acl_id INT NOT NULL,
@@ -276,7 +304,8 @@ CREATE TABLE document (
   object_version     INT, -- this is NULL in folders
   project_id         INT,
   parent_document_id INT,
-  date_id            INT,
+  date_id            INT, -- attach notes and files to events
+  job_id             INT, -- attach notes and files to tasks
   
   first_owner_id     INT NOT NULL,
   current_owner_id   INT NOT NULL,
@@ -347,25 +376,44 @@ CREATE TABLE document_editing (
   status              VARCHAR(50),
   db_status           VARCHAR(50) NOT NULL,
   contact             VARCHAR(255),
-  CONSTRAINT          pk_document_editing PRIMARY KEY (document_editing_id));
+  CONSTRAINT          pk_document_editing PRIMARY KEY (document_editing_id)
+);
 
 CREATE TABLE address (
   address_id     INT NOT NULL,
-  object_version INT,
+  object_version INT, -- NULL in DB's, FIXME
+  
+  -- 2025-03-01: So far addresses always have been attached to company records,
+  --             but going forward we can keep them standalone as structured
+  --             addresses. This is `NULL` for such.
+  -- Note the `company_unique_adrtype` constraint does not constraint NULL
+  -- `company_id`'s, so that's good.
   company_id     INT,
+  
   name1          VARCHAR(255),
   name2          VARCHAR(255),
   name3          VARCHAR(255),
   street         VARCHAR(255),
   zip            VARCHAR(50),
-  zipcity        VARCHAR(255),
+  zipcity        VARCHAR(255), -- city, not sure why this is called zipcity
   country        VARCHAR(100),
   state          VARCHAR(100),
-  type           VARCHAR(50) NOT NULL,
-  db_status      VARCHAR(50),
-  source_url     VARCHAR(255),
   district       VARCHAR(255),
-  CONSTRAINT     pk_address PRIMARY KEY (address_id));
+  
+  type           VARCHAR(50) NOT NULL, -- bill,ship, or a V:HOME like type
+  
+  db_status      VARCHAR(50) NOT NULL,
+  source_url     VARCHAR(255), -- external sync URL
+  
+  -- structured location
+  latitude           FLOAT8,
+  longitude          FLOAT8,
+  radius             FLOAT8, -- it could be other shapes
+  title              TEXT,
+  structured_version INT, -- the `object_version` the structured loc relates to
+  
+  CONSTRAINT     pk_address PRIMARY KEY (address_id)
+);
 
 CREATE TABLE telephone (
   telephone_id   INT NOT NULL,
@@ -377,13 +425,15 @@ CREATE TABLE telephone (
   info           VARCHAR(255),
   url            VARCHAR(255),
   db_status      VARCHAR(50),
-  CONSTRAINT     pk_telephone PRIMARY KEY (telephone_id));
+  CONSTRAINT     pk_telephone PRIMARY KEY (telephone_id)
+);
 
 CREATE TABLE job (
   job_id               INT NOT NULL,
   object_version       INT NOT NULL,
   parent_job_id        INT,
   project_id           INT,
+  date_id              INT,
   creator_id           INT NOT NULL,
   owner_id             INT NOT NULL,
   executant_id         INT, -- TBD: NOT NULL?
@@ -391,15 +441,19 @@ CREATE TABLE job (
   start_date           TIMESTAMP WITH TIME ZONE NOT NULL,
   end_date             TIMESTAMP WITH TIME ZONE NOT NULL,
   notify_x             INT,
+  
   is_control_job       SMALLINT,
   is_team_job          SMALLINT,
-  is_new               SMALLINT,
+  is_new               SMALLINT, -- seems to be unused
   job_status           VARCHAR(255),
   category             VARCHAR(255),
-  priority             INT,
+  priority             INT NOT NULL,
+  
   db_status            VARCHAR(50) NOT NULL,
-  kind                 VARCHAR(50),
-  keywords             VARCHAR(255),
+  
+  kind                 VARCHAR(50), -- NULL or 01_root_process, 00_template
+  
+  keywords             VARCHAR(255), -- aka "tags"
   source_url           VARCHAR(255),
   sensitivity          SMALLINT,
   job_comment          TEXT,
@@ -412,12 +466,17 @@ CREATE TABLE job (
   kilometers           VARCHAR(255),
   associated_companies VARCHAR(255),
   associated_contacts  VARCHAR(255),
+  
   timer_date           TIMESTAMP WITH TIME ZONE,
-  CONSTRAINT           pk_job PRIMARY KEY (job_id));
+
+  url                  TEXT,            -- a URL associated w/ the event
+  
+  CONSTRAINT           pk_job PRIMARY KEY (job_id)
+);
 
 CREATE TABLE job_history (
   job_history_id INT NOT NULL,
-  object_version INT,
+  object_version INT NOT NULL,
   job_id         INT NOT NULL,
   actor_id       INT,
   action         VARCHAR(50),
@@ -432,8 +491,10 @@ CREATE TABLE job_history_info (
   job_history_id      INT NOT NULL,
   comment             TEXT,
   db_status           VARCHAR(50),
-  CONSTRAINT          pk_job_history_info PRIMARY KEY (job_history_info_id));
+  CONSTRAINT          pk_job_history_info PRIMARY KEY (job_history_info_id)
+);
 
+-- unused?
 CREATE TABLE resource (
   resource_id    INT NOT NULL,
   resource_name  VARCHAR(255) NOT NULL,
@@ -445,7 +506,8 @@ CREATE TABLE resource (
   type           INT NOT NULL,
   db_status      VARCHAR(50),
   object_version INT,
-  CONSTRAINT     pk_resource_id PRIMARY KEY (resource_id));
+  CONSTRAINT     pk_resource_id PRIMARY KEY (resource_id)
+);
 
 CREATE TABLE job_resource_assignment (
   job_resource_assignment_id INT NOT NULL,
@@ -454,7 +516,8 @@ CREATE TABLE job_resource_assignment (
   operative_part             INT,
   db_status                  VARCHAR(50),
   CONSTRAINT                 pk_job_resource_id PRIMARY KEY 
-                             (job_resource_assignment_id));
+                             (job_resource_assignment_id)
+);
 
 CREATE TABLE news_article (
   news_article_id  INT NOT NULL,
@@ -464,14 +527,16 @@ CREATE TABLE news_article (
   is_index_article SMALLINT,
   creation_date    TIMESTAMP WITH TIME ZONE,
   db_status        VARCHAR(50),
-  CONSTRAINT       pk_news_article PRIMARY KEY (news_article_id));
+  CONSTRAINT       pk_news_article PRIMARY KEY (news_article_id)
+);
 
 CREATE TABLE news_article_link (
   news_article_link_id INT NOT NULL,
   object_version       INT,
   news_article_id      INT,
   sub_news_article_id  INT,
-  CONSTRAINT           pk_article_link PRIMARY KEY (news_article_link_id));
+  CONSTRAINT           pk_article_link PRIMARY KEY (news_article_link_id)
+);
 
 CREATE TABLE invoice (
   invoice_id        INT NOT NULL,
@@ -487,20 +552,23 @@ CREATE TABLE invoice (
   comment           TEXT,
   object_version    INT,
   db_status         VARCHAR(50)  ,
-  CONSTRAINT        pk_invoice PRIMARY KEY (invoice_id));
+  CONSTRAINT        pk_invoice PRIMARY KEY (invoice_id)
+);
 
 CREATE TABLE article_category (
   article_category_id INT NOT NULL,
   category_name       VARCHAR(255) NOT NULL,
   category_abbrev     VARCHAR(255),
-  CONSTRAINT          pk_article_category PRIMARY KEY (article_category_id));
+  CONSTRAINT          pk_article_category PRIMARY KEY (article_category_id)
+);
 
 CREATE TABLE article_unit (
   article_unit_id    INT NOT NULL,
   format             VARCHAR(50),
   singular_unit      VARCHAR(255),
   plural_unit        VARCHAR(255),
-  CONSTRAINT         pk_url_x PRIMARY KEY (article_unit_id));
+  CONSTRAINT         pk_url_x PRIMARY KEY (article_unit_id)
+);
 
 CREATE TABLE article (
   article_id          INT NOT NULL,
@@ -515,7 +583,8 @@ CREATE TABLE article (
   vat                 NUMERIC(19,4),
   vat_group           VARCHAR(50),
   db_status           VARCHAR(50),
-  CONSTRAINT          pk_article PRIMARY KEY (article_id));
+  CONSTRAINT          pk_article PRIMARY KEY (article_id)
+);
 
 CREATE TABLE invoice_article_assignment (
   invoice_article_assignment_id INT NOT NULL,
@@ -528,7 +597,8 @@ CREATE TABLE invoice_article_assignment (
   comment                       TEXT,
   db_status                     VARCHAR(50),
   CONSTRAINT                    pk_invoice_article_assignment PRIMARY KEY 
-                                (invoice_article_assignment_id));
+                                (invoice_article_assignment_id)
+);
 
 CREATE TABLE invoice_account (
   invoice_account_id INT NOT NULL,
@@ -537,7 +607,8 @@ CREATE TABLE invoice_account (
   balance            NUMERIC(19,4),
   object_version     INT,
   db_status          VARCHAR(50),
-  CONSTRAINT         pk_invoice_account PRIMARY KEY (invoice_account_id));
+  CONSTRAINT         pk_invoice_account PRIMARY KEY (invoice_account_id)
+);
 
 CREATE TABLE invoice_action (
   invoice_action_id INT NOT NULL,
@@ -549,7 +620,8 @@ CREATE TABLE invoice_action (
   log_text          TEXT,
   object_version    INT,
   db_status         VARCHAR(50),
-  CONSTRAINT        pk_invoice_action PRIMARY KEY (invoice_action_id));
+  CONSTRAINT        pk_invoice_action PRIMARY KEY (invoice_action_id)
+);
 
 CREATE TABLE invoice_accounting (
   invoice_accounting_id INT NOT NULL,
@@ -559,7 +631,8 @@ CREATE TABLE invoice_accounting (
   object_version        INT,
   db_status             VARCHAR(50),
   CONSTRAINT            pk_invoice_accounting PRIMARY KEY 
-                        (invoice_accounting_id));
+                        (invoice_accounting_id)
+);
 
 CREATE TABLE job_assignment (
   job_assignment_id INT NOT NULL,
@@ -568,14 +641,16 @@ CREATE TABLE job_assignment (
   position_x        INT,
   assignment_kind   VARCHAR(50),
   db_status         VARCHAR(50),
-  CONSTRAINT        pk_job_assignment PRIMARY KEY (job_assignment_id));
+  CONSTRAINT        pk_job_assignment PRIMARY KEY (job_assignment_id)
+);
 
 CREATE TABLE project_info (
   project_info_id INT NOT NULL,
   project_id      INT NOT NULL, 
   comment         TEXT,
-  db_status       VARCHAR(50),
-  CONSTRAINT      pk_project_info PRIMARY KEY (project_info_id));
+  db_status       VARCHAR(50) NOT NULL,
+  CONSTRAINT      pk_project_info PRIMARY KEY (project_info_id)
+);
 
 CREATE TABLE log (
   log_id        INT NOT NULL,
@@ -584,19 +659,22 @@ CREATE TABLE log (
   log_text      TEXT NOT NULL,
   action        VARCHAR(100) NOT NULL,
   account_id    INT,
-  CONSTRAINT    pk_log PRIMARY KEY (log_id));
+  CONSTRAINT    pk_log PRIMARY KEY (log_id)
+);
 
 CREATE TABLE session_log (
   session_log_id INT NOT NULL,
   account_id     INT NOT NULL,
   log_date       TIMESTAMP WITH TIME ZONE NOT NULL,
   action         VARCHAR(255) NOT NULL,
-  CONSTRAINT     pk_session_log PRIMARY KEY (session_log_id));
+  CONSTRAINT     pk_session_log PRIMARY KEY (session_log_id)
+);
 
 CREATE TABLE obj_info (
   obj_id     INT NOT NULL,
   obj_type   VARCHAR(255) NOT NULL,
-  CONSTRAINT pk_obj_info PRIMARY KEY (obj_id));
+  CONSTRAINT pk_obj_info PRIMARY KEY (obj_id)
+);
 
 CREATE TABLE obj_property (
   obj_property_id  INT NOT NULL,
@@ -613,7 +691,8 @@ CREATE TABLE obj_property (
   value_oid        VARCHAR(255),
   blob_size        INT,
   value_blob       TEXT,
-  CONSTRAINT       pk_obj_property PRIMARY KEY (obj_property_id));
+  CONSTRAINT       pk_obj_property PRIMARY KEY (obj_property_id)
+);
 
 CREATE TABLE obj_link (
   obj_link_id int          NOT NULL,
@@ -623,26 +702,30 @@ CREATE TABLE obj_link (
   target_id   int          null,
   target_type VARCHAR(50)  null,
   link_type   VARCHAR(50)  null,
-  label       VARCHAR(255) null);
+  label       VARCHAR(255) null
+);
 
 CREATE TABLE object_model (
   db_version INT NOT NULL,
-  model_name VARCHAR(255) not null);
+  model_name VARCHAR(255) not null
+);
 
-INSERT INTO object_model(db_version, model_name) VALUES ( 3, 'OpenGroupware.org_PostgreSQL');
+INSERT INTO object_model(db_version, model_name)
+     VALUES ( 3, 'OpenGroupware.org_PostgreSQL');
 
 CREATE TABLE table_version (
   table_name    VARCHAR(255) NOT NULL,
   table_version INT NOT NULL,
-  CONSTRAINT    pk_table_version PRIMARY KEY (table_name));
+  CONSTRAINT    pk_table_version PRIMARY KEY (table_name)
+);
 
 CREATE TABLE person ()     INHERITS(company);
 CREATE TABLE enterprise () INHERITS(company);
 CREATE TABLE trust ()      INHERITS(company);
 CREATE TABLE team ()       INHERITS(company);
 
-CREATE TABLE note () INHERITS(document);
-CREATE TABLE doc ()  INHERITS(document);
+CREATE TABLE note ()       INHERITS(document);
+CREATE TABLE doc ()        INHERITS(document);
 
 -- CTags
 
@@ -651,8 +734,7 @@ CREATE TABLE ctags (
   ctag  INTEGER NOT NULL DEFAULT 0
 );
 
-ALTER TABLE ctags ADD CONSTRAINT ctag_unique_entity
-  UNIQUE (entity);
+ALTER TABLE ctags ADD CONSTRAINT ctag_unique_entity UNIQUE (entity);
 
 INSERT INTO ctags (entity) VALUES ('Person'); 
 INSERT INTO ctags (entity) VALUES ('Enterprise');
@@ -760,6 +842,48 @@ CREATE RULE company_hierarchy_delete AS ON DELETE TO company_hierarchy DO INSTEA
   DELETE FROM company_assignment
   WHERE company_assignment_id = old.company_assignment_id;
 
+-- TBD: we should probably include the full join info (ie company data)
+CREATE VIEW person_relationship AS
+  SELECT
+    ca.company_assignment_id,
+    ca.company_id     AS person_id,
+    ca.sub_company_id AS related_person_id,
+    -- TBD: ca.is_headquarter, ca.is_chief, 
+    ca."function" AS relationship,
+    ca.db_status,
+    ca.start_date, ca.end_date
+  FROM company_assignment ca
+  INNER JOIN person e USING (company_id)
+  INNER JOIN person p ON (p.company_id = ca.sub_company_id);
+
+CREATE RULE person_relationship_add AS 
+    ON INSERT TO person_relationship DO INSTEAD
+  INSERT INTO company_assignment (
+    company_assignment_id, company_id, sub_company_id,
+    "function", db_status,
+    start_date, end_date
+  )
+  VALUES (
+    new.company_assignment_id, new.person_id, new.related_person_id,
+    new.relationship, new.db_status,
+    new.start_date, new.end_date
+  );
+
+CREATE RULE person_relationship_set AS 
+    ON UPDATE TO person_relationship DO INSTEAD
+  UPDATE company_assignment
+  SET company_id     = new.person_id,
+      sub_company_id = new.related_person_id,
+      "function"     = new."relationship",
+      db_status      = new.db_status,
+      start_date     = new.start_date,
+      end_date       = new.end_date
+  WHERE company_assignment_id = old.company_assignment_id;
+
+CREATE RULE person_relationship_delete AS 
+    ON DELETE TO person_relationship DO INSTEAD
+  DELETE FROM company_assignment
+        WHERE company_assignment_id = old.company_assignment_id;
 
 
 -- TBD: we should probably include the full join info (ie team data)
@@ -1024,9 +1148,10 @@ CREATE TABLE palm_category (
 
 INSERT INTO person (company_id, login, name, description, is_account, 
                     is_intra_account, is_extra_account, is_person, number, 
-                    is_private, is_readonly, db_status, object_version) 
+                    is_private, is_readonly, db_status, object_version, 
+                    owner_id) 
   VALUES (10000, 'root', 'root', 'Administrator', 1, 1, 0, 1, 'LS10000', 0, 1,
-          'inserted', 1);
+          'inserted', 1, 10000);
 
 INSERT INTO staff (staff_id, company_id, is_account) 
   VALUES (10001, 10000, 1);
@@ -1158,7 +1283,6 @@ CREATE INDEX telephone__real_number ON telephone(real_number);
 CREATE INDEX job__keywords      ON job(keywords);
 CREATE INDEX is_control_job_idx ON job(is_control_job);
 CREATE INDEX is_team_job_idx    ON job(is_team_job);
-CREATE INDEX is_new_idx         ON job(is_new);
 CREATE INDEX priority_idx       ON job(priority);
 CREATE INDEX job_kind_idx       ON job(kind);
 CREATE INDEX job_status_idx     ON job(job_status);
@@ -1297,56 +1421,60 @@ CREATE INDEX palmtodo_md5hash_idx ON palm_todo (md5hash);
 CREATE INDEX palmtodo_skyrix_idx ON palm_todo (skyrix_id);
 
 -- table versions -------------------------------------------------------------
+-- Bump versions
+-- 54  - things we changed in 2015
+-- 55  - things changed end of 2024
+-- 56+ - things changed in 2025
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('_model', 41);
+  VALUES ('_model', 55);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('staff', 41);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company', 45);
+  VALUES ('company', 55);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('company_info', 42);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company_value', 41);
+  VALUES ('company_value', 56);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company_category', 41);
+  VALUES ('company_category', 56);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company_assignment', 41);
+  VALUES ('company_assignment', 55);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('appointment_resource', 41);
+  VALUES ('appointment_resource', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('appointment', 47);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('date', 47);
+  VALUES ('date', 56); -- actually date_x
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('date_info', 42);
+  VALUES ('date_info', 56);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('date_company_assignment', 43);
+  VALUES ('date_company_assignment', 55);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('project', 41);
+  VALUES ('project', 54);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('project_info', 42);
+  VALUES ('project_info', 56);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('project_company_assignment', 41);
+  VALUES ('project_company_assignment', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('document', 41);
+  VALUES ('document', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('document_version', 42);
+  VALUES ('document_version', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('document_editing', 41);
+  VALUES ('document_editing', 55);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('address', 42);
+  VALUES ('address', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('telephone', 41);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('job', 46);
+  VALUES ('job', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('job_history', 41);
+  VALUES ('job_history', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('job_history_info', 42);
 

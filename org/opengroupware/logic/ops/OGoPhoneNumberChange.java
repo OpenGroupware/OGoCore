@@ -81,6 +81,6 @@ public class OGoPhoneNumberChange extends OGoContactChildChange {
   
   @Override
   public IOGoContactChildObject createObject() {
-    return new OGoAddress(this.baseEntity);
+    return new OGoPhoneNumber(this.baseEntity);
   }
 }

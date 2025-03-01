@@ -150,6 +150,10 @@ public class OGoTask extends OGoCalObject {
   
   /* dates */
   
+  /**
+   * This returns the `endDate` of the task, unless the task is done, then the
+   * `completionDate` is returned (if set).
+   */
   public Date primaryEndDate() {
     if (!this.isDone())
       return (Date)this.valueForKey("endDate");
