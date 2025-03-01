@@ -59,8 +59,10 @@ CREATE TABLE login_token (
 ALTER TABLE job ADD COLUMN owner_id INT;
 UPDATE job SET owner_id = creator_id WHERE owner_id IS NULL;
 ALTER TABLE job ADD COLUMN date_id INT;
+ALTER TABLE job ADD COLUMN url     TEXT;
 
 ALTER TABLE date_x ADD COLUMN project_id INT;
+ALTER TABLE date_x ADD COLUMN url        TEXT;
 
 -- pg-update-1.0to5.4.psql, used to be a separate file
 
@@ -422,6 +424,7 @@ ALTER TABLE job         ALTER COLUMN db_status      SET NOT NULL;
 ALTER TABLE job         ALTER COLUMN creator_id     SET NOT NULL;
 ALTER TABLE job         ALTER COLUMN owner_id       SET NOT NULL;
 ALTER TABLE job         ALTER COLUMN executant_id   SET NOT NULL;
+ALTER TABLE job         ALTER COLUMN priority       SET NOT NULL;
 ALTER TABLE job_history ALTER COLUMN object_version SET NOT NULL;
 
 ALTER TABLE company     ALTER COLUMN owner_id       SET NOT NULL;

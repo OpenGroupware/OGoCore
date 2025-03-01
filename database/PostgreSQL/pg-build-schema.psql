@@ -215,6 +215,8 @@ CREATE TABLE date_x (
   online_meeting         VARCHAR(255),    -- CSV for online meeting values
   associated_contacts    VARCHAR(255),    -- Outlook associated_contacts
   keywords               VARCHAR(255),    -- Outlook keywords
+  
+  url                    TEXT,            -- a URL associated w/ the event
 
   CONSTRAINT             pk_date PRIMARY KEY (date_id)
 );
@@ -415,15 +417,19 @@ CREATE TABLE job (
   start_date           TIMESTAMP WITH TIME ZONE NOT NULL,
   end_date             TIMESTAMP WITH TIME ZONE NOT NULL,
   notify_x             INT,
+  
   is_control_job       SMALLINT,
   is_team_job          SMALLINT,
   is_new               SMALLINT, -- seems to be unused
   job_status           VARCHAR(255),
   category             VARCHAR(255),
-  priority             INT,
+  priority             INT NOT NULL,
+  
   db_status            VARCHAR(50) NOT NULL,
-  kind                 VARCHAR(50), -- 01_root_process, 00_template
-  keywords             VARCHAR(255),
+  
+  kind                 VARCHAR(50), -- NULL or 01_root_process, 00_template
+  
+  keywords             VARCHAR(255), -- aka "tags"
   source_url           VARCHAR(255),
   sensitivity          SMALLINT,
   job_comment          TEXT,
@@ -436,7 +442,11 @@ CREATE TABLE job (
   kilometers           VARCHAR(255),
   associated_companies VARCHAR(255),
   associated_contacts  VARCHAR(255),
+  
   timer_date           TIMESTAMP WITH TIME ZONE,
+
+  url                  TEXT,            -- a URL associated w/ the event
+  
   CONSTRAINT           pk_job PRIMARY KEY (job_id)
 );
 
