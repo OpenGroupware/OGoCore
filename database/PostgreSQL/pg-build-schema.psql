@@ -50,6 +50,7 @@ CREATE TABLE company (
   can_change_password SMALLINT,
   login               VARCHAR(50),
   password            VARCHAR(255),
+  modern_password     VARCHAR(255), -- this will be written by newer versions
   pop3_account        VARCHAR(50),
 
   name                VARCHAR(50),
@@ -1432,7 +1433,7 @@ INSERT INTO table_version (table_name, table_version)
   VALUES ('staff', 41);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company', 55);
+  VALUES ('company', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('company_info', 42);
 INSERT INTO table_version (table_name, table_version)
