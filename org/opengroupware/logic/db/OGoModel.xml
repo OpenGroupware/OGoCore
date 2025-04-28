@@ -1850,14 +1850,14 @@
 
     <attribute name="sourceURL"      column="source_url" />
 
-                <!-- relationships -->
+    <!-- relationships -->
                 
     <to-one  name="project"     to="Projects" join="projectId,id" />
     <to-one  name="creator"     to="Persons"  join="creatorId,id" />
     <to-one  name="ownerPerson" to="Persons"  join="ownerId,id" />
     <to-one  name="ownerTeam"   to="Teams"    join="ownerId,id" />
 
-                <!-- fetch specifications -->
+    <!-- fetch specifications -->
 
     <fetch name="default" requiresAllBindings="true" limit="10000">
       <!-- 

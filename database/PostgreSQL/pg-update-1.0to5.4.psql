@@ -32,6 +32,7 @@ ALTER TABLE company ADD COLUMN birthname     VARCHAR(255) NULL;
 ALTER TABLE company ADD COLUMN family_status VARCHAR(255) NULL;
 ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
 ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
+ALTER TABLE company ADD COLUMN modern_password VARCHAR(255) NULL;
 
 -- district of a city (eg Magdeburg "Nord")
 ALTER TABLE address ADD COLUMN district VARCHAR(255) NULL;
@@ -482,7 +483,7 @@ ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
 -- 56+ - things changed in 2025
 UPDATE table_version SET table_version = 55 WHERE table_name = '_model';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'address';
-UPDATE table_version SET table_version = 55 WHERE table_name = 'company';
+UPDATE table_version SET table_version = 56 WHERE table_name = 'company';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'company_value';
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'company_category';

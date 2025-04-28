@@ -277,7 +277,11 @@ public class OGoDocumentObjectInsert extends OGoOperation {
     /* write file */
     
     final IOGoBlobStore bs = _ctx.oDatabase().notesStore();
-    File f = bs.blobFileForId(pkey, null, (String)this.record.get("fileext"));
+    if (bs == null)
+      return new NSException("Notes store is not setup!");
+    
+    final Object fe = this.record.get("fileext");
+    File f = bs.blobFileForId(pkey, null, (String)fe);
     
     this.fileTx = new OGoFileWriteTransaction(f);
     if ((error = this.fileTx.performAtomicWrite(this.content)) != null)
