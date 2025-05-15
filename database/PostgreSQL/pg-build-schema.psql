@@ -900,7 +900,20 @@ CREATE VIEW team_membership AS
   INNER JOIN team   t USING (company_id)
   INNER JOIN person p ON (p.company_id = ca.sub_company_id);
 CREATE OR REPLACE FUNCTION insert_team_membership() RETURNS trigger AS $$
+  DECLARE
+    _team_exists   BOOLEAN;
+    _person_exists BOOLEAN;
   BEGIN
+    SELECT EXISTS ( SELECT 1 FROM team WHERE company_id = NEW.team_id )
+      INTO _team_exists;
+    IF NOT _team_exists THEN
+      RAISE EXCEPTION 'Team with id % does not exist', NEW.team_id;
+    END IF;
+    SELECT EXISTS ( SELECT 1 FROM person WHERE company_id = NEW.person_id )
+      INTO _person_exists;
+    IF NOT _person_exists THEN
+      RAISE EXCEPTION 'Person with id % does not exist', NEW.person_id;
+    END IF;
     INSERT INTO company_assignment (
       company_assignment_id, company_id, sub_company_id, is_headquarter,
       is_chief, "function", db_status, start_date, end_date
