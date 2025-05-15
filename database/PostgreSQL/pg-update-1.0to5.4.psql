@@ -259,6 +259,33 @@ CREATE VIEW team_membership AS
   FROM company_assignment ca
   INNER JOIN team   t USING (company_id)
   INNER JOIN person p ON (p.company_id = ca.sub_company_id);
+CREATE OR REPLACE FUNCTION insert_team_membership() RETURNS trigger AS $$
+  BEGIN
+    INSERT INTO company_assignment (
+      company_assignment_id, company_id, sub_company_id, is_headquarter,
+      is_chief, "function", db_status, start_date, end_date
+    )
+    VALUES (
+      NEW.company_assignment_id, NEW.team_id, NEW.person_id, NEW.is_headquarter,
+      NEW.is_chief, NEW."function", NEW.db_status, NEW.start_date, NEW.end_date
+    );
+    RETURN NEW;
+  END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION delete_team_membership() RETURNS trigger AS $$
+  BEGIN
+    DELETE FROM company_assignment
+          WHERE company_assignment_id = OLD.company_assignment_id;
+    RETURN OLD;
+  END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_insert_team_membership
+  INSTEAD OF INSERT ON team_membership
+  FOR EACH ROW EXECUTE FUNCTION insert_team_membership();
+CREATE TRIGGER trigger_delete_team_membership
+  INSTEAD OF DELETE ON team_membership
+  FOR EACH ROW EXECUTE FUNCTION delete_team_membership();
 
 CREATE VIEW team_hierarchy AS
   SELECT
