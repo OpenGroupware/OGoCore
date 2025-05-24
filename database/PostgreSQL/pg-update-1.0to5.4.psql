@@ -477,6 +477,11 @@ ALTER TABLE job         ALTER COLUMN owner_id       SET NOT NULL;
 ALTER TABLE job         ALTER COLUMN executant_id   SET NOT NULL;
 ALTER TABLE job         ALTER COLUMN priority       SET NOT NULL;
 ALTER TABLE job_history ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN db_status      SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN action         SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN action_date    SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN actor_id       SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN job_status     SET NOT NULL;
 
 ALTER TABLE address     ALTER COLUMN db_status      SET NOT NULL;
 
@@ -540,7 +545,7 @@ UPDATE table_version SET table_version = 56
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'appointment_resource';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'job_history';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'job_history';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'project_info';
 UPDATE table_version SET table_version = 55
