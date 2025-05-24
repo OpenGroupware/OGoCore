@@ -492,6 +492,10 @@ ALTER TABLE company_assignment ALTER COLUMN company_id     SET NOT NULL;
 ALTER TABLE company_assignment ALTER COLUMN sub_company_id SET NOT NULL;
 ALTER TABLE company_assignment ALTER COLUMN db_status      SET NOT NULL;
 
+ALTER TABLE project                    ALTER COLUMN db_status  SET NOT NULL;
+ALTER TABLE project                    ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE project                    ALTER COLUMN name       SET NOT NULL;
+ALTER TABLE project                    ALTER COLUMN number     SET NOT NULL;
 ALTER TABLE project_info               ALTER COLUMN db_status  SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN db_status  SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN company_id SET NOT NULL;
@@ -537,7 +541,7 @@ UPDATE table_version SET table_version = 56
  WHERE table_name = 'appointment_resource';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job_history';
-UPDATE table_version SET table_version = 54 WHERE table_name = 'project';
+UPDATE table_version SET table_version = 56 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'project_info';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';
