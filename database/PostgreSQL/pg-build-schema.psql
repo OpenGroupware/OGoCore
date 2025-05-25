@@ -963,21 +963,24 @@ CREATE VIEW project_teams AS
 CREATE RULE project_teams_add AS ON INSERT TO project_teams DO INSTEAD
   INSERT INTO project_company_assignment (
     project_company_assignment_id, company_id, project_id, info,
-    has_access, access_right, db_status,
-    start_date, end_date
+    has_access, access_right, db_status, start_date, end_date
   )
   VALUES (
-    new.project_company_assignment_id, new.company_id, new.project_id, new.info,
-    new.has_access, new.access_right, new.db_status, new.start_date, new.end_date
-  );
+    NEW.project_company_assignment_id, NEW.company_id, NEW.project_id, NEW.info,
+    NEW.has_access, NEW.access_right, NEW.db_status, 
+    NEW.start_date, NEW.end_date
+  )
+  RETURNING
+    project_company_assignment_id, company_id, project_id, info,
+    has_access, access_right, db_status, start_date, end_date
+  ;
 CREATE RULE project_teams_set AS ON UPDATE TO project_teams DO INSTEAD
   UPDATE project_company_assignment
-  SET company_id = new.company_id, project_id = new.project_id, info = new.info,
-      has_access = new.has_access, access_right = new.access_right,
-      db_status  = new.db_status,
-      start_date = new.start_date, end_date = new.end_date
+  SET company_id = NEW.company_id, project_id = NEW.project_id, info = NEW.info,
+      has_access = NEW.has_access, access_right = NEW.access_right,
+      db_status  = NEW.db_status,
+      start_date = NEW.start_date, end_date = NEW.end_date
   WHERE project_company_assignment_id = old.project_company_assignment_id;
-
 CREATE RULE project_teams_del AS ON DELETE TO project_teams DO INSTEAD
   DELETE FROM project_company_assignment
   WHERE project_company_assignment_id = old.project_company_assignment_id;
@@ -997,7 +1000,11 @@ CREATE RULE project_persons_add AS ON INSERT TO project_persons DO INSTEAD
     new.project_company_assignment_id, new.company_id, new.project_id, new.info,
     new.has_access, new.access_right, new.db_status,
     new.start_date, new.end_date
-  );
+  )
+  RETURNING
+    project_company_assignment_id, company_id, project_id, info, has_access,
+    access_right, db_status, start_date, end_date
+  ;
 CREATE RULE project_persons_set AS ON UPDATE TO project_persons DO INSTEAD
   UPDATE project_company_assignment
   SET company_id = new.company_id, project_id = new.project_id, info = new.info,
@@ -1025,7 +1032,11 @@ CREATE RULE project_companies_add AS ON INSERT TO project_companies DO INSTEAD
     new.project_company_assignment_id, new.company_id, new.project_id, new.info,
     new.has_access, new.access_right, new.db_status,
     new.start_date, new.end_date
-  );
+  )
+  RETURNING
+    project_company_assignment_id, company_id, project_id, info, has_access,
+    access_right, db_status, start_date, end_date
+  ;
 CREATE RULE project_companies_set AS ON UPDATE TO project_companies DO INSTEAD
   UPDATE project_company_assignment
   SET company_id = new.company_id, project_id = new.project_id, info = new.info,
