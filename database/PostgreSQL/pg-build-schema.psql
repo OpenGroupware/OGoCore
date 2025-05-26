@@ -785,8 +785,12 @@ CREATE RULE employment_add AS ON INSERT TO employment DO INSTEAD
     new.company_assignment_id, new.enterprise_id, new.person_id,
     new.is_headquarter, new.is_chief, new."function", new.db_status,
     new.start_date, new.end_date
-  );
-
+  )
+  RETURNING
+    company_assignment_id, company_id, sub_company_id,
+    is_headquarter, is_chief, "function", db_status,
+    start_date, end_date
+  ;
 CREATE RULE employment_set AS ON UPDATE TO employment DO INSTEAD
   UPDATE company_assignment
   SET company_id     = new.enterprise_id,
@@ -827,7 +831,12 @@ CREATE RULE company_hierarchy_add AS ON INSERT TO company_hierarchy DO INSTEAD
     new.company_assignment_id, new.parent_id, new.company_id,
     new.is_headquarter, new.is_chief, new."function", new.db_status,
     new.start_date, new.end_date
-  );
+  )
+  RETURNING
+    company_assignment_id, company_id, sub_company_id,
+    is_headquarter, is_chief, "function", db_status,
+    start_date, end_date
+  ;
 
 CREATE RULE company_hierarchy_set AS ON UPDATE TO company_hierarchy DO INSTEAD
   UPDATE company_assignment
@@ -870,7 +879,12 @@ CREATE RULE person_relationship_add AS
     new.company_assignment_id, new.person_id, new.related_person_id,
     new.relationship, new.db_status,
     new.start_date, new.end_date
-  );
+  )
+  RETURNING
+    company_assignment_id, company_id, sub_company_id,
+    "function", db_status,
+    start_date, end_date
+  ;
 
 CREATE RULE person_relationship_set AS 
     ON UPDATE TO person_relationship DO INSTEAD
