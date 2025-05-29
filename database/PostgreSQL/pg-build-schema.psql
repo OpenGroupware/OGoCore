@@ -273,6 +273,8 @@ CREATE TABLE project (
   -- this is the document storage URL, either skyrix:// for DB or empty/file://
   url               VARCHAR(100),
   parent_project_id INT,
+  source_url        VARCHAR(255), -- external system sync-id
+  
   CONSTRAINT        pk_project PRIMARY KEY (project_id),
   CONSTRAINT        unique_project_number UNIQUE(number)
 );
@@ -341,6 +343,8 @@ CREATE TABLE document (
   text_content       TEXT NULL,
   text_content_type  SMALLINT,
   text_content_object_version INT, -- the version the content is based upon
+
+  source_url         VARCHAR(255), -- external system sync-id
   
   CONSTRAINT         pk_document PRIMARY KEY (document_id)
 );
@@ -1522,13 +1526,13 @@ INSERT INTO table_version (table_name, table_version)
   VALUES ('date_company_assignment', 55);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('project', 56);
+  VALUES ('project', 57);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('project_info', 56);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('project_company_assignment', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('document', 55);
+  VALUES ('document', 57);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('document_version', 55);
 INSERT INTO table_version (table_name, table_version)

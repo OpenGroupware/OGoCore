@@ -52,7 +52,8 @@ ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
 
 
 -- prepare for project hierarchies
-ALTER TABLE project ADD COLUMN parent_project_id INT NULL;
+ALTER TABLE project ADD COLUMN parent_project_id INT          NULL;
+ALTER TABLE project ADD COLUMN source_url        VARCHAR(255) NULL;
 
 CREATE TABLE login_token (
   token           VARCHAR(4096) PRIMARY KEY,
@@ -97,7 +98,8 @@ ALTER TABLE project_company_assignment
 
 -- field to connect documents and notes to contacts
 -- Also in pg-update-1.x-to-5.5.psql
-ALTER TABLE document ADD COLUMN company_id INT NULL;
+ALTER TABLE document ADD COLUMN company_id INT          NULL;
+ALTER TABLE document ADD COLUMN source_url VARCHAR(255) NULL;
 
 
 -- both do not work on SX:
@@ -575,11 +577,11 @@ UPDATE table_version SET table_version = 56
  WHERE table_name = 'appointment_resource';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
 UPDATE table_version SET table_version = 57 WHERE table_name = 'job_history';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'project';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'project_info';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'document';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'document';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_version';
 UPDATE table_version SET table_version = 55
