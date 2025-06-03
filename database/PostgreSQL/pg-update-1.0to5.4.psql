@@ -52,7 +52,8 @@ ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
 
 
 -- prepare for project hierarchies
-ALTER TABLE project ADD COLUMN parent_project_id INT NULL;
+ALTER TABLE project ADD COLUMN parent_project_id INT          NULL;
+ALTER TABLE project ADD COLUMN source_url        VARCHAR(255) NULL;
 
 CREATE TABLE login_token (
   token           VARCHAR(4096) PRIMARY KEY,
@@ -97,7 +98,8 @@ ALTER TABLE project_company_assignment
 
 -- field to connect documents and notes to contacts
 -- Also in pg-update-1.x-to-5.5.psql
-ALTER TABLE document ADD COLUMN company_id INT NULL;
+ALTER TABLE document ADD COLUMN company_id INT          NULL;
+ALTER TABLE document ADD COLUMN source_url VARCHAR(255) NULL;
 
 
 -- both do not work on SX:
@@ -133,7 +135,7 @@ CREATE VIEW employment AS
   INNER JOIN enterprise e USING (company_id)
   INNER JOIN person     p ON (p.company_id = ca.sub_company_id);
 
-CREATE RULE employment_add AS ON INSERT TO employment DO INSTEAD
+CREATE OR REPLACE RULE employment_add AS ON INSERT TO employment DO INSTEAD
   INSERT INTO company_assignment (
     company_assignment_id, company_id, sub_company_id,
     is_headquarter, is_chief, "function", db_status,
@@ -143,7 +145,12 @@ CREATE RULE employment_add AS ON INSERT TO employment DO INSTEAD
     new.company_assignment_id, new.enterprise_id, new.person_id,
     new.is_headquarter, new.is_chief, new."function", new.db_status,
     new.start_date, new.end_date
-  );
+  )
+  RETURNING
+    company_assignment_id, company_id, sub_company_id,
+    is_headquarter, is_chief, "function", db_status,
+    start_date, end_date
+  ;
 
 CREATE RULE employment_set AS ON UPDATE TO employment DO INSTEAD
   UPDATE company_assignment
@@ -175,7 +182,8 @@ CREATE VIEW company_hierarchy AS
   INNER JOIN enterprise e1 USING (company_id)
   INNER JOIN enterprise e2 ON (e2.company_id = ca.sub_company_id);
 
-CREATE RULE company_hierarchy_add AS ON INSERT TO company_hierarchy DO INSTEAD
+CREATE OR REPLACE RULE company_hierarchy_add AS 
+  ON INSERT TO company_hierarchy DO INSTEAD
   INSERT INTO company_assignment (
     company_assignment_id, company_id, sub_company_id,
     is_headquarter, is_chief, "function", db_status,
@@ -185,8 +193,12 @@ CREATE RULE company_hierarchy_add AS ON INSERT TO company_hierarchy DO INSTEAD
     new.company_assignment_id, new.parent_id, new.company_id,
     new.is_headquarter, new.is_chief, new."function", new.db_status,
     new.start_date, new.end_date
-  );
-
+  )
+  RETURNING
+    company_assignment_id, company_id, sub_company_id,
+    is_headquarter, is_chief, "function", db_status,
+    start_date, end_date
+  ;
 CREATE RULE company_hierarchy_set AS ON UPDATE TO company_hierarchy DO INSTEAD
   UPDATE company_assignment
   SET company_id     = new.parent_id,
@@ -217,7 +229,7 @@ CREATE VIEW person_relationship AS
   INNER JOIN person e USING (company_id)
   INNER JOIN person p ON (p.company_id = ca.sub_company_id);
 
-CREATE RULE person_relationship_add AS 
+CREATE OR REPLACE RULE person_relationship_add AS 
     ON INSERT TO person_relationship DO INSTEAD
   INSERT INTO company_assignment (
     company_assignment_id, company_id, sub_company_id,
@@ -228,7 +240,12 @@ CREATE RULE person_relationship_add AS
     new.company_assignment_id, new.person_id, new.related_person_id,
     new.relationship, new.db_status,
     new.start_date, new.end_date
-  );
+  )
+  RETURNING
+    company_assignment_id, company_id, sub_company_id,
+    "function", db_status,
+    start_date, end_date
+  ;
 
 CREATE RULE person_relationship_set AS 
     ON UPDATE TO person_relationship DO INSTEAD
@@ -259,6 +276,46 @@ CREATE VIEW team_membership AS
   FROM company_assignment ca
   INNER JOIN team   t USING (company_id)
   INNER JOIN person p ON (p.company_id = ca.sub_company_id);
+CREATE OR REPLACE FUNCTION insert_team_membership() RETURNS trigger AS $$
+  DECLARE
+    _team_exists   BOOLEAN;
+    _person_exists BOOLEAN;
+  BEGIN
+    SELECT EXISTS ( SELECT 1 FROM team WHERE company_id = NEW.team_id )
+      INTO _team_exists;
+    IF NOT _team_exists THEN
+      RAISE EXCEPTION 'Team with id % does not exist', NEW.team_id;
+    END IF;
+    SELECT EXISTS ( SELECT 1 FROM person WHERE company_id = NEW.person_id )
+      INTO _person_exists;
+    IF NOT _person_exists THEN
+      RAISE EXCEPTION 'Person with id % does not exist', NEW.person_id;
+    END IF;
+    INSERT INTO company_assignment (
+      company_assignment_id, company_id, sub_company_id, is_headquarter,
+      is_chief, "function", db_status, start_date, end_date
+    )
+    VALUES (
+      NEW.company_assignment_id, NEW.team_id, NEW.person_id, NEW.is_headquarter,
+      NEW.is_chief, NEW."function", NEW.db_status, NEW.start_date, NEW.end_date
+    );
+    RETURN NEW;
+  END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION delete_team_membership() RETURNS trigger AS $$
+  BEGIN
+    DELETE FROM company_assignment
+          WHERE company_assignment_id = OLD.company_assignment_id;
+    RETURN OLD;
+  END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_insert_team_membership
+  INSTEAD OF INSERT ON team_membership
+  FOR EACH ROW EXECUTE FUNCTION insert_team_membership();
+CREATE TRIGGER trigger_delete_team_membership
+  INSTEAD OF DELETE ON team_membership
+  FOR EACH ROW EXECUTE FUNCTION delete_team_membership();
 
 CREATE VIEW team_hierarchy AS
   SELECT
@@ -278,22 +335,27 @@ CREATE VIEW project_teams AS
   FROM project_company_assignment pca
   JOIN team e USING (company_id);
 
-CREATE RULE project_teams_add AS ON INSERT TO project_teams DO INSTEAD
+CREATE OR REPLACE RULE project_teams_add AS ON INSERT TO project_teams DO INSTEAD
   INSERT INTO project_company_assignment (
     project_company_assignment_id, company_id, project_id, info,
-    has_access, access_right, db_status
+    has_access, access_right, db_status, start_date, end_date
   )
   VALUES (
-    new.project_company_assignment_id, new.company_id, new.project_id, new.info,
-    new.has_access, new.access_right, new.db_status
-  );
-CREATE RULE project_teams_set AS ON UPDATE TO project_teams DO INSTEAD
+    NEW.project_company_assignment_id, NEW.company_id, NEW.project_id, NEW.info,
+    NEW.has_access, NEW.access_right, NEW.db_status, 
+    NEW.start_date, NEW.end_date
+  )
+  RETURNING
+    project_company_assignment_id, company_id, project_id, info,
+    has_access, access_right, db_status, start_date, end_date
+  ;
+CREATE OR REPLACE RULE project_teams_set AS ON UPDATE TO project_teams DO INSTEAD
   UPDATE project_company_assignment
-  SET company_id = new.company_id, project_id = new.project_id, info = new.info,
-      has_access = new.has_access, access_right = new.access_right,
-      db_status  = new.db_status
+  SET company_id = NEW.company_id, project_id = NEW.project_id, info = NEW.info,
+      has_access = NEW.has_access, access_right = NEW.access_right,
+      db_status  = NEW.db_status,
+      start_date = NEW.start_date, end_date = NEW.end_date
   WHERE project_company_assignment_id = old.project_company_assignment_id;
-
 CREATE RULE project_teams_del AS ON DELETE TO project_teams DO INSTEAD
   DELETE FROM project_company_assignment
   WHERE project_company_assignment_id = old.project_company_assignment_id;
@@ -304,23 +366,27 @@ CREATE VIEW project_persons AS
   FROM project_company_assignment pca
   JOIN person p USING (company_id);
 
-CREATE RULE project_persons_add AS ON INSERT TO project_persons DO INSTEAD
+CREATE OR REPLACE RULE project_persons_add AS ON INSERT TO project_persons DO INSTEAD
   INSERT INTO project_company_assignment (
     project_company_assignment_id, company_id, project_id, info, has_access,
     access_right, db_status, start_date, end_date
   )
   VALUES (
-    new.project_company_assignment_id, new.company_id, new.project_id, new.info,
-    new.has_access, new.access_right, new.db_status,
-    new.start_date, new.end_date
-  );
+    NEW.project_company_assignment_id, NEW.company_id, NEW.project_id, NEW.info,
+    NEW.has_access, NEW.access_right, NEW.db_status,
+    NEW.start_date, NEW.end_date
+  )
+  RETURNING
+    project_company_assignment_id, company_id, project_id, info, has_access,
+    access_right, db_status, start_date, end_date
+  ;
 CREATE RULE project_persons_set AS ON UPDATE TO project_persons DO INSTEAD
   UPDATE project_company_assignment
-  SET company_id = new.company_id, project_id = new.project_id, info = new.info,
-      has_access = new.has_access, access_right = new.access_right,
-      db_status  = new.db_status,
-      start_date = new.start_date, end_date = new.end_date
-  WHERE project_company_assignment_id = old.project_company_assignment_id;
+  SET company_id = NEW.company_id, project_id = NEW.project_id, info = NEW.info,
+      has_access = NEW.has_access, access_right = NEW.access_right,
+      db_status  = NEW.db_status,
+      start_date = NEW.start_date, end_date = NEW.end_date
+  WHERE project_company_assignment_id = OLD.project_company_assignment_id;
 
 CREATE RULE project_persons_del AS ON DELETE TO project_persons DO INSTEAD
   DELETE FROM project_company_assignment
@@ -332,7 +398,7 @@ CREATE VIEW project_companies AS
   FROM project_company_assignment pca
   JOIN enterprise e USING (company_id);
 
-CREATE RULE project_companies_add AS ON INSERT TO project_companies DO INSTEAD
+CREATE OR REPLACE RULE project_companies_add AS ON INSERT TO project_companies DO INSTEAD
   INSERT INTO project_company_assignment (
     project_company_assignment_id, company_id, project_id, info, has_access,
     access_right, db_status, start_date, end_date
@@ -341,7 +407,11 @@ CREATE RULE project_companies_add AS ON INSERT TO project_companies DO INSTEAD
     new.project_company_assignment_id, new.company_id, new.project_id, new.info,
     new.has_access, new.access_right, new.db_status,
     new.start_date, new.end_date
-  );
+  )
+  RETURNING
+    project_company_assignment_id, company_id, project_id, info, has_access,
+    access_right, db_status, start_date, end_date
+  ;
 CREATE RULE project_companies_set AS ON UPDATE TO project_companies DO INSTEAD
   UPDATE project_company_assignment
   SET company_id = new.company_id, project_id = new.project_id, info = new.info,
@@ -350,9 +420,10 @@ CREATE RULE project_companies_set AS ON UPDATE TO project_companies DO INSTEAD
       start_date = new.start_date, end_date = new.end_date
   WHERE project_company_assignment_id = old.project_company_assignment_id;
 
-CREATE RULE project_companies_del AS ON DELETE TO project_companies DO INSTEAD
+-- this does not seem to work
+CREATE OR REPLACE RULE project_companies_del AS ON DELETE TO project_companies DO INSTEAD
   DELETE FROM project_company_assignment
-  WHERE project_company_assignment_id = old.project_company_assignment_id;
+   WHERE project_company_assignment.project_company_assignment_id = OLD.project_company_assignment_id;
 
 
 -- unused? sounds useful, but maybe its overkill
@@ -437,6 +508,11 @@ ALTER TABLE job         ALTER COLUMN owner_id       SET NOT NULL;
 ALTER TABLE job         ALTER COLUMN executant_id   SET NOT NULL;
 ALTER TABLE job         ALTER COLUMN priority       SET NOT NULL;
 ALTER TABLE job_history ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN db_status      SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN action         SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN action_date    SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN actor_id       SET NOT NULL;
+ALTER TABLE job_history ALTER COLUMN job_status     SET NOT NULL;
 
 ALTER TABLE address     ALTER COLUMN db_status      SET NOT NULL;
 
@@ -452,6 +528,10 @@ ALTER TABLE company_assignment ALTER COLUMN company_id     SET NOT NULL;
 ALTER TABLE company_assignment ALTER COLUMN sub_company_id SET NOT NULL;
 ALTER TABLE company_assignment ALTER COLUMN db_status      SET NOT NULL;
 
+ALTER TABLE project                    ALTER COLUMN db_status  SET NOT NULL;
+ALTER TABLE project                    ALTER COLUMN object_version SET NOT NULL;
+ALTER TABLE project                    ALTER COLUMN name       SET NOT NULL;
+ALTER TABLE project                    ALTER COLUMN number     SET NOT NULL;
 ALTER TABLE project_info               ALTER COLUMN db_status  SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN db_status  SET NOT NULL;
 ALTER TABLE project_company_assignment ALTER COLUMN company_id SET NOT NULL;
@@ -496,12 +576,12 @@ UPDATE table_version SET table_version = 56
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'appointment_resource';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'job_history';
-UPDATE table_version SET table_version = 54 WHERE table_name = 'project';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'job_history';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'project_info';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'document';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'document';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_version';
 UPDATE table_version SET table_version = 55
