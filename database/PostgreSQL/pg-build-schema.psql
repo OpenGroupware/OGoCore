@@ -37,7 +37,7 @@ CREATE TABLE company (
   priority            VARCHAR(50),
   keywords            VARCHAR(255),
 
-  url                 VARCHAR(255),
+  url                 TEXT,
   email               VARCHAR(100), 
   type                VARCHAR(50),
   bank                VARCHAR(100),
@@ -271,7 +271,7 @@ CREATE TABLE project (
   db_status         VARCHAR(50) NOT NULL,
   kind              VARCHAR(50),
   -- this is the document storage URL, either skyrix:// for DB or empty/file://
-  url               VARCHAR(100),
+  url               TEXT,
   parent_project_id INT,
   source_url        VARCHAR(255), -- external system sync-id
   
@@ -430,7 +430,7 @@ CREATE TABLE telephone (
   real_number    VARCHAR(255),
   type           VARCHAR(50) NOT NULL,
   info           VARCHAR(255),
-  url            VARCHAR(255),
+  url            TEXT,
   db_status      VARCHAR(50),
   CONSTRAINT     pk_telephone PRIMARY KEY (telephone_id)
 );
