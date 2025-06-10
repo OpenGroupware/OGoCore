@@ -93,6 +93,9 @@ CREATE TABLE company (
   family_status       VARCHAR(255),
   citizenship         VARCHAR(255),
   dayofdeath          TIMESTAMP WITH TIME ZONE,
+
+  tags_array          TEXT[] GENERATED ALWAYS 
+                      AS (string_to_array(keywords, ', ')) STORED,
   
   CONSTRAINT          pk_company PRIMARY KEY (company_id),
   CONSTRAINT          unique_company_number UNIQUE(number),
@@ -194,6 +197,7 @@ CREATE TABLE date_x (
   location_id_version    INT, -- the `object_version` when the loc_id was set
   
   resource_names         VARCHAR(255), -- CSV of `appointment_resource` names
+  -- This is a CSV of company table primary keys, e.g. 10000,10003
   write_access_list      VARCHAR(255),
   
   absence                VARCHAR(255), -- also: `is_absence`
@@ -222,9 +226,17 @@ CREATE TABLE date_x (
   ol_reminder            VARCHAR(255),    -- Outlook reminder settings
   online_meeting         VARCHAR(255),    -- CSV for online meeting values
   associated_contacts    VARCHAR(255),    -- Outlook associated_contacts
-  keywords               VARCHAR(255),    -- Outlook keywords
+  keywords               VARCHAR(255),    -- Outlook keywords (USE apt_type!)
   
   url                    TEXT,            -- a URL associated w/ the event
+  
+  tags_array             TEXT[] GENERATED ALWAYS 
+                         AS (string_to_array(apt_type, ', ')) STORED,
+  write_access_ids       INT[] GENERATED ALWAYS 
+                         AS (string_to_array(write_access_list, ',')::INT[]) 
+                         STORED,
+  resource_names_array   TEXT[] GENERATED ALWAYS 
+                         AS (string_to_array(resource_names, ', ')) STORED,
 
   CONSTRAINT             pk_date PRIMARY KEY (date_id)
 );
@@ -477,6 +489,9 @@ CREATE TABLE job (
   timer_date           TIMESTAMP WITH TIME ZONE,
 
   url                  TEXT,            -- a URL associated w/ the event
+  
+  tags_array           TEXT[] GENERATED ALWAYS 
+                       AS (string_to_array(keywords, ', ')) STORED,
   
   CONSTRAINT           pk_job PRIMARY KEY (job_id)
 );
@@ -1304,6 +1319,7 @@ CREATE INDEX company_is_team_idx             ON company(is_team);
 CREATE INDEX company_is_enterprise_idx       ON company(is_enterprise);
 CREATE INDEX company_is_trust_idx            ON company(is_trust);
 CREATE INDEX company_is_person_idx           ON company(is_person);
+CREATE INDEX company_tags_gin                ON company USING GIN (tags_array);
 
 CREATE INDEX person_name_idx                 ON person(name);
 CREATE INDEX person_firstname_idx            ON person(firstname);
@@ -1337,6 +1353,9 @@ CREATE INDEX is_absence_idx                  ON date_x(is_absence);
 CREATE INDEX is_attendance_idx               ON date_x(is_attendance);
 CREATE INDEX is_conflict_disabled_idx        ON date_x(is_conflict_disabled);
 CREATE INDEX resource_names_ind              ON date_x(resource_names);
+CREATE INDEX date_tags_gin                   ON date_x USING GIN (tags_array);
+CREATE INDEX date_writeacl_gin       ON date_x USING GIN (write_access_ids);
+CREATE INDEX date_resources_gin      ON date_x USING GIN (resource_names_array);
 CREATE INDEX apt_parent_idx                  ON date_x (parent_date_id);
 CREATE INDEX apt_owner_idx                   ON date_x (owner_id);
 CREATE INDEX apt_team_idx                    ON date_x (access_team_id);
@@ -1401,6 +1420,7 @@ CREATE INDEX job_executant_idx               ON job(executant_id);
 CREATE INDEX jobh_job_idx                    ON job_history(job_id);
 CREATE INDEX jobh_actor_idx                  ON job_history(actor_id);
 CREATE INDEX jobhi_jobh_idx                ON job_history_info(job_history_id);
+CREATE INDEX job_tags_gin                    ON job USING GIN (tags_array);
 
 CREATE INDEX is_index_article_idx            ON news_article(is_index_article);
 
@@ -1504,7 +1524,7 @@ INSERT INTO table_version (table_name, table_version)
   VALUES ('staff', 41);
 
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('company', 56);
+  VALUES ('company', 57);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('company_info', 42);
 INSERT INTO table_version (table_name, table_version)
@@ -1519,7 +1539,7 @@ INSERT INTO table_version (table_name, table_version)
 INSERT INTO table_version (table_name, table_version)
   VALUES ('appointment', 47);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('date', 56); -- actually date_x
+  VALUES ('date', 57); -- actually date_x
 INSERT INTO table_version (table_name, table_version)
   VALUES ('date_info', 56);
 INSERT INTO table_version (table_name, table_version)

@@ -33,6 +33,9 @@ ALTER TABLE company ADD COLUMN family_status VARCHAR(255) NULL;
 ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
 ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
 ALTER TABLE company ADD COLUMN modern_password VARCHAR(255) NULL;
+ALTER TABLE company ADD COLUMN tags_array TEXT[] GENERATED ALWAYS 
+            AS (string_to_array(keywords, ', ')) STORED;
+CREATE INDEX company_tags_gin ON company USING GIN (tags_array);
 
 -- district of a city (eg Magdeburg "Nord")
 ALTER TABLE address ADD COLUMN district VARCHAR(255) NULL;
@@ -66,15 +69,27 @@ CREATE TABLE login_token (
   expiration_date TIMESTAMP WITH TIME ZONE NULL
 );
 
-ALTER TABLE job ADD COLUMN owner_id INT;
+ALTER TABLE job ADD COLUMN owner_id   INT;
 UPDATE job SET owner_id = creator_id WHERE owner_id IS NULL;
-ALTER TABLE job ADD COLUMN date_id INT;
-ALTER TABLE job ADD COLUMN url     TEXT;
+ALTER TABLE job ADD COLUMN date_id    INT;
+ALTER TABLE job ADD COLUMN url        TEXT;
+ALTER TABLE job ADD COLUMN tags_array TEXT[] GENERATED ALWAYS 
+         AS (string_to_array(keywords, ', ')) STORED;
+CREATE INDEX job_tags_gin ON job USING GIN (tags_array);
 
 ALTER TABLE date_x ADD COLUMN project_id          INT;
 ALTER TABLE date_x ADD COLUMN url                 TEXT;
 ALTER TABLE date_x ADD COLUMN location_id         INT;
 ALTER TABLE date_x ADD COLUMN location_id_version INT;
+ALTER TABLE date_x ADD COLUMN tags_array TEXT[] GENERATED ALWAYS 
+         AS (string_to_array(apt_type, ', ')) STORED;
+ALTER TABLE date_x ADD COLUMN write_access_ids       INT[] GENERATED ALWAYS 
+         AS (string_to_array(write_access_list, ',')::INT[]) STORED;
+ALTER TABLE date_x ADD COLUMN resource_names_array   TEXT[] GENERATED ALWAYS 
+         AS (string_to_array(resource_names, ', ')) STORED;
+CREATE INDEX date_tags_gin      ON date_x USING GIN (tags_array);
+CREATE INDEX date_writeacl_gin  ON date_x USING GIN (write_access_ids);
+CREATE INDEX date_resources_gin ON date_x USING GIN (resource_names_array);
 
 -- pg-update-1.0to5.4.psql, used to be a separate file
 
@@ -563,19 +578,19 @@ ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
 -- 56+ - things changed in 2025
 UPDATE table_version SET table_version = 55 WHERE table_name = '_model';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'address';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'company';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'company';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'company_value';
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'company_category';
 UPDATE table_version SET table_version = 55 
  WHERE table_name = 'company_assignment';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'date';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'date';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'date_info';
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'date_company_assignment';
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'appointment_resource';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'job';
 UPDATE table_version SET table_version = 57 WHERE table_name = 'job_history';
 UPDATE table_version SET table_version = 57 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'project_info';
