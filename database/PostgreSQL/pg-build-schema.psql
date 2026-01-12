@@ -355,6 +355,11 @@ CREATE TABLE document (
   text_content       TEXT NULL,
   text_content_type  SMALLINT,
   text_content_object_version INT, -- the version the content is based upon
+  
+  -- 2026-01-12: new, allow tags on documents/notes
+  keywords           TEXT,
+  tags_array         TEXT[] GENERATED ALWAYS 
+                     AS (string_to_array(keywords, ', ')) STORED,
 
   source_url         VARCHAR(255), -- external system sync-id
   
@@ -1391,6 +1396,7 @@ CREATE INDEX dediting_doc_idx              ON document_editing(document_id);
 CREATE INDEX dediting_current_owner_idx  ON document_editing(current_owner_id);
 CREATE INDEX note_project_idx                ON note(project_id);
 CREATE INDEX note_date_idx                   ON note(date_id);
+CREATE INDEX document_tags_gin               ON document USING GIN (tags_array);
 
 CREATE INDEX address_company_idx             ON address(company_id);
 CREATE INDEX address__name1                  ON address(name1);
@@ -1552,7 +1558,7 @@ INSERT INTO table_version (table_name, table_version)
 INSERT INTO table_version (table_name, table_version)
   VALUES ('project_company_assignment', 55);
 INSERT INTO table_version (table_name, table_version)
-  VALUES ('document', 57);
+  VALUES ('document', 58);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('document_version', 55);
 INSERT INTO table_version (table_name, table_version)

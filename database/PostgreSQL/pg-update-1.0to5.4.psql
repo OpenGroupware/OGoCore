@@ -12,6 +12,10 @@ ALTER TABLE object_acl
 
 ALTER TABLE document ADD COLUMN company_id INT NULL;
 ALTER TABLE document ADD COLUMN job_id     INT NULL;
+ALTER TABLE document ADD COLUMN keywords   TEXT NULL;
+ALTER TABLE document ADD COLUMN tags_array TEXT[] GENERATED ALWAYS 
+            AS (string_to_array(keywords, ', ')) STORED;
+CREATE INDEX document_tags_gin ON document USING GIN (tags_array);
 
 CREATE TABLE ctags (
   entity VARCHAR NOT NULL,
@@ -596,7 +600,7 @@ UPDATE table_version SET table_version = 57 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'project_info';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';
-UPDATE table_version SET table_version = 57 WHERE table_name = 'document';
+UPDATE table_version SET table_version = 58 WHERE table_name = 'document';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_version';
 UPDATE table_version SET table_version = 55
