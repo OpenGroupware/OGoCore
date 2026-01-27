@@ -571,6 +571,7 @@ ALTER TABLE document_version ALTER COLUMN last_owner_id  SET NOT NULL;
 -- this can be a prefix, or the actual content, or sth else.
 -- since old clients won't know about this and always access the file,
 -- this tracks the object_version of the last write.
+-- 1=text/plain, 1001=cutoff-text/plain (if file was too large)
 ALTER TABLE document ADD COLUMN text_content                TEXT     NULL;
 ALTER TABLE document ADD COLUMN text_content_type           SMALLINT NULL;
 ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
