@@ -577,6 +577,128 @@ ALTER TABLE document ADD COLUMN text_content_type           SMALLINT NULL;
 ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
 
 
+-- Change Notifications
+
+CREATE OR REPLACE FUNCTION notify_change_company() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.company_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.company_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_change_date() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.date_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.date_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_change_document() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.document_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.document_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_change_job() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.job_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.job_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_change_project() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.project_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.project_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- DROP existing triggers if re-running update
+DROP TRIGGER IF EXISTS notify_person_changes     ON person;
+DROP TRIGGER IF EXISTS notify_enterprise_changes ON enterprise;
+DROP TRIGGER IF EXISTS notify_team_changes       ON team;
+DROP TRIGGER IF EXISTS notify_date_changes       ON date_x;
+DROP TRIGGER IF EXISTS notify_note_changes       ON note;
+DROP TRIGGER IF EXISTS notify_doc_changes        ON doc;
+DROP TRIGGER IF EXISTS notify_job_changes        ON job;
+DROP TRIGGER IF EXISTS notify_project_changes    ON project;
+
+CREATE TRIGGER notify_person_changes
+  AFTER INSERT OR UPDATE OR DELETE ON person
+  FOR EACH ROW EXECUTE FUNCTION notify_change_company();
+CREATE TRIGGER notify_enterprise_changes
+  AFTER INSERT OR UPDATE OR DELETE ON enterprise
+  FOR EACH ROW EXECUTE FUNCTION notify_change_company();
+CREATE TRIGGER notify_team_changes
+  AFTER INSERT OR UPDATE OR DELETE ON team
+  FOR EACH ROW EXECUTE FUNCTION notify_change_company();
+
+CREATE TRIGGER notify_date_changes
+  AFTER INSERT OR UPDATE OR DELETE ON date_x
+  FOR EACH ROW EXECUTE FUNCTION notify_change_date();
+
+CREATE TRIGGER notify_note_changes
+  AFTER INSERT OR UPDATE OR DELETE ON note
+  FOR EACH ROW EXECUTE FUNCTION notify_change_document();
+CREATE TRIGGER notify_doc_changes
+  AFTER INSERT OR UPDATE OR DELETE ON doc
+  FOR EACH ROW EXECUTE FUNCTION notify_change_document();
+
+CREATE TRIGGER notify_job_changes
+  AFTER INSERT OR UPDATE OR DELETE ON job
+  FOR EACH ROW EXECUTE FUNCTION notify_change_job();
+
+CREATE TRIGGER notify_project_changes
+  AFTER INSERT OR UPDATE OR DELETE ON project
+  FOR EACH ROW EXECUTE FUNCTION notify_change_project();
+
+
 -- Bump versions
 -- 54  - things we changed in 2015
 -- 55  - things changed end of 2024
