@@ -1631,6 +1631,192 @@ CREATE TRIGGER notify_project_changes
   FOR EACH ROW EXECUTE FUNCTION notify_change_project();
 
 
+-- permission functions -------------------------------------------------------
+-- Bit values match OGoPermissions.Builtin.rawValue in OGoCore/S.
+--
+-- l=1  r=2  i=4  d=8  w=16  m=32  a=64
+-- p=1024  b=2048  M=4096  P=8192  I=16384
+-- u=1048576  A=2097152
+--
+-- readPermissions  = l|r|p|b|M|P|I        = 31747
+-- writePermissions = l|r|i|d|w|p|b|M|P|I  = 31775
+
+-- Permission string to bitmask.
+-- Example: SELECT perm_to_bits('rw');  -- => 18
+CREATE OR REPLACE FUNCTION perm_to_bits(perms text)
+RETURNS int LANGUAGE sql IMMUTABLE STRICT AS $$
+  SELECT COALESCE(bit_or(
+    CASE ch
+      WHEN 'l' THEN 1      WHEN 'r' THEN 2
+      WHEN 'i' THEN 4      WHEN 'd' THEN 8
+      WHEN 'w' THEN 16     WHEN 'm' THEN 32
+      WHEN 'a' THEN 64
+      WHEN 'p' THEN 1024   WHEN 'b' THEN 2048
+      WHEN 'M' THEN 4096   WHEN 'P' THEN 8192
+      WHEN 'I' THEN 16384
+      WHEN 'u' THEN 1048576 WHEN 'A' THEN 2097152
+      ELSE 0
+    END
+  ), 0)
+  FROM regexp_split_to_table(perms, '') AS ch
+$$;
+
+-- Bitmask to permission string (for debugging).
+-- Example: SELECT bits_to_perm(31775);  -- => 'lrwidpbMPI'
+CREATE OR REPLACE FUNCTION bits_to_perm(bits int)
+RETURNS text LANGUAGE sql IMMUTABLE STRICT AS $$
+  SELECT COALESCE(string_agg(ch, ''), '')
+  FROM (
+    VALUES
+      (1,'l'),    (2,'r'),    (16,'w'),
+      (4,'i'),    (8,'d'),
+      (1024,'p'), (2048,'b'), (4096,'M'),
+      (32,'m'),   (1048576,'u'),
+      (8192,'P'), (16384,'I'),
+      (2097152,'A'), (64,'a')
+  ) AS v(b, ch)
+  WHERE bits & b <> 0
+$$;
+
+-- Transition function for the acl_permission_bits aggregate.
+-- Accumulates permission bits from object_acl rows processed in
+-- sort_key DESC order. 'allowed' entries OR their bits into the
+-- state, 'denied' entries mask them out. This lets a low-priority
+-- deny for a team be overridden by a high-priority allow for a
+-- specific person (or vice versa), because later rows in the
+-- aggregate can flip bits set by earlier ones.
+-- Not called directly -- use acl_permission_bits() or object_acl_bits_for().
+CREATE OR REPLACE FUNCTION _acl_step(
+  state int, action text, perms int
+) RETURNS int LANGUAGE sql IMMUTABLE AS $$
+  SELECT CASE
+    WHEN action IN ('allowed', '')
+      THEN state | perms
+    WHEN action IN ('denied', 'forbidden')
+      THEN state & ~perms
+    ELSE state
+  END
+$$;
+
+-- Ordered aggregate that computes the effective permission bitmask
+-- from a set of object_acl rows for a SINGLE object_id. Must be
+-- called with ORDER BY sort_key DESC so that high-priority entries
+-- are processed first and low-priority entries can override them.
+-- Do not feed rows for multiple objects -- their ACL entries would
+-- be mixed into one result. Use object_acl_bits_for() which pre-filters
+-- by object_id.
+-- Example:
+--   SELECT acl_permission_bits(action, perm_to_bits(permissions)
+--            ORDER BY sort_key DESC)
+--     FROM object_acl WHERE object_id = 12345;
+CREATE AGGREGATE acl_permission_bits(text, int) (
+  SFUNC    = _acl_step,
+  STYPE    = int,
+  INITCOND = '0'
+);
+
+-- Compute ACL permission bits for any object.
+-- Example:
+--   SELECT bits_to_perm(object_acl_bits_for(12345, ARRAY[10000, 10003]));
+CREATE OR REPLACE FUNCTION object_acl_bits_for(
+  p_object_id int, p_auth_ids int[]
+) RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT COALESCE(
+    acl_permission_bits(
+      action, perm_to_bits(permissions)
+      -- ORDER BY is part of the ordered-aggregate syntax:
+      -- it controls the row processing order for _acl_step,
+      -- not the output of perm_to_bits.
+      ORDER BY sort_key DESC
+    ),
+    0
+  )
+  FROM object_acl
+  WHERE object_id = p_object_id
+    AND auth_id   = ANY(p_auth_ids)
+$$;
+
+-- Check whether any ACL grants access to an object.
+-- Example:
+--   SELECT object_acl_has_access(12345, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION object_acl_has_access(
+  p_object_id int, p_auth_ids int[]
+) RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM object_acl
+    WHERE object_id  = p_object_id
+      AND auth_id    = ANY(p_auth_ids)
+      AND action     = 'allowed'
+      AND permissions <> ''
+  )
+$$;
+
+-- Check whether the given auth IDs have access to a company
+-- (person/enterprise/team) record.
+-- Example:
+--   SELECT p.* FROM person p
+--    WHERE company_has_access(p, ARRAY[10000, 10003])
+--      AND p.name ILIKE '%duck%';
+CREATE OR REPLACE FUNCTION company_has_access(
+  p person, p_auth_ids int[]
+) RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT
+    p.owner_id = ANY(p_auth_ids)
+    OR COALESCE(p.is_private, 0::int2) = 0::int2
+    OR p.contact_id = ANY(p_auth_ids)
+    OR p.company_id = ANY(p_auth_ids)
+    OR object_acl_has_access(p.company_id, p_auth_ids)
+$$;
+
+-- Compute the full permission bitmask for a company
+-- (person/enterprise/team) record.
+-- Returns 0 if no access, otherwise a bitmask of permission bits.
+-- Example:
+--   SELECT p.company_id, p.name,
+--          bits_to_perm(company_permission_bits(
+--            p, ARRAY[10000, 10003])) AS perms
+--     FROM person p
+--    WHERE company_has_access(p, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION company_permission_bits(
+  p person, p_auth_ids int[]
+) RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Owner: full write
+    WHEN p.owner_id = ANY(p_auth_ids) THEN 31775
+
+    -- Public read-only
+    WHEN COALESCE(p.is_private, 0::int2) = 0::int2
+     AND COALESCE(p.is_readonly, 0::int2) <> 0::int2
+      THEN 31747
+
+    -- Public read-write
+    WHEN COALESCE(p.is_private, 0::int2) = 0::int2
+      THEN 31775
+
+    -- Private: ordered ACL + contact + self
+    ELSE (
+      SELECT CASE
+        WHEN combined & 16 <> 0 THEN combined | 31775
+        WHEN combined & 2  <> 0 THEN combined | 31747
+        WHEN combined <> 0      THEN combined | 1
+        ELSE 0
+      END
+      FROM (
+        SELECT
+          object_acl_bits_for(p.company_id, p_auth_ids)
+          | CASE
+              WHEN p.contact_id = ANY(p_auth_ids)
+                OR p.company_id = ANY(p_auth_ids)
+              THEN 31747
+              ELSE 0
+            END
+          AS combined
+      ) acl
+    )
+  END
+$$;
+
+
 -- table versions -------------------------------------------------------------
 -- Bump versions
 -- 54  - things we changed in 2015
