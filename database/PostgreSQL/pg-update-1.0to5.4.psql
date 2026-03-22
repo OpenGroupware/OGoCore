@@ -814,7 +814,7 @@ CREATE OR REPLACE FUNCTION company_has_access( p person, p_auth_ids int[])
 RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT p.owner_id = ANY(p_auth_ids)
       OR COALESCE(p.is_private, 0::int2) = 0::int2
-      OR p.contact_id = ANY(p_auth_ids)
+      OR COALESCE(p.contact_id = ANY(p_auth_ids), false)
       OR p.company_id = ANY(p_auth_ids)
       OR object_acl_has_access(p.company_id, p_auth_ids)
 $$;
@@ -823,11 +823,11 @@ $$;
 -- (person/enterprise/team) record.
 -- Returns 0 if no access, otherwise a bitmask of permission bits.
 -- Example:
---   SELECT p.company_id, p.name,
---          bits_to_perm(company_permission_bits(
---            p, ARRAY[10000, 10003])) AS perms
---     FROM person p
---    WHERE company_has_access(p, ARRAY[10000, 10003]);
+--   SELECT P.company_id, P.name,
+--          bits_to_perm(company_permission_bits(P, ARRAY[8318651, 10003]))
+--          AS perms
+--     FROM person P
+--    WHERE company_has_access(P, ARRAY[8318651, 10003]) LIMIT 10;
 CREATE OR REPLACE FUNCTION company_permission_bits(p person, p_auth_ids int[]) 
 RETURNS int LANGUAGE sql STABLE AS $$
   SELECT CASE
@@ -853,7 +853,7 @@ RETURNS int LANGUAGE sql STABLE AS $$
         SELECT
           object_acl_bits_for(p.company_id, p_auth_ids)
           | CASE
-              WHEN p.contact_id = ANY(p_auth_ids)
+              WHEN COALESCE(p.contact_id = ANY(p_auth_ids), false)
                 OR p.company_id = ANY(p_auth_ids) THEN 31747
               ELSE 0
             END

@@ -1763,7 +1763,7 @@ CREATE OR REPLACE FUNCTION company_has_access(
   SELECT
     p.owner_id = ANY(p_auth_ids)
     OR COALESCE(p.is_private, 0::int2) = 0::int2
-    OR p.contact_id = ANY(p_auth_ids)
+    OR COALESCE(p.contact_id = ANY(p_auth_ids), false)
     OR p.company_id = ANY(p_auth_ids)
     OR object_acl_has_access(p.company_id, p_auth_ids)
 $$;
@@ -1805,7 +1805,7 @@ CREATE OR REPLACE FUNCTION company_permission_bits(
         SELECT
           object_acl_bits_for(p.company_id, p_auth_ids)
           | CASE
-              WHEN p.contact_id = ANY(p_auth_ids)
+              WHEN COALESCE(p.contact_id = ANY(p_auth_ids), false)
                 OR p.company_id = ANY(p_auth_ids)
               THEN 31747
               ELSE 0
