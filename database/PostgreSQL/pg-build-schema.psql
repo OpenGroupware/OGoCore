@@ -1821,6 +1821,19 @@ CREATE OR REPLACE FUNCTION company_permission_bits(
 $$;
 
 
+-- Convenience: check company access by ID (looks up the row).
+-- Example:
+--   SELECT company_id_has_access(33137, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION company_id_has_access(
+  p_company_id int, p_auth_ids int[]
+) RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM company
+    WHERE company_id = p_company_id
+      AND company_has_access(company, p_auth_ids)
+  )
+$$;
+
 -- table versions -------------------------------------------------------------
 -- Bump versions
 -- 54  - things we changed in 2015
