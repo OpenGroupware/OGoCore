@@ -291,13 +291,17 @@ CREATE TABLE project (
   CONSTRAINT        unique_project_number UNIQUE(number)
 );
 
+-- generic ACL's that work on anything.
+-- for projects one should usually use the company_assignment instead,
+-- same for events.
+-- Those are usually used for: documents/notes, companies and persons.
 CREATE TABLE object_acl (
-  object_acl_id INT NOT NULL,
-  sort_key      INT NOT NULL,
-  action        VARCHAR(10) NOT NULL,
-  object_id     INT NOT NULL,
-  auth_id       INT NOT NULL,
-  permissions   VARCHAR(50)
+  object_acl_id INT         NOT NULL, -- ID of the ACE itself
+  sort_key      INT         NOT NULL, -- usually 0, but can be used for priority
+  action        VARCHAR(10) NOT NULL, -- allowed/denied
+  object_id     INT         NOT NULL, -- the ID of the object being protected
+  auth_id       INT         NOT NULL, -- either an account or team id
+  permissions   VARCHAR(50) NOT NULL  -- rwidm like permission chars
 );
 
 CREATE TABLE project_company_assignment (

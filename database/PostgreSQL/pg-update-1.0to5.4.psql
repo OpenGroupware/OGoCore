@@ -576,6 +576,8 @@ ALTER TABLE document ADD COLUMN text_content                TEXT     NULL;
 ALTER TABLE document ADD COLUMN text_content_type           SMALLINT NULL;
 ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
 
+ALTER TABLE object_acl ALTER COLUMN permissions SET NOT NULL;
+ALTER TABLE object_acl ALTER COLUMN auth_id     SET NOT NULL;
 
 -- Change Notifications
 
