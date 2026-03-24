@@ -1826,6 +1826,7 @@ $$;
 -- 54  - things we changed in 2015
 -- 55  - things changed end of 2024
 -- 56+ - things changed in 2025
+-- 60  - things changed in 2026
 
 INSERT INTO table_version (table_name, table_version)
   VALUES ('_model', 55);
@@ -1935,3 +1936,5 @@ INSERT INTO table_version (table_name, table_version)
   VALUES ('obj_property', 42);
 INSERT INTO table_version (table_name, table_version)
   VALUES ('obj_link', 42);
+INSERT INTO table_version (table_name, table_version)
+  VALUES ('object_acl', 60);

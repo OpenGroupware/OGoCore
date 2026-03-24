@@ -870,6 +870,7 @@ $$;
 -- 54  - things we changed in 2015
 -- 55  - things changed end of 2024
 -- 56+ - things changed in 2025
+-- 60  - things changed in 2026
 UPDATE table_version SET table_version = 55 WHERE table_name = '_model';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'address';
 UPDATE table_version SET table_version = 57 WHERE table_name = 'company';
@@ -895,3 +896,4 @@ UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_version';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_editing';
+INSERT INTO table_version (table_name, table_version) VALUES ('object_acl', 60);
