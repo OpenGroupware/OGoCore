@@ -1834,6 +1834,113 @@ CREATE OR REPLACE FUNCTION company_id_has_access(
   )
 $$;
 
+-- Check whether the given auth IDs have access to a project.
+-- Company projects (is_fake = 1) derive access from the parent
+-- company via project_company_assignment.
+-- Example:
+--   SELECT p.* FROM project p
+--    WHERE project_has_access(p, ARRAY[10000, 10003])
+--      AND p.name ILIKE '%acme%';
+CREATE OR REPLACE FUNCTION project_has_access(
+  p project, p_auth_ids int[]
+) RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Company doc stores: delegate to parent company.
+    WHEN COALESCE(p.is_fake, 0::int2) = 1::int2 THEN
+      EXISTS (
+        SELECT 1 FROM project_company_assignment pca
+        WHERE pca.project_id = p.project_id
+          AND company_id_has_access(pca.company_id, p_auth_ids)
+      )
+    ELSE
+      -- Owner has full access.
+      p.owner_id = ANY(p_auth_ids)
+      -- Team gets implicit read access.
+      OR COALESCE(p.team_id = ANY(p_auth_ids), false)
+      -- Membership in project_company_assignment.
+      OR EXISTS (
+        SELECT 1 FROM project_company_assignment pca
+        WHERE pca.project_id = p.project_id
+          AND pca.company_id = ANY(p_auth_ids)
+          AND pca.has_access  = 1
+          AND pca.access_right IS NOT NULL
+          AND pca.access_right <> ''
+      )
+  END
+$$;
+
+-- Compute the full permission bitmask for a project.
+-- Returns 0 if no access, otherwise a bitmask.
+-- Company projects (is_fake = 1) derive permissions from
+-- the parent company -- full access (62) if the company is
+-- accessible, 0 otherwise.
+--
+-- Project permission bits:
+--   m=32, r=2, w=16, i=4, d=8  =>  "mrwid" = 62
+--
+-- Logic:
+--   1. is_fake => delegate to parent company (62 if accessible)
+--   2. owner => 62 (mrwid)
+--   3. membership ACL (union of access_right) + team (r=2)
+--   4. if combined has m (32), expand to 62 (mrwid)
+--
+-- Example:
+--   SELECT p.project_id, p.name,
+--          bits_to_perm(project_permission_bits(
+--            p, ARRAY[10000, 10003])) AS perms
+--     FROM project p
+--    WHERE project_has_access(p, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION project_permission_bits(
+  p project, p_auth_ids int[]
+) RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Company doc stores: full access if parent company
+    -- is accessible.
+    WHEN COALESCE(p.is_fake, 0::int2) = 1::int2 THEN
+      CASE WHEN EXISTS (
+        SELECT 1 FROM project_company_assignment pca
+        WHERE pca.project_id = p.project_id
+          AND company_id_has_access(
+                pca.company_id, p_auth_ids)
+      ) THEN 62 ELSE 0 END
+
+    -- Owner: full manager permissions (mrwid = 62).
+    WHEN p.owner_id = ANY(p_auth_ids) THEN 62
+
+    -- Membership ACL + team check.
+    ELSE (
+      SELECT CASE
+        -- Manager bit set => expand to full mrwid (62).
+        WHEN combined & 32 <> 0 THEN 62
+        ELSE combined
+      END
+      FROM (
+        SELECT
+          -- Union all matching membership permissions.
+          COALESCE(
+            (SELECT bit_or(perm_to_bits(pca.access_right))
+               FROM project_company_assignment pca
+              WHERE pca.project_id = p.project_id
+                AND pca.company_id = ANY(p_auth_ids)
+                AND pca.has_access  = 1
+                AND pca.access_right IS NOT NULL
+                AND pca.access_right <> ''),
+            0
+          )
+          -- Union team read permission (r = 2).
+          | CASE
+              WHEN COALESCE(
+                p.team_id = ANY(p_auth_ids), false)
+              THEN 2
+              ELSE 0
+            END
+          AS combined
+      ) membership
+    )
+  END
+$$;
+
+
 -- table versions -------------------------------------------------------------
 -- Bump versions
 -- 54  - things we changed in 2015

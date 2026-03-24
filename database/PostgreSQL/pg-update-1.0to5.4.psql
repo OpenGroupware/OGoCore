@@ -879,6 +879,88 @@ RETURNS boolean LANGUAGE sql STABLE AS $$
   )
 $$;
 
+-- Check whether the given auth IDs have access to a project.
+-- Company projects (is_fake = 1) derive access from the parent
+-- company via project_company_assignment.
+-- Example:
+--   SELECT p.* FROM project p
+--    WHERE project_has_access(p, ARRAY[10000, 10003])
+--      AND p.name ILIKE '%acme%';
+CREATE OR REPLACE FUNCTION project_has_access(p project, p_auth_ids int[])
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    WHEN COALESCE(p.is_fake, 0::int2) = 1::int2 THEN -- company projects
+      EXISTS (
+        SELECT 1 FROM project_company_assignment pca
+         WHERE pca.project_id = p.project_id
+           AND company_id_has_access(pca.company_id, p_auth_ids)
+      )
+    ELSE -- regular projects
+      p.owner_id = ANY(p_auth_ids) -- we are the owner
+      OR COALESCE(p.team_id = ANY(p_auth_ids), false) -- or the access team
+      OR EXISTS (
+        SELECT 1 FROM project_company_assignment pca -- or are assigned
+         WHERE pca.project_id  = p.project_id
+           AND pca.company_id  = ANY(p_auth_ids)
+           AND pca.has_access  = 1                   -- with access flag
+           AND pca.access_right IS NOT NULL
+           AND pca.access_right <> ''
+      )
+  END
+$$;
+
+-- Compute the full permission bitmask for a project.
+-- Returns 0 if no access, otherwise a bitmask.
+-- Company projects (is_fake = 1) derive permissions from
+-- the parent company -- full access (62) if accessible.
+--
+-- Project permission bits:
+--   m=32, r=2, w=16, i=4, d=8  =>  "mrwid" = 62
+--
+-- Example:
+--   SELECT project_id AS id, name AS name,
+--          bits_to_perm(project_permission_bits(project, ARRAY[10000, 10003])) 
+--          AS permissions
+--     FROM project WHERE project_has_access(project, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION project_permission_bits(p project, p_auth_ids int[]) 
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    WHEN COALESCE(p.is_fake, 0::int2) = 1::int2 THEN -- company project
+      CASE WHEN EXISTS (
+        SELECT 1 FROM project_company_assignment pca
+        WHERE pca.project_id = p.project_id
+          AND company_id_has_access(pca.company_id, p_auth_ids)
+      ) THEN 62 ELSE 0 END
+    WHEN p.owner_id = ANY(p_auth_ids) THEN 62 -- full
+    ELSE (
+      SELECT CASE
+        WHEN combined & 32 <> 0 THEN 62 -- full
+        ELSE combined
+      END
+      FROM (
+        SELECT
+          COALESCE(
+            (SELECT bit_or(perm_to_bits(pca.access_right))
+               FROM project_company_assignment pca
+              WHERE pca.project_id. = p.project_id
+                AND pca.company_id  = ANY(p_auth_ids)
+                AND pca.has_access  = 1
+                AND pca.access_right IS NOT NULL
+                AND pca.access_right <> ''),
+            0
+          )
+          | CASE
+              WHEN COALESCE(p.team_id = ANY(p_auth_ids), false)
+              THEN 2 -- read
+              ELSE 0 -- none
+            END
+          AS combined
+      ) membership
+    )
+  END
+$$;
+
+
 -- Bump versions
 -- 54  - things we changed in 2015
 -- 55  - things changed end of 2024
