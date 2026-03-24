@@ -1762,7 +1762,7 @@ $$;
 --    WHERE company_has_access(p, ARRAY[10000, 10003])
 --      AND p.name ILIKE '%duck%';
 CREATE OR REPLACE FUNCTION company_has_access(
-  p person, p_auth_ids int[]
+  p company, p_auth_ids int[]
 ) RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT
     p.owner_id = ANY(p_auth_ids)
@@ -1782,7 +1782,7 @@ $$;
 --     FROM person p
 --    WHERE company_has_access(p, ARRAY[10000, 10003]);
 CREATE OR REPLACE FUNCTION company_permission_bits(
-  p person, p_auth_ids int[]
+  p company, p_auth_ids int[]
 ) RETURNS int LANGUAGE sql STABLE AS $$
   SELECT CASE
     -- Owner: full write
