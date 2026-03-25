@@ -961,6 +961,63 @@ RETURNS int LANGUAGE sql STABLE AS $$
 $$;
 
 
+-- Check whether the given auth IDs have READ access to an event.
+-- Freebusy/list access is always granted (date_permission_bits
+-- returns at least 1); this checks for owner/team/write/attendee.
+-- Example:
+--   SELECT e.* FROM date_x e
+--    WHERE date_has_read_access(e, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION date_has_read_access(e date_x, p_auth_ids int[]) 
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT e.owner_id = ANY(p_auth_ids)
+      OR COALESCE(e.access_team_id = ANY(p_auth_ids), false)
+      OR COALESCE(e.write_access_ids && p_auth_ids, false)
+      OR EXISTS (SELECT 1 FROM date_company_assignment dca
+                  WHERE dca.date_id = e.date_id 
+                    AND dca.company_id = ANY(p_auth_ids))
+$$;
+
+-- Compute the full permission bitmask for an event.
+-- Every user gets at least freebusy/list (1). Additional:
+--   owner => lrudw (1048603)
+--   access_team => +r
+--   write_access_ids => +lrdw (27)
+--   attendee => +lru (1048579, changeMemberStatus)
+-- Compound: w implies lrdw, u implies lru, r implies l.
+-- Example:
+--   SELECT date_id, title,
+--          bits_to_perm(date_permission_bits(date_x, ARRAY[10000, 10003])) AS P
+--     FROM date_x
+--    WHERE date_has_read_access(date_x, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION date_permission_bits(e date_x, p_auth_ids int[])
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    WHEN e.owner_id = ANY(p_auth_ids) THEN 1048603
+    ELSE (
+      SELECT CASE
+        WHEN combined &      16 <> 0 THEN combined | 27
+        WHEN combined & 1048576 <> 0 THEN combined | 1048579
+        WHEN combined &       2 <> 0 THEN combined | 1
+        ELSE combined
+      END
+      FROM (
+        SELECT
+          1
+          | CASE WHEN COALESCE(e.access_team_id = ANY(p_auth_ids), false)
+                 THEN 2 ELSE 0 END
+          | CASE WHEN COALESCE(e.write_access_ids && p_auth_ids, false)
+                 THEN 27 ELSE 0 END
+          | CASE WHEN EXISTS (SELECT 1 FROM date_company_assignment DCA
+                               WHERE DCA.date_id    = e.date_id
+                                 AND DCA.company_id = ANY(p_auth_ids))
+                 THEN 1048579 ELSE 0 END
+          AS combined
+      ) parts
+    )
+  END
+$$;
+
+
 -- Bump versions
 -- 54  - things we changed in 2015
 -- 55  - things changed end of 2024

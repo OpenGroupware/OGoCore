@@ -1941,6 +1941,96 @@ CREATE OR REPLACE FUNCTION project_permission_bits(
 $$;
 
 
+-- Check whether the given auth IDs have READ access to an event.
+-- Note: every authenticated user always has freebusy/list access
+-- to all events (date_permission_bits returns at least 1).
+-- This function checks for more than that: owner, access_team,
+-- write_access_ids, or attendee. Use it as a WHERE filter when
+-- you want events the user can actually read, not just see as
+-- freebusy blocks.
+-- Example:
+--   SELECT e.* FROM date_x e
+--    WHERE date_has_read_access(e, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION date_has_read_access(
+  e date_x, p_auth_ids int[]
+) RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT
+    e.owner_id = ANY(p_auth_ids)
+    OR COALESCE(e.access_team_id = ANY(p_auth_ids), false)
+    OR COALESCE(e.write_access_ids && p_auth_ids, false)
+    OR EXISTS (
+      SELECT 1 FROM date_company_assignment dca
+      WHERE dca.date_id    = e.date_id
+        AND dca.company_id = ANY(p_auth_ids)
+    )
+$$;
+
+-- Compute the full permission bitmask for an event.
+-- Every user gets at least freebusy/list (1). Additional:
+--   owner => lrudw (1048603)
+--   access_team => +r
+--   write_access_ids => +lrdw (27)
+--   attendee => +lru (1048579, changeMemberStatus)
+-- Compound: w implies lrdw, u implies lru, r implies l.
+--
+-- Example:
+--   SELECT e.date_id, e.title,
+--          bits_to_perm(date_permission_bits(
+--            e, ARRAY[10000, 10003])) AS perms
+--     FROM date_x e
+--    WHERE date_has_read_access(e, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION date_permission_bits(
+  e date_x, p_auth_ids int[]
+) RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Owner: full access (lrudw = 1048603).
+    WHEN e.owner_id = ANY(p_auth_ids) THEN 1048603
+
+    ELSE (
+      SELECT CASE
+        -- w implies lrdw (27)
+        WHEN combined & 16 <> 0 THEN combined | 27
+        -- u implies lru (1048579)
+        WHEN combined & 1048576 <> 0 THEN combined | 1048579
+        -- r implies l (1)
+        WHEN combined & 2 <> 0 THEN combined | 1
+        ELSE combined
+      END
+      FROM (
+        SELECT
+          -- Base: everyone gets freebusy/list (1).
+          1
+          -- access_team => read (2).
+          | CASE
+              WHEN COALESCE(
+                e.access_team_id = ANY(p_auth_ids), false)
+              THEN 2
+              ELSE 0
+            END
+          -- write_access_ids => lrdw (27).
+          | CASE
+              WHEN COALESCE(
+                e.write_access_ids && p_auth_ids, false)
+              THEN 27
+              ELSE 0
+            END
+          -- attendee => lru / changeMemberStatus (1048579).
+          | CASE
+              WHEN EXISTS (
+                SELECT 1 FROM date_company_assignment dca
+                WHERE dca.date_id    = e.date_id
+                  AND dca.company_id = ANY(p_auth_ids)
+              )
+              THEN 1048579
+              ELSE 0
+            END
+          AS combined
+      ) parts
+    )
+  END
+$$;
+
+
 -- table versions -------------------------------------------------------------
 -- Bump versions
 -- 54  - things we changed in 2015
