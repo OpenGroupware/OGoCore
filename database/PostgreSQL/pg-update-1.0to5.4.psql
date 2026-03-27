@@ -1017,6 +1017,55 @@ RETURNS int LANGUAGE sql STABLE AS $$
   END
 $$;
 
+-- Check whether the given auth IDs have read access to a task.
+-- Creator, owner, executant, or project member.
+-- Example:
+--   SELECT * FROM job WHERE job_has_read_access(job, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION job_has_read_access(t job, p_auth_ids int[]) 
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT t.creator_id = ANY(p_auth_ids) OR t.owner_id = ANY(p_auth_ids)
+      OR t.executant_id = ANY(p_auth_ids) OR 
+      (t.project_id IS NOT NULL AND EXISTS (
+       SELECT 1 FROM project p WHERE p.project_id = t.project_id
+          AND project_has_access(p, p_auth_ids)
+    ))
+$$;
+
+-- Compute the full permission bitmask for a task.
+-- Creator/owner: lrwadA = 2097243
+-- Executant:     lrwaA  = 2097235 (no delete)
+-- Project member (if project accessible): lr = 3
+-- No access: 0
+--
+-- The executant can be a team (is_team_job).
+--
+-- Example:
+--   SELECT job_id, name,
+--          bits_to_perm(job_permission_bits(job, ARRAY[10000, 10003])) AS perms
+--     FROM job
+--    WHERE job_has_read_access(job, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION job_permission_bits(t job, p_auth_ids int[]) 
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Creator: full access (lrwadA = 2097243).
+    WHEN t.creator_id = ANY(p_auth_ids) THEN 2097243
+    -- Owner: full access (lrwadA = 2097243).
+    WHEN t.owner_id = ANY(p_auth_ids) THEN 2097243
+    -- Executant: lrwaA = 2097235 (no delete).
+    WHEN t.executant_id = ANY(p_auth_ids)
+    THEN 2097235
+
+    -- Project member: lr = 3.
+    WHEN t.project_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM project p WHERE p.project_id = t.project_id
+         AND project_has_access(p, p_auth_ids)
+    ) THEN 3
+
+    -- No access.
+    ELSE 0
+  END
+$$;
+
 
 -- Bump versions
 -- 54  - things we changed in 2015
