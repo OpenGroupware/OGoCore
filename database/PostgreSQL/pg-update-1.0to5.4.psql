@@ -1066,6 +1066,352 @@ RETURNS int LANGUAGE sql STABLE AS $$
   END
 $$;
 
+-- ===== Set-returning functions for bulk filtering =====
+-- Return (id, permission_bits) for all accessible rows.
+-- These avoid per-row function calls by decomposing
+-- permission checks into UNION of index-scannable queries.
+-- Use bit_or() to merge when a row appears via multiple
+-- access paths.
+--
+-- Example:
+--   SELECT p.*, ap.perms
+--     FROM project p
+--     JOIN accessible_projects(ARRAY[10000,10003]) ap
+--       ON ap.id = p.project_id;
+
+-- Project permissions: m=32 r=2 w=16 i=4 d=8, mrwid=62
+CREATE OR REPLACE FUNCTION accessible_projects(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  SELECT project_id, bit_or(p) FROM (
+    -- Owner: mrwid (62).
+    SELECT project_id, 62 AS p FROM project WHERE owner_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Team: r (2).
+    SELECT project_id, 2 FROM project WHERE team_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Membership: per access_right, expand m=>62.
+    SELECT project_id,
+           CASE WHEN perm_to_bits(access_right) & 32 <> 0 THEN 62
+                ELSE perm_to_bits(access_right)
+           END
+      FROM project_company_assignment
+     WHERE company_id = ANY(p_auth_ids) AND has_access = 1
+       AND access_right IS NOT NULL AND access_right <> ''
+    UNION ALL
+    -- Company doc-stores (is_fake=1): mrwid (62).
+    SELECT p.project_id, 62 FROM project p
+     WHERE COALESCE(p.is_fake, 0::int2) = 1::int2
+       AND EXISTS (
+         SELECT 1 FROM project_company_assignment pca
+         WHERE pca.project_id = p.project_id
+           AND company_id_has_access(pca.company_id, p_auth_ids))
+  ) sub GROUP BY project_id
+$$;
+
+-- Event permissions: l=1 r=2 w=16 d=8 u=1048576
+--   owner: lrudw=1048603
+--   access_team: lr=3
+--   write_access_list: lrdw=27
+--   attendee: lru=1048579
+CREATE OR REPLACE FUNCTION accessible_events(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  SELECT date_id, bit_or(p) FROM (
+    -- Owner: lrudw (1048603).
+    SELECT date_id, 1048603 AS p FROM date_x WHERE owner_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Access team: lr (3).
+    SELECT date_id, 3 FROM date_x WHERE access_team_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Write access list: lrdw (27).
+    SELECT date_id, 27 FROM date_x WHERE write_access_ids && p_auth_ids
+    UNION ALL
+    -- Attendee: lru (1048579).
+    SELECT date_id, 1048579 FROM date_company_assignment
+     WHERE company_id = ANY(p_auth_ids)
+  ) sub GROUP BY date_id
+$$;
+
+-- Task permissions: l=1 r=2 w=16 a=64 d=8 A=2097152
+--   creator/owner: lrwadA=2097243
+--   executant: lrwaA=2097235
+--   project member: lr=3
+CREATE OR REPLACE FUNCTION accessible_tasks(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  SELECT job_id, bit_or(p) FROM (
+    -- Creator: lrwadA (2097243).
+    SELECT job_id, 2097243 AS p FROM job WHERE creator_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Owner: lrwadA (2097243).
+    SELECT job_id, 2097243 FROM job WHERE owner_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Executant: lrwaA (2097235).
+    SELECT job_id, 2097235 FROM job WHERE executant_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Project member: lr (3).
+    SELECT j.job_id, 3 FROM job j
+     WHERE j.project_id IN 
+       (SELECT ap.id FROM accessible_projects(p_auth_ids) ap)
+  ) sub GROUP BY job_id
+$$;
+
+-- Company permissions:
+--   write (owner/public-rw): 31775
+--   read  (public-ro/contact/self): 31747
+-- Private contacts need ACL; resolved via
+-- company_permission_bits for those.
+CREATE OR REPLACE FUNCTION accessible_companies(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  SELECT company_id, bit_or(p) FROM (
+    -- Owner: full write (31775).
+    SELECT company_id, 31775 AS p FROM company WHERE owner_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Public read-write (not private, not readonly).
+    SELECT company_id, 31775 FROM company
+     WHERE COALESCE(is_private,  0::int2) = 0::int2
+       AND COALESCE(is_readonly, 0::int2) = 0::int2
+    UNION ALL
+    -- Public read-only.
+    SELECT company_id, 31747 FROM company
+     WHERE COALESCE(is_private,  0::int2) =  0::int2
+       AND COALESCE(is_readonly, 0::int2) <> 0::int2
+    UNION ALL
+    -- Primary contact: read (31747).
+    SELECT company_id, 31747 FROM company WHERE contact_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Self: read (31747).
+    SELECT unnest(p_auth_ids), 31747
+    UNION ALL
+    -- ACL: compute per entry.
+    SELECT object_id, object_acl_bits_for(object_id, p_auth_ids) FROM (
+      SELECT DISTINCT object_id FROM object_acl
+       WHERE auth_id = ANY(p_auth_ids)
+         AND action  = 'allowed' AND permissions <> ''
+    ) acl_objects
+  ) sub GROUP BY company_id
+$$;
+
+-- Document/note permissions: r=2 w=16 d=8, rwd=26
+-- Owner gets rwd (26); project-attached docs are
+-- intersected with project perms; contact/event-
+-- attached get r (2).
+-- Uses accessible_projects / accessible_events for
+-- the context lookups.
+CREATE OR REPLACE FUNCTION accessible_documents(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  WITH RECURSIVE
+    ap AS (SELECT * FROM accessible_projects(p_auth_ids)),
+    ae AS (SELECT * FROM accessible_events(p_auth_ids)),
+    at AS (SELECT * FROM accessible_tasks(p_auth_ids)),
+    -- Roots: docs accessible by direct context.
+    roots(document_id, base_perms) AS (
+      -- Owner: rwd (26).
+      SELECT document_id, 26 FROM document
+       WHERE current_owner_id = ANY(p_auth_ids)
+      UNION ALL
+      -- Project-attached (no ACL): rwd intersected
+      -- with project perms.
+      SELECT d.document_id,
+             CASE
+               WHEN  26 & ap.perms  & 8 <> 0 OR (8 <> 0 AND ap.perms & 16 <> 0)
+               THEN (26 & ap.perms) | 8
+               ELSE  26 & ap.perms
+             END
+        FROM document d
+        JOIN ap ON ap.id = d.project_id
+       WHERE d.current_owner_id != ALL(p_auth_ids)
+      UNION ALL
+      -- Contact-attached (no project): r (2).
+      SELECT d.document_id, 2 FROM document d
+       WHERE d.project_id IS NULL
+         AND d.company_id IN 
+             (SELECT ac.id FROM accessible_companies(p_auth_ids) ac)
+         AND d.current_owner_id != ALL(p_auth_ids)
+      UNION ALL
+      -- Event-attached (no project): r (2).
+      SELECT d.document_id, 2 FROM document d JOIN ae ON ae.id = d.date_id
+       WHERE d.project_id IS NULL AND d.current_owner_id != ALL(p_auth_ids)
+      UNION ALL
+      -- Task-attached (no project): r (2).
+      SELECT d.document_id, 2 FROM document d JOIN at ON at.id = d.job_id
+       WHERE d.project_id IS NULL AND d.current_owner_id != ALL(p_auth_ids)
+    ),
+    -- Walk down parent chain.
+    reachable(document_id, base_perms) AS (
+      SELECT document_id, base_perms FROM roots
+      UNION ALL
+      SELECT d.document_id, 2 FROM document d
+        JOIN reachable r ON d.parent_document_id = r.document_id
+    )
+  SELECT document_id, bit_or(base_perms)
+    FROM reachable
+   GROUP BY document_id
+$$;
+
+
+-- Check whether the given auth IDs have read access to a
+-- document or note. Checks owner, project, contact, event
+-- and parent hierarchy.
+-- Works on `document` (basetable), `doc`, and `note` tables
+-- (PostgreSQL table inheritance).
+-- Example:
+--   SELECT * FROM document
+--    WHERE document_has_read_access(document, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION document_has_read_access(d document,p_auth_ids int[]) 
+  RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT
+    -- Project: ultimate blocker, even for the owner.
+    (d.project_id IS NULL OR EXISTS (
+      SELECT 1 FROM project p
+      WHERE p.project_id = d.project_id AND project_has_access(p, p_auth_ids)
+    ))
+    AND (
+      -- Owner (no project, already passed above).
+      d.current_owner_id = ANY(p_auth_ids)
+      -- Or must pass ALL context checks:
+      OR (
+        -- If project set, project access is sufficient.
+        d.project_id IS NOT NULL
+        -- Contact: must have access if set.
+        OR (d.company_id IS NULL
+            OR company_id_has_access(d.company_id, p_auth_ids))
+        AND (d.date_id IS NULL OR EXISTS (
+          SELECT 1 FROM date_x e
+          WHERE e.date_id = d.date_id AND date_has_read_access(e, p_auth_ids)
+        ))
+        AND (d.job_id IS NULL OR EXISTS (
+          SELECT 1 FROM job t WHERE t.job_id = d.job_id
+             AND task_has_read_access(t, p_auth_ids)
+        ))
+        -- At least one context must exist (or parent).
+        AND (d.company_id IS NOT NULL OR d.date_id IS NOT NULL
+             OR d.job_id IS NOT NULL
+             OR (d.parent_document_id IS NOT NULL
+                 AND EXISTS (
+                   SELECT 1 FROM document p
+                   WHERE p.document_id = d.parent_document_id
+                     AND document_has_read_access(p, p_auth_ids)
+                 ))
+        )
+      )
+    )
+$$;
+
+-- Compute the full permission bitmask for a document or note.
+--
+-- Permission bits: l=1, r=2, i=4, d=8, w=16
+--   owner (no ACL): rwd = 26
+--   public w/ project (no ACL): rwd = 26
+--   public w/o project (contact/event): r = 2
+--   unattached (no context): 0
+--
+-- Rules:
+--   1. If project attached and no project access => 0 (even owner)
+--   2. If contact attached (no project) and no contact access => 0
+--   3. If event attached (no project) and no event access => 0
+--   4. If parent exists and parent not readable => 0
+--   5. Owner => rwd (26) (project already checked above)
+--   6. Parent has delete => add d (8)
+--   7. Intersect with project permissions (d maps to w)
+--
+-- Example:
+--   SELECT d.document_id, d.title,
+--          bits_to_perm(document_permission_bits(
+--            d, ARRAY[10000, 10003])) AS perms
+--     FROM document d
+--    WHERE document_has_read_access(
+--            d, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION document_permission_bitsd document, p_auth_ids int[])
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Blocker: project attached but no access (even owner).
+    WHEN d.project_id IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM project p
+      WHERE p.project_id = d.project_id AND project_has_access(p, p_auth_ids)
+    ) THEN 0
+
+    -- Blocker: contact attached (no project), no access.
+    WHEN d.project_id IS NULL AND d.company_id IS NOT NULL
+     AND NOT company_id_has_access(d.company_id, p_auth_ids)
+    THEN 0
+
+    -- Blocker: event attached (no project), no access.
+    WHEN d.project_id IS NULL AND d.date_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM date_x e
+       WHERE e.date_id = d.date_id AND date_has_read_access(e, p_auth_ids)
+     ) THEN 0
+
+    -- Blocker: parent not readable.
+    WHEN d.parent_document_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM document p
+       WHERE p.document_id = d.parent_document_id
+         AND document_has_read_access(p, p_auth_ids)
+     ) THEN 0
+
+    ELSE (
+      SELECT
+        CASE
+          -- Intersect with project permissions.
+          WHEN d.project_id IS NOT NULL THEN (
+            SELECT
+              (base & proj_bits)
+              -- d maps to project w: if base had d
+              -- and project has w, restore d.
+              | CASE WHEN base & 8 <> 0 AND proj_bits & 16 <> 0 THEN 8 ELSE 0
+                END
+            FROM (
+              SELECT project_permission_bits(p, p_auth_ids) AS proj_bits
+                FROM project p
+               WHERE p.project_id = d.project_id
+            ) pp
+          )
+          ELSE base
+        END
+      FROM (
+        SELECT
+          (CASE
+            -- Owner: rwd (26).
+            WHEN d.current_owner_id = ANY(p_auth_ids) THEN 26
+
+            -- Has ACL: use ACL permissions.
+            WHEN EXISTS (
+              SELECT 1 FROM object_acl WHERE object_id = d.document_id
+            ) THEN object_acl_bits_for(d.document_id, p_auth_ids)
+
+            -- No ACL + project: public rwd (26).
+            WHEN d.project_id IS NOT NULL THEN 26
+
+            -- No ACL + contact/event/task: r (2).
+            WHEN d.company_id IS NOT NULL OR d.date_id IS NOT NULL
+              OR d.job_id IS NOT NULL THEN 2
+
+            -- No ACL + readable parent: r (2).
+            WHEN d.parent_document_id IS NOT NULL THEN 2
+
+            -- Unattached, not owner: no access.
+            ELSE 0
+          END)
+          -- Add delete from parent folder.
+          | CASE
+              WHEN d.parent_document_id IS NOT NULL
+               AND EXISTS (
+                 SELECT 1 FROM document p
+                  WHERE p.document_id = d.parent_document_id
+                    AND document_permission_bits(p, p_auth_ids) & 8 <> 0
+               )
+              THEN 8 ELSE 0
+            END
+          AS base
+      ) b
+    )
+  END
+$$;
 
 -- Bump versions
 -- 54  - things we changed in 2015
