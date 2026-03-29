@@ -1325,7 +1325,7 @@ $$;
 --     FROM document d
 --    WHERE document_has_read_access(
 --            d, ARRAY[10000, 10003]);
-CREATE OR REPLACE FUNCTION document_permission_bitsd document, p_auth_ids int[])
+CREATE OR REPLACE FUNCTION document_permission_bits(d document, p_auth_ids int[])
 RETURNS int LANGUAGE sql STABLE AS $$
   SELECT CASE
     -- Blocker: project attached but no access (even owner).
