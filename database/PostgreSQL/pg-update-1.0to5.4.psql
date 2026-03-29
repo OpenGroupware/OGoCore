@@ -942,7 +942,7 @@ RETURNS int LANGUAGE sql STABLE AS $$
           COALESCE(
             (SELECT bit_or(perm_to_bits(pca.access_right))
                FROM project_company_assignment pca
-              WHERE pca.project_id. = p.project_id
+              WHERE pca.project_id  = p.project_id
                 AND pca.company_id  = ANY(p_auth_ids)
                 AND pca.has_access  = 1
                 AND pca.access_right IS NOT NULL
