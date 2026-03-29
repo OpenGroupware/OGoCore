@@ -1285,7 +1285,7 @@ CREATE OR REPLACE FUNCTION document_has_read_access(d document,p_auth_ids int[])
         ))
         AND (d.job_id IS NULL OR EXISTS (
           SELECT 1 FROM job t WHERE t.job_id = d.job_id
-             AND task_has_read_access(t, p_auth_ids)
+             AND job_has_read_access(t, p_auth_ids)
         ))
         -- At least one context must exist (or parent).
         AND (d.company_id IS NOT NULL OR d.date_id IS NOT NULL
@@ -1494,7 +1494,7 @@ CREATE OR REPLACE FUNCTION recent_accessible_documents(
      -- Task accessible (no project, no event).
      OR (fr.r_pid IS NULL AND fr.r_did IS NULL AND fr.r_jid IS NOT NULL
          AND EXISTS (SELECT 1 FROM job j WHERE j.job_id = fr.r_jid
-                              AND task_has_read_access(j, p_auth_ids)))
+                              AND job_has_read_access(j, p_auth_ids)))
    ORDER BY fr.lastmodified_date DESC NULLS LAST LIMIT p_limit
 $$;
 
