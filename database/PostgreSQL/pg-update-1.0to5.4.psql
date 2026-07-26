@@ -1419,6 +1419,11 @@ $$;
 -- own context (project/contact/event/task), and filters
 -- by permissions using the per-row functions.
 --
+-- Skips structure rather than content: folders, object
+-- links and project index documents. Creating a project
+-- auto-creates a `Root` folder plus an `index` document,
+-- neither is something a user changed.
+--
 -- Example:
 --   SELECT * FROM note WHERE document_id IN (
 --      SELECT id FROM recent_accessible_documents(ARRAY[10000, 10003]));
@@ -1436,8 +1441,9 @@ CREATE OR REPLACE FUNCTION recent_accessible_documents(
            date_id, job_id, current_owner_id, lastmodified_date
       FROM document
      WHERE COALESCE(is_folder, 0) = 0 AND COALESCE(is_object_link, 0) = 0
+       AND COALESCE(is_index_doc, 0) = 0
        AND db_status <> 'archived'
-       AND (p_exclude_owners = '{}' 
+       AND (p_exclude_owners = '{}'
             OR current_owner_id != ALL(p_exclude_owners))
      ORDER BY lastmodified_date DESC NULLS LAST LIMIT p_scan_limit
   ),
