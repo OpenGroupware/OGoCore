@@ -135,7 +135,11 @@ CREATE TABLE company_value (
   start_date         TIMESTAMP WITH TIME ZONE,
   end_date           TIMESTAMP WITH TIME ZONE,
   
-  CONSTRAINT pk_company_value PRIMARY KEY (company_value_id)
+  CONSTRAINT pk_company_value PRIMARY KEY (company_value_id),
+  -- email attributes are always of type 3
+  CONSTRAINT email_type
+    CHECK (NOT (attribute LIKE 'email%')
+           OR (attribute LIKE 'email%' AND type = 3))
 );
 
 CREATE TABLE company_category (
@@ -441,7 +445,8 @@ CREATE TABLE address (
   title              TEXT,
   structured_version INT, -- the `object_version` the structured loc relates to
   
-  CONSTRAINT     pk_address PRIMARY KEY (address_id)
+  CONSTRAINT     pk_address PRIMARY KEY (address_id),
+  CONSTRAINT     company_unique_adrtype UNIQUE (company_id, type)
 );
 
 CREATE TABLE telephone (
@@ -454,7 +459,8 @@ CREATE TABLE telephone (
   info           VARCHAR(255),
   url            TEXT,
   db_status      VARCHAR(50),
-  CONSTRAINT     pk_telephone PRIMARY KEY (telephone_id)
+  CONSTRAINT     pk_telephone PRIMARY KEY (telephone_id),
+  CONSTRAINT     company_unique_phonetype UNIQUE (company_id, type)
 );
 
 CREATE TABLE job (
