@@ -1535,3 +1535,18 @@ UPDATE table_version SET table_version = 55
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_editing';
 INSERT INTO table_version (table_name, table_version) VALUES ('object_acl', 60);
+
+-- In the build schema since 2026-10. At the end, after every column
+-- they index exists. IF NOT EXISTS: some databases got them by hand.
+CREATE INDEX IF NOT EXISTS date_apt_type_start_idx
+  ON date_x (apt_type, start_date);
+CREATE INDEX IF NOT EXISTS date_apt_type_end_idx
+  ON date_x (apt_type, end_date);
+-- For recent_accessible_documents(), which walks the newest documents.
+CREATE INDEX IF NOT EXISTS idx_document_recent
+  ON document (lastmodified_date DESC NULLS LAST)
+  WHERE db_status <> 'archived';
+CREATE INDEX IF NOT EXISTS idx_document_recent_notes
+  ON document (lastmodified_date DESC NULLS LAST)
+  WHERE is_note = 1 AND db_status <> 'archived';
+CREATE INDEX IF NOT EXISTS is_new_idx ON job(is_new);

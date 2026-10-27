@@ -1369,6 +1369,8 @@ CREATE INDEX date_resources_gin      ON date_x USING GIN (resource_names_array);
 CREATE INDEX apt_parent_idx                  ON date_x (parent_date_id);
 CREATE INDEX apt_owner_idx                   ON date_x (owner_id);
 CREATE INDEX apt_team_idx                    ON date_x (access_team_id);
+CREATE INDEX date_apt_type_start_idx         ON date_x (apt_type, start_date);
+CREATE INDEX date_apt_type_end_idx           ON date_x (apt_type, end_date);
 CREATE INDEX date_info_apt_idx               ON date_info (date_id);
 CREATE INDEX date_assign_company_idx ON date_company_assignment(company_id);
 CREATE INDEX date_assign_apt_idx     ON date_company_assignment(date_id);
@@ -1402,6 +1404,13 @@ CREATE INDEX dediting_current_owner_idx  ON document_editing(current_owner_id);
 CREATE INDEX note_project_idx                ON note(project_id);
 CREATE INDEX note_date_idx                   ON note(date_id);
 CREATE INDEX document_tags_gin               ON document USING GIN (tags_array);
+-- For recent_accessible_documents(), which walks the newest documents.
+CREATE INDEX idx_document_recent
+  ON document (lastmodified_date DESC NULLS LAST)
+  WHERE db_status <> 'archived';
+CREATE INDEX idx_document_recent_notes
+  ON document (lastmodified_date DESC NULLS LAST)
+  WHERE is_note = 1 AND db_status <> 'archived';
 
 CREATE INDEX address_company_idx             ON address(company_id);
 CREATE INDEX address__name1                  ON address(name1);
@@ -1432,6 +1441,7 @@ CREATE INDEX jobh_job_idx                    ON job_history(job_id);
 CREATE INDEX jobh_actor_idx                  ON job_history(actor_id);
 CREATE INDEX jobhi_jobh_idx                ON job_history_info(job_history_id);
 CREATE INDEX job_tags_gin                    ON job USING GIN (tags_array);
+CREATE INDEX is_new_idx                      ON job(is_new);
 
 CREATE INDEX is_index_article_idx            ON news_article(is_index_article);
 
