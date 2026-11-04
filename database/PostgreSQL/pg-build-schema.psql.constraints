@@ -2,6 +2,8 @@
 -- hh(2024-12-01): This used to be separate, because very old databases had
 --                 various issues related to constraints. Today this should
 --                 probably be merged into the main schema builder.
+-- hh(2026-10-27): email_type, company_unique_adrtype and
+--                 company_unique_phonetype moved to pg-build-schema.psql.
 
 -- table staff
 
@@ -23,12 +25,10 @@ ALTER TABLE company ADD constraint
 ALTER TABLE company_value ADD CONSTRAINT
    company_value2company FOREIGN KEY (company_id) 
     REFERENCES company(company_id);
+-- hh(2026-10-27): Not in the build schema, unlike email_type: real
+--                 databases have contacts with two email1 values.
 ALTER TABLE company_value ADD CONSTRAINT company_unique_valuetype
   UNIQUE ( company_id, attribute );
-ALTER TABLE company_value 
-  ADD CONSTRAINT email_type 
-  CHECK (NOT (attribute LIKE 'email%') 
-         OR ((attribute LIKE 'email%') AND type = 3));
 
 -- table company_category
 
@@ -115,14 +115,10 @@ ALTER TABLE document_editing ADD CONSTRAINT
 -- table address
 ALTER TABLE address ADD CONSTRAINT
     address2company FOREIGN KEY (company_id) REFERENCES company(company_id);
-ALTER TABLE address   ADD CONSTRAINT company_unique_adrtype
-  UNIQUE ( company_id, type );
 
 -- table telephone
 ALTER TABLE telephone ADD constraint
     telephone2company FOREIGN KEY (company_id) REFERENCES company(company_id);
-ALTER TABLE telephone ADD CONSTRAINT company_unique_phonetype
-  UNIQUE ( company_id, type );
 
 -- table job
 ALTER TABLE job ADD CONSTRAINT 

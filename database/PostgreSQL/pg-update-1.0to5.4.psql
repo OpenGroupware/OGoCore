@@ -12,6 +12,10 @@ ALTER TABLE object_acl
 
 ALTER TABLE document ADD COLUMN company_id INT NULL;
 ALTER TABLE document ADD COLUMN job_id     INT NULL;
+ALTER TABLE document ADD COLUMN keywords   TEXT NULL;
+ALTER TABLE document ADD COLUMN tags_array TEXT[] GENERATED ALWAYS 
+            AS (string_to_array(keywords, ', ')) STORED;
+CREATE INDEX document_tags_gin ON document USING GIN (tags_array);
 
 CREATE TABLE ctags (
   entity VARCHAR NOT NULL,
@@ -33,6 +37,9 @@ ALTER TABLE company ADD COLUMN family_status VARCHAR(255) NULL;
 ALTER TABLE company ADD COLUMN citizenship   VARCHAR(255) NULL; -- CSV?!
 ALTER TABLE company ADD COLUMN dayofdeath    TIMESTAMP WITH TIME ZONE NULL;
 ALTER TABLE company ADD COLUMN modern_password VARCHAR(255) NULL;
+ALTER TABLE company ADD COLUMN tags_array TEXT[] GENERATED ALWAYS 
+            AS (string_to_array(keywords, ', ')) STORED;
+CREATE INDEX company_tags_gin ON company USING GIN (tags_array);
 
 -- district of a city (eg Magdeburg "Nord")
 ALTER TABLE address ADD COLUMN district VARCHAR(255) NULL;
@@ -66,15 +73,27 @@ CREATE TABLE login_token (
   expiration_date TIMESTAMP WITH TIME ZONE NULL
 );
 
-ALTER TABLE job ADD COLUMN owner_id INT;
+ALTER TABLE job ADD COLUMN owner_id   INT;
 UPDATE job SET owner_id = creator_id WHERE owner_id IS NULL;
-ALTER TABLE job ADD COLUMN date_id INT;
-ALTER TABLE job ADD COLUMN url     TEXT;
+ALTER TABLE job ADD COLUMN date_id    INT;
+ALTER TABLE job ADD COLUMN url        TEXT;
+ALTER TABLE job ADD COLUMN tags_array TEXT[] GENERATED ALWAYS 
+         AS (string_to_array(keywords, ', ')) STORED;
+CREATE INDEX job_tags_gin ON job USING GIN (tags_array);
 
 ALTER TABLE date_x ADD COLUMN project_id          INT;
 ALTER TABLE date_x ADD COLUMN url                 TEXT;
 ALTER TABLE date_x ADD COLUMN location_id         INT;
 ALTER TABLE date_x ADD COLUMN location_id_version INT;
+ALTER TABLE date_x ADD COLUMN tags_array TEXT[] GENERATED ALWAYS 
+         AS (string_to_array(apt_type, ', ')) STORED;
+ALTER TABLE date_x ADD COLUMN write_access_ids       INT[] GENERATED ALWAYS 
+         AS (string_to_array(write_access_list, ',')::INT[]) STORED;
+ALTER TABLE date_x ADD COLUMN resource_names_array   TEXT[] GENERATED ALWAYS 
+         AS (string_to_array(resource_names, ', ')) STORED;
+CREATE INDEX date_tags_gin      ON date_x USING GIN (tags_array);
+CREATE INDEX date_writeacl_gin  ON date_x USING GIN (write_access_ids);
+CREATE INDEX date_resources_gin ON date_x USING GIN (resource_names_array);
 
 -- pg-update-1.0to5.4.psql, used to be a separate file
 
@@ -552,37 +571,982 @@ ALTER TABLE document_version ALTER COLUMN last_owner_id  SET NOT NULL;
 -- this can be a prefix, or the actual content, or sth else.
 -- since old clients won't know about this and always access the file,
 -- this tracks the object_version of the last write.
+-- 1=text/plain, 1001=cutoff-text/plain (if file was too large)
 ALTER TABLE document ADD COLUMN text_content                TEXT     NULL;
 ALTER TABLE document ADD COLUMN text_content_type           SMALLINT NULL;
 ALTER TABLE document ADD COLUMN text_content_object_version INT      NULL;
 
+ALTER TABLE object_acl ALTER COLUMN permissions SET NOT NULL;
+ALTER TABLE object_acl ALTER COLUMN auth_id     SET NOT NULL;
+
+-- Change Notifications
+
+CREATE OR REPLACE FUNCTION notify_change_company() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.company_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.company_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_change_date() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.date_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.date_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_change_document() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.document_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.document_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_change_job() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.job_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.job_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_change_project() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM pg_notify('ogo_changes', json_build_object(
+      'table', TG_TABLE_NAME, 'op', TG_OP, 'id', OLD.project_id
+    )::text);
+    RETURN OLD;
+  END IF;
+  PERFORM pg_notify('ogo_changes', json_build_object(
+    'table', TG_TABLE_NAME, 'op', TG_OP, 'id', NEW.project_id,
+    'version', NEW.object_version, 'old_version', OLD.object_version
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- DROP existing triggers if re-running update
+DROP TRIGGER IF EXISTS notify_person_changes     ON person;
+DROP TRIGGER IF EXISTS notify_enterprise_changes ON enterprise;
+DROP TRIGGER IF EXISTS notify_team_changes       ON team;
+DROP TRIGGER IF EXISTS notify_date_changes       ON date_x;
+DROP TRIGGER IF EXISTS notify_note_changes       ON note;
+DROP TRIGGER IF EXISTS notify_doc_changes        ON doc;
+DROP TRIGGER IF EXISTS notify_job_changes        ON job;
+DROP TRIGGER IF EXISTS notify_project_changes    ON project;
+
+CREATE TRIGGER notify_person_changes
+  AFTER INSERT OR UPDATE OR DELETE ON person
+  FOR EACH ROW EXECUTE FUNCTION notify_change_company();
+CREATE TRIGGER notify_enterprise_changes
+  AFTER INSERT OR UPDATE OR DELETE ON enterprise
+  FOR EACH ROW EXECUTE FUNCTION notify_change_company();
+CREATE TRIGGER notify_team_changes
+  AFTER INSERT OR UPDATE OR DELETE ON team
+  FOR EACH ROW EXECUTE FUNCTION notify_change_company();
+
+CREATE TRIGGER notify_date_changes
+  AFTER INSERT OR UPDATE OR DELETE ON date_x
+  FOR EACH ROW EXECUTE FUNCTION notify_change_date();
+
+CREATE TRIGGER notify_note_changes
+  AFTER INSERT OR UPDATE OR DELETE ON note
+  FOR EACH ROW EXECUTE FUNCTION notify_change_document();
+CREATE TRIGGER notify_doc_changes
+  AFTER INSERT OR UPDATE OR DELETE ON doc
+  FOR EACH ROW EXECUTE FUNCTION notify_change_document();
+
+CREATE TRIGGER notify_job_changes
+  AFTER INSERT OR UPDATE OR DELETE ON job
+  FOR EACH ROW EXECUTE FUNCTION notify_change_job();
+
+CREATE TRIGGER notify_project_changes
+  AFTER INSERT OR UPDATE OR DELETE ON project
+  FOR EACH ROW EXECUTE FUNCTION notify_change_project();
+
+
+-- permission functions -------------------------------------------------------
+-- Bit values match OGoPermissions.Builtin.rawValue in OGoCore/S.
+--
+-- l=1  r=2  i=4  d=8  w=16  m=32  a=64
+-- p=1024  b=2048  M=4096  P=8192  I=16384
+-- u=1048576  A=2097152
+--
+-- readPermissions  = l|r|p|b|M|P|I        = 31747
+-- writePermissions = l|r|i|d|w|p|b|M|P|I  = 31775
+
+-- Permission string to bitmask.
+-- Example: SELECT perm_to_bits('rw');  -- => 18
+CREATE OR REPLACE FUNCTION perm_to_bits(perms text)
+RETURNS int LANGUAGE sql IMMUTABLE STRICT AS $$
+  SELECT COALESCE(bit_or(
+    CASE ch
+      WHEN 'l' THEN    1  WHEN 'r' THEN  2   WHEN 'i' THEN  4 WHEN 'd' THEN 8
+      WHEN 'w' THEN   16  WHEN 'm' THEN 32   WHEN 'a' THEN 64 WHEN 'p' THEN 1024
+      WHEN 'b' THEN 2048  WHEN 'M' THEN 4096 WHEN 'P' THEN 8192
+      WHEN 'I' THEN 16384 WHEN 'u' THEN 1048576 WHEN 'A' THEN 2097152
+      ELSE 0
+    END
+  ), 0)
+  FROM regexp_split_to_table(perms, '') AS ch
+$$;
+
+-- Bitmask to permission string (for debugging).
+-- Example: SELECT bits_to_perm(31775);  -- => 'lrwidpbMPI'
+CREATE OR REPLACE FUNCTION bits_to_perm(bits int)
+RETURNS text LANGUAGE sql IMMUTABLE STRICT AS $$
+  SELECT COALESCE(string_agg(ch, ''), '') FROM (VALUES
+    (1,'l'), (2,'r'), (16,'w'), (4,'i'), (8,'d'),
+    (1024,'p'), (2048,'b'), (4096,'M'),
+    (32,'m'), (1048576,'u'),
+    (8192,'P'), (16384,'I'),
+    (2097152,'A'), (64,'a')
+  ) AS v(b, ch)
+  WHERE bits & b <> 0
+$$;
+
+-- Transition function for the acl_permission_bits aggregate.
+-- Accumulates permission bits from object_acl rows processed in
+-- sort_key DESC order. 'allowed' entries OR their bits into the
+-- state, 'denied' entries mask them out. This lets a low-priority
+-- deny for a team be overridden by a high-priority allow for a
+-- specific person (or vice versa), because later rows in the
+-- aggregate can flip bits set by earlier ones.
+-- Not called directly -- use acl_permission_bits() or object_acl_bits_for().
+CREATE OR REPLACE FUNCTION _acl_step(state int, action text, perms int) 
+RETURNS int LANGUAGE sql IMMUTABLE AS $$
+  SELECT CASE
+    WHEN action IN ('allowed', '')         THEN state | perms
+    WHEN action IN ('denied', 'forbidden') THEN state & ~perms
+    ELSE state
+  END
+$$;
+
+-- Ordered aggregate that computes the effective permission bitmask
+-- from a set of object_acl rows for a SINGLE object_id. Must be
+-- called with ORDER BY sort_key DESC so that high-priority entries
+-- are processed first and low-priority entries can override them.
+-- Do not feed rows for multiple objects -- their ACL entries would
+-- be mixed into one result. Use object_acl_bits_for() which pre-filters
+-- by object_id.
+-- Example:
+--   SELECT acl_permission_bits(action, perm_to_bits(permissions)
+--            ORDER BY sort_key DESC)
+--     FROM object_acl WHERE object_id = 12345;
+DROP AGGREGATE IF EXISTS acl_permission_bits(text, int);
+CREATE AGGREGATE acl_permission_bits(text, int) (
+  SFUNC    = _acl_step,
+  STYPE    = int,
+  INITCOND = '0'
+);
+
+-- Compute ACL permission bits for any object.
+-- Example:
+--   SELECT bits_to_perm(object_acl_bits_for(12345, ARRAY[10000, 10003]));
+CREATE OR REPLACE FUNCTION object_acl_bits_for(p_object_id int, p_auth_ids int[]) 
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT COALESCE(
+    acl_permission_bits(action, 
+                        perm_to_bits(permissions)
+                        -- ORDER BY is part of the ordered-aggregate syntax:
+                        -- it controls the row processing order for _acl_step,
+                        -- not the output of perm_to_bits.
+      ORDER BY sort_key DESC
+    ),
+    0
+  )
+  FROM object_acl WHERE object_id = p_object_id AND auth_id = ANY(p_auth_ids)
+$$;
+
+-- Check whether any ACL grants access to an object.
+-- Example:
+--   SELECT object_acl_has_access(12345, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION object_acl_has_access(p_object_id int, 
+                                                 p_auth_ids int[]) 
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (SELECT 1 FROM object_acl
+    WHERE object_id = p_object_id AND auth_id = ANY(p_auth_ids) 
+      AND action = 'allowed' AND permissions <> ''
+  )
+$$;
+
+-- Check whether the given auth IDs have access to a company
+-- (person/enterprise/team) record.
+-- Example:
+--   SELECT p.* FROM person p
+--    WHERE company_has_access(p, ARRAY[10000, 10003])
+--      AND p.name ILIKE '%duck%';
+CREATE OR REPLACE FUNCTION company_has_access( p company, p_auth_ids int[])
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT p.owner_id = ANY(p_auth_ids)
+      OR COALESCE(p.is_private, 0::int2) = 0::int2
+      OR COALESCE(p.contact_id = ANY(p_auth_ids), false)
+      OR p.company_id = ANY(p_auth_ids)
+      OR object_acl_has_access(p.company_id, p_auth_ids)
+$$;
+
+-- Compute the full permission bitmask for a company
+-- (person/enterprise/team) record.
+-- Returns 0 if no access, otherwise a bitmask of permission bits.
+-- Example:
+--   SELECT P.company_id, P.name,
+--          bits_to_perm(company_permission_bits(P, ARRAY[8318651, 10003]))
+--          AS perms
+--     FROM person P
+--    WHERE company_has_access(P, ARRAY[8318651, 10003]) LIMIT 10;
+CREATE OR REPLACE FUNCTION company_permission_bits(p company, p_auth_ids int[])
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Owner: full write
+    WHEN p.owner_id = ANY(p_auth_ids)                THEN 31775
+
+    -- Public read-only
+    WHEN COALESCE(p.is_private, 0::int2) = 0::int2
+     AND COALESCE(p.is_readonly, 0::int2) <> 0::int2 THEN 31747
+
+    -- Public read-write
+    WHEN COALESCE(p.is_private, 0::int2) = 0::int2   THEN 31775
+
+    -- Private: ordered ACL + contact + self
+    ELSE (
+      SELECT CASE
+        WHEN combined & 16 <> 0 THEN combined | 31775
+        WHEN combined & 2  <> 0 THEN combined | 31747
+        WHEN combined <> 0      THEN combined | 1
+        ELSE 0
+      END
+      FROM (
+        SELECT
+          object_acl_bits_for(p.company_id, p_auth_ids)
+          | CASE
+              WHEN COALESCE(p.contact_id = ANY(p_auth_ids), false)
+                OR p.company_id = ANY(p_auth_ids) THEN 31747
+              ELSE 0
+            END
+          AS combined
+      ) acl
+    )
+  END
+$$;
+
+
+-- Convenience: check company access by ID (looks up the row).
+-- Example:
+--   SELECT company_id_has_access(33137, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION company_id_has_access(p_company_id int,
+                                                 p_auth_ids int[])
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM company
+     WHERE company_id = p_company_id
+       AND company_has_access(company, p_auth_ids)
+  )
+$$;
+
+-- Check whether the given auth IDs have access to a project.
+-- Company projects (is_fake = 1) derive access from the parent
+-- company via project_company_assignment.
+-- Example:
+--   SELECT p.* FROM project p
+--    WHERE project_has_access(p, ARRAY[10000, 10003])
+--      AND p.name ILIKE '%acme%';
+CREATE OR REPLACE FUNCTION project_has_access(p project, p_auth_ids int[])
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    WHEN COALESCE(p.is_fake, 0::int2) = 1::int2 THEN -- company projects
+      EXISTS (
+        SELECT 1 FROM project_company_assignment pca
+         WHERE pca.project_id = p.project_id
+           AND company_id_has_access(pca.company_id, p_auth_ids)
+      )
+    ELSE -- regular projects
+      p.owner_id = ANY(p_auth_ids) -- we are the owner
+      OR COALESCE(p.team_id = ANY(p_auth_ids), false) -- or the access team
+      OR EXISTS (
+        SELECT 1 FROM project_company_assignment pca -- or are assigned
+         WHERE pca.project_id  = p.project_id
+           AND pca.company_id  = ANY(p_auth_ids)
+           AND pca.has_access  = 1                   -- with access flag
+           AND pca.access_right IS NOT NULL
+           AND pca.access_right <> ''
+      )
+  END
+$$;
+
+-- Compute the full permission bitmask for a project.
+-- Returns 0 if no access, otherwise a bitmask.
+-- Company projects (is_fake = 1) derive permissions from
+-- the parent company -- full access (62) if accessible.
+--
+-- Project permission bits:
+--   m=32, r=2, w=16, i=4, d=8  =>  "mrwid" = 62
+--
+-- Example:
+--   SELECT project_id AS id, name AS name,
+--          bits_to_perm(project_permission_bits(project, ARRAY[10000, 10003])) 
+--          AS permissions
+--     FROM project WHERE project_has_access(project, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION project_permission_bits(p project, p_auth_ids int[]) 
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    WHEN COALESCE(p.is_fake, 0::int2) = 1::int2 THEN -- company project
+      CASE WHEN EXISTS (
+        SELECT 1 FROM project_company_assignment pca
+        WHERE pca.project_id = p.project_id
+          AND company_id_has_access(pca.company_id, p_auth_ids)
+      ) THEN 62 ELSE 0 END
+    WHEN p.owner_id = ANY(p_auth_ids) THEN 62 -- full
+    ELSE (
+      SELECT CASE
+        WHEN combined & 32 <> 0 THEN 62 -- full
+        ELSE combined
+      END
+      FROM (
+        SELECT
+          COALESCE(
+            (SELECT bit_or(perm_to_bits(pca.access_right))
+               FROM project_company_assignment pca
+              WHERE pca.project_id  = p.project_id
+                AND pca.company_id  = ANY(p_auth_ids)
+                AND pca.has_access  = 1
+                AND pca.access_right IS NOT NULL
+                AND pca.access_right <> ''),
+            0
+          )
+          | CASE
+              WHEN COALESCE(p.team_id = ANY(p_auth_ids), false)
+              THEN 2 -- read
+              ELSE 0 -- none
+            END
+          AS combined
+      ) membership
+    )
+  END
+$$;
+
+
+-- Check whether the given auth IDs have READ access to an event.
+-- Freebusy/list access is always granted (date_permission_bits
+-- returns at least 1); this checks for owner/team/write/attendee.
+-- Example:
+--   SELECT e.* FROM date_x e
+--    WHERE date_has_read_access(e, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION date_has_read_access(e date_x, p_auth_ids int[]) 
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT e.owner_id = ANY(p_auth_ids)
+      OR COALESCE(e.access_team_id = ANY(p_auth_ids), false)
+      OR COALESCE(e.write_access_ids && p_auth_ids, false)
+      OR EXISTS (SELECT 1 FROM date_company_assignment dca
+                  WHERE dca.date_id = e.date_id 
+                    AND dca.company_id = ANY(p_auth_ids))
+$$;
+
+-- Compute the full permission bitmask for an event.
+-- Every user gets at least freebusy/list (1). Additional:
+--   owner => lrudw (1048603)
+--   access_team => +r
+--   write_access_ids => +lrdw (27)
+--   attendee => +lru (1048579, changeMemberStatus)
+-- Compound: w implies lrdw, u implies lru, r implies l.
+-- Example:
+--   SELECT date_id, title,
+--          bits_to_perm(date_permission_bits(date_x, ARRAY[10000, 10003])) AS P
+--     FROM date_x
+--    WHERE date_has_read_access(date_x, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION date_permission_bits(e date_x, p_auth_ids int[])
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    WHEN e.owner_id = ANY(p_auth_ids) THEN 1048603
+    ELSE (
+      SELECT CASE
+        WHEN combined &      16 <> 0 THEN combined | 27
+        WHEN combined & 1048576 <> 0 THEN combined | 1048579
+        WHEN combined &       2 <> 0 THEN combined | 1
+        ELSE combined
+      END
+      FROM (
+        SELECT
+          1
+          | CASE WHEN COALESCE(e.access_team_id = ANY(p_auth_ids), false)
+                 THEN 2 ELSE 0 END
+          | CASE WHEN COALESCE(e.write_access_ids && p_auth_ids, false)
+                 THEN 27 ELSE 0 END
+          | CASE WHEN EXISTS (SELECT 1 FROM date_company_assignment DCA
+                               WHERE DCA.date_id    = e.date_id
+                                 AND DCA.company_id = ANY(p_auth_ids))
+                 THEN 1048579 ELSE 0 END
+          AS combined
+      ) parts
+    )
+  END
+$$;
+
+-- Check whether the given auth IDs have read access to a task.
+-- Creator, owner, executant, or project member.
+-- Example:
+--   SELECT * FROM job WHERE job_has_read_access(job, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION job_has_read_access(t job, p_auth_ids int[]) 
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT t.creator_id = ANY(p_auth_ids) OR t.owner_id = ANY(p_auth_ids)
+      OR t.executant_id = ANY(p_auth_ids) OR 
+      (t.project_id IS NOT NULL AND EXISTS (
+       SELECT 1 FROM project p WHERE p.project_id = t.project_id
+          AND project_has_access(p, p_auth_ids)
+    ))
+$$;
+
+-- Compute the full permission bitmask for a task.
+-- Creator/owner: lrwadA = 2097243
+-- Executant:     lrwaA  = 2097235 (no delete)
+-- Project member (if project accessible): lr = 3
+-- No access: 0
+--
+-- The executant can be a team (is_team_job).
+--
+-- Example:
+--   SELECT job_id, name,
+--          bits_to_perm(job_permission_bits(job, ARRAY[10000, 10003])) AS perms
+--     FROM job
+--    WHERE job_has_read_access(job, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION job_permission_bits(t job, p_auth_ids int[]) 
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Creator: full access (lrwadA = 2097243).
+    WHEN t.creator_id = ANY(p_auth_ids) THEN 2097243
+    -- Owner: full access (lrwadA = 2097243).
+    WHEN t.owner_id = ANY(p_auth_ids) THEN 2097243
+    -- Executant: lrwaA = 2097235 (no delete).
+    WHEN t.executant_id = ANY(p_auth_ids)
+    THEN 2097235
+
+    -- Project member: lr = 3.
+    WHEN t.project_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM project p WHERE p.project_id = t.project_id
+         AND project_has_access(p, p_auth_ids)
+    ) THEN 3
+
+    -- No access.
+    ELSE 0
+  END
+$$;
+
+-- ===== Set-returning functions for bulk filtering =====
+-- Return (id, permission_bits) for all accessible rows.
+-- These avoid per-row function calls by decomposing
+-- permission checks into UNION of index-scannable queries.
+-- Use bit_or() to merge when a row appears via multiple
+-- access paths.
+--
+-- Example:
+--   SELECT p.*, ap.perms
+--     FROM project p
+--     JOIN accessible_projects(ARRAY[10000,10003]) ap
+--       ON ap.id = p.project_id;
+
+-- Project permissions: m=32 r=2 w=16 i=4 d=8, mrwid=62
+CREATE OR REPLACE FUNCTION accessible_projects(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  SELECT project_id, bit_or(p) FROM (
+    -- Owner: mrwid (62).
+    SELECT project_id, 62 AS p FROM project WHERE owner_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Team: r (2).
+    SELECT project_id, 2 FROM project WHERE team_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Membership: per access_right, expand m=>62.
+    SELECT project_id,
+           CASE WHEN perm_to_bits(access_right) & 32 <> 0 THEN 62
+                ELSE perm_to_bits(access_right)
+           END
+      FROM project_company_assignment
+     WHERE company_id = ANY(p_auth_ids) AND has_access = 1
+       AND access_right IS NOT NULL AND access_right <> ''
+    UNION ALL
+    -- Company doc-stores (is_fake=1): mrwid (62).
+    SELECT p.project_id, 62 FROM project p
+     WHERE COALESCE(p.is_fake, 0::int2) = 1::int2
+       AND EXISTS (
+         SELECT 1 FROM project_company_assignment pca
+         WHERE pca.project_id = p.project_id
+           AND company_id_has_access(pca.company_id, p_auth_ids))
+  ) sub GROUP BY project_id
+$$;
+
+-- Event permissions: l=1 r=2 w=16 d=8 u=1048576
+--   owner: lrudw=1048603
+--   access_team: lr=3
+--   write_access_list: lrdw=27
+--   attendee: lru=1048579
+CREATE OR REPLACE FUNCTION accessible_events(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  SELECT date_id, bit_or(p) FROM (
+    -- Owner: lrudw (1048603).
+    SELECT date_id, 1048603 AS p FROM date_x WHERE owner_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Access team: lr (3).
+    SELECT date_id, 3 FROM date_x WHERE access_team_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Write access list: lrdw (27).
+    SELECT date_id, 27 FROM date_x WHERE write_access_ids && p_auth_ids
+    UNION ALL
+    -- Attendee: lru (1048579).
+    SELECT date_id, 1048579 FROM date_company_assignment
+     WHERE company_id = ANY(p_auth_ids)
+  ) sub GROUP BY date_id
+$$;
+
+-- Task permissions: l=1 r=2 w=16 a=64 d=8 A=2097152
+--   creator/owner: lrwadA=2097243
+--   executant: lrwaA=2097235
+--   project member: lr=3
+CREATE OR REPLACE FUNCTION accessible_tasks(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  SELECT job_id, bit_or(p) FROM (
+    -- Creator: lrwadA (2097243).
+    SELECT job_id, 2097243 AS p FROM job WHERE creator_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Owner: lrwadA (2097243).
+    SELECT job_id, 2097243 FROM job WHERE owner_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Executant: lrwaA (2097235).
+    SELECT job_id, 2097235 FROM job WHERE executant_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Project member: lr (3).
+    SELECT j.job_id, 3 FROM job j
+     WHERE j.project_id IN 
+       (SELECT ap.id FROM accessible_projects(p_auth_ids) ap)
+  ) sub GROUP BY job_id
+$$;
+
+-- Company permissions:
+--   write (owner/public-rw): 31775
+--   read  (public-ro/contact/self): 31747
+-- Private contacts need ACL; resolved via
+-- company_permission_bits for those.
+CREATE OR REPLACE FUNCTION accessible_companies(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  SELECT company_id, bit_or(p) FROM (
+    -- Owner: full write (31775).
+    SELECT company_id, 31775 AS p FROM company WHERE owner_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Public read-write (not private, not readonly).
+    SELECT company_id, 31775 FROM company
+     WHERE COALESCE(is_private,  0::int2) = 0::int2
+       AND COALESCE(is_readonly, 0::int2) = 0::int2
+    UNION ALL
+    -- Public read-only.
+    SELECT company_id, 31747 FROM company
+     WHERE COALESCE(is_private,  0::int2) =  0::int2
+       AND COALESCE(is_readonly, 0::int2) <> 0::int2
+    UNION ALL
+    -- Primary contact: read (31747).
+    SELECT company_id, 31747 FROM company WHERE contact_id = ANY(p_auth_ids)
+    UNION ALL
+    -- Self: read (31747).
+    SELECT unnest(p_auth_ids), 31747
+    UNION ALL
+    -- ACL: compute per entry.
+    SELECT object_id, object_acl_bits_for(object_id, p_auth_ids) FROM (
+      SELECT DISTINCT object_id FROM object_acl
+       WHERE auth_id = ANY(p_auth_ids)
+         AND action  = 'allowed' AND permissions <> ''
+    ) acl_objects
+  ) sub GROUP BY company_id
+$$;
+
+-- Document/note permissions: r=2 w=16 d=8, rwd=26
+-- Owner gets rwd (26); project-attached docs are
+-- intersected with project perms; contact/event-
+-- attached get r (2).
+-- Uses accessible_projects / accessible_events for
+-- the context lookups.
+CREATE OR REPLACE FUNCTION accessible_documents(p_auth_ids int[]) 
+RETURNS TABLE(id int, perms int)
+  LANGUAGE sql STABLE AS $$
+  WITH RECURSIVE
+    ap AS (SELECT * FROM accessible_projects(p_auth_ids)),
+    ae AS (SELECT * FROM accessible_events(p_auth_ids)),
+    at AS (SELECT * FROM accessible_tasks(p_auth_ids)),
+    -- Roots: docs accessible by direct context.
+    roots(document_id, base_perms) AS (
+      -- Owner: rwd (26).
+      SELECT document_id, 26 FROM document
+       WHERE current_owner_id = ANY(p_auth_ids)
+      UNION ALL
+      -- Project-attached (no ACL): rwd intersected
+      -- with project perms.
+      SELECT d.document_id,
+             CASE
+               WHEN  26 & ap.perms  & 8 <> 0 OR (8 <> 0 AND ap.perms & 16 <> 0)
+               THEN (26 & ap.perms) | 8
+               ELSE  26 & ap.perms
+             END
+        FROM document d
+        JOIN ap ON ap.id = d.project_id
+       WHERE d.current_owner_id != ALL(p_auth_ids)
+      UNION ALL
+      -- Contact-attached (no project): r (2).
+      SELECT d.document_id, 2 FROM document d
+       WHERE d.project_id IS NULL
+         AND d.company_id IN 
+             (SELECT ac.id FROM accessible_companies(p_auth_ids) ac)
+         AND d.current_owner_id != ALL(p_auth_ids)
+      UNION ALL
+      -- Event-attached (no project): r (2).
+      SELECT d.document_id, 2 FROM document d JOIN ae ON ae.id = d.date_id
+       WHERE d.project_id IS NULL AND d.current_owner_id != ALL(p_auth_ids)
+      UNION ALL
+      -- Task-attached (no project): r (2).
+      SELECT d.document_id, 2 FROM document d JOIN at ON at.id = d.job_id
+       WHERE d.project_id IS NULL AND d.current_owner_id != ALL(p_auth_ids)
+    ),
+    -- Walk down parent chain.
+    reachable(document_id, base_perms) AS (
+      SELECT document_id, base_perms FROM roots
+      UNION ALL
+      SELECT d.document_id, 2 FROM document d
+        JOIN reachable r ON d.parent_document_id = r.document_id
+    )
+  SELECT document_id, bit_or(base_perms)
+    FROM reachable
+   GROUP BY document_id
+$$;
+
+
+-- Check whether the given auth IDs have read access to a
+-- document or note. Checks owner, project, contact, event
+-- and parent hierarchy.
+-- Works on `document` (basetable), `doc`, and `note` tables
+-- (PostgreSQL table inheritance).
+-- Example:
+--   SELECT * FROM document
+--    WHERE document_has_read_access(document, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION document_has_read_access(d document,p_auth_ids int[]) 
+  RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT
+    -- Project: ultimate blocker, even for the owner.
+    (d.project_id IS NULL OR EXISTS (
+      SELECT 1 FROM project p
+      WHERE p.project_id = d.project_id AND project_has_access(p, p_auth_ids)
+    ))
+    AND (
+      -- Owner (no project, already passed above).
+      d.current_owner_id = ANY(p_auth_ids)
+      -- Or must pass ALL context checks:
+      OR (
+        -- If project set, project access is sufficient.
+        d.project_id IS NOT NULL
+        -- Contact: must have access if set.
+        OR (d.company_id IS NULL
+            OR company_id_has_access(d.company_id, p_auth_ids))
+        AND (d.date_id IS NULL OR EXISTS (
+          SELECT 1 FROM date_x e
+          WHERE e.date_id = d.date_id AND date_has_read_access(e, p_auth_ids)
+        ))
+        AND (d.job_id IS NULL OR EXISTS (
+          SELECT 1 FROM job t WHERE t.job_id = d.job_id
+             AND job_has_read_access(t, p_auth_ids)
+        ))
+        -- At least one context must exist (or parent).
+        AND (d.company_id IS NOT NULL OR d.date_id IS NOT NULL
+             OR d.job_id IS NOT NULL
+             OR (d.parent_document_id IS NOT NULL
+                 AND EXISTS (
+                   SELECT 1 FROM document p
+                   WHERE p.document_id = d.parent_document_id
+                     AND document_has_read_access(p, p_auth_ids)
+                 ))
+        )
+      )
+    )
+$$;
+
+-- Compute the full permission bitmask for a document or note.
+--
+-- Permission bits: l=1, r=2, i=4, d=8, w=16
+--   owner (no ACL): rwd = 26
+--   public w/ project (no ACL): rwd = 26
+--   public w/o project (contact/event): r = 2
+--   unattached (no context): 0
+--
+-- Rules:
+--   1. If project attached and no project access => 0 (even owner)
+--   2. If contact attached (no project) and no contact access => 0
+--   3. If event attached (no project) and no event access => 0
+--   4. If parent exists and parent not readable => 0
+--   5. Owner => rwd (26) (project already checked above)
+--   6. Parent has delete => add d (8)
+--   7. Intersect with project permissions (d maps to w)
+--
+-- Example:
+--   SELECT d.document_id, d.title,
+--          bits_to_perm(document_permission_bits(
+--            d, ARRAY[10000, 10003])) AS perms
+--     FROM document d
+--    WHERE document_has_read_access(
+--            d, ARRAY[10000, 10003]);
+CREATE OR REPLACE FUNCTION document_permission_bits(d document, p_auth_ids int[])
+RETURNS int LANGUAGE sql STABLE AS $$
+  SELECT CASE
+    -- Blocker: project attached but no access (even owner).
+    WHEN d.project_id IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM project p
+      WHERE p.project_id = d.project_id AND project_has_access(p, p_auth_ids)
+    ) THEN 0
+
+    -- Blocker: contact attached (no project), no access.
+    WHEN d.project_id IS NULL AND d.company_id IS NOT NULL
+     AND NOT company_id_has_access(d.company_id, p_auth_ids)
+    THEN 0
+
+    -- Blocker: event attached (no project), no access.
+    WHEN d.project_id IS NULL AND d.date_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM date_x e
+       WHERE e.date_id = d.date_id AND date_has_read_access(e, p_auth_ids)
+     ) THEN 0
+
+    -- Blocker: parent not readable.
+    WHEN d.parent_document_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM document p
+       WHERE p.document_id = d.parent_document_id
+         AND document_has_read_access(p, p_auth_ids)
+     ) THEN 0
+
+    ELSE (
+      SELECT
+        CASE
+          -- Intersect with project permissions.
+          WHEN d.project_id IS NOT NULL THEN (
+            SELECT
+              (base & proj_bits)
+              -- d maps to project w: if base had d
+              -- and project has w, restore d.
+              | CASE WHEN base & 8 <> 0 AND proj_bits & 16 <> 0 THEN 8 ELSE 0
+                END
+            FROM (
+              SELECT project_permission_bits(p, p_auth_ids) AS proj_bits
+                FROM project p
+               WHERE p.project_id = d.project_id
+            ) pp
+          )
+          ELSE base
+        END
+      FROM (
+        SELECT
+          (CASE
+            -- Owner: rwd (26).
+            WHEN d.current_owner_id = ANY(p_auth_ids) THEN 26
+
+            -- Has ACL: use ACL permissions.
+            WHEN EXISTS (
+              SELECT 1 FROM object_acl WHERE object_id = d.document_id
+            ) THEN object_acl_bits_for(d.document_id, p_auth_ids)
+
+            -- No ACL + project: public rwd (26).
+            WHEN d.project_id IS NOT NULL THEN 26
+
+            -- No ACL + contact/event/task: r (2).
+            WHEN d.company_id IS NOT NULL OR d.date_id IS NOT NULL
+              OR d.job_id IS NOT NULL THEN 2
+
+            -- No ACL + readable parent: r (2).
+            WHEN d.parent_document_id IS NOT NULL THEN 2
+
+            -- Unattached, not owner: no access.
+            ELSE 0
+          END)
+          -- Add delete from parent folder.
+          | CASE
+              WHEN d.parent_document_id IS NOT NULL
+               AND EXISTS (
+                 SELECT 1 FROM document p
+                  WHERE p.document_id = d.parent_document_id
+                    AND document_permission_bits(p, p_auth_ids) & 8 <> 0
+               )
+              THEN 8 ELSE 0
+            END
+          AS base
+      ) b
+    )
+  END
+$$;
+
+-- ===== Recent documents/notes with resolved context ===
+-- Scans the most recent documents, walks up
+-- parent_document_id chains for replies lacking their
+-- own context (project/contact/event/task), and filters
+-- by permissions using the per-row functions.
+--
+-- Skips structure rather than content: folders, object
+-- links and project index documents. Creating a project
+-- auto-creates a `Root` folder plus an `index` document,
+-- neither is something a user changed.
+--
+-- Example:
+--   SELECT * FROM note WHERE document_id IN (
+--      SELECT id FROM recent_accessible_documents(ARRAY[10000, 10003]));
+CREATE OR REPLACE FUNCTION recent_accessible_documents(
+  p_auth_ids       int[],
+  p_limit          int DEFAULT 50,
+  p_scan_limit     int DEFAULT 200,
+  p_exclude_owners int[] DEFAULT '{}'
+) RETURNS TABLE(id int, is_note boolean)
+  LANGUAGE sql STABLE AS $$
+  WITH RECURSIVE
+
+  candidates AS (
+    SELECT document_id, is_note, parent_document_id, project_id, company_id, 
+           date_id, job_id, current_owner_id, lastmodified_date
+      FROM document
+     WHERE COALESCE(is_folder, 0) = 0 AND COALESCE(is_object_link, 0) = 0
+       AND COALESCE(is_index_doc, 0) = 0
+       AND db_status <> 'archived'
+       AND (p_exclude_owners = '{}'
+            OR current_owner_id != ALL(p_exclude_owners))
+     ORDER BY lastmodified_date DESC NULLS LAST LIMIT p_scan_limit
+  ),
+
+  -- Walk parent chain to resolve inherited context.
+  resolved AS (
+    SELECT c.document_id AS candidate_id, c.is_note,
+           c.parent_document_id AS parent_id,
+           c.project_id AS r_pid, c.company_id AS r_cid, c.date_id AS r_did,
+           c.job_id AS r_jid, c.current_owner_id, c.lastmodified_date,
+           0 AS depth,
+           (c.project_id IS NULL AND c.company_id IS NULL AND c.date_id IS NULL
+            AND c.job_id IS NULL AND c.parent_document_id IS NOT NULL
+           ) AS needs_resolve
+      FROM candidates c
+    UNION ALL
+    SELECT r.candidate_id, r.is_note, d.parent_document_id,
+           COALESCE(r.r_pid, d.project_id), COALESCE(r.r_cid, d.company_id),
+           COALESCE(r.r_did, d.date_id),    COALESCE(r.r_jid, d.job_id),
+           r.current_owner_id, r.lastmodified_date, r.depth + 1,
+           (    COALESCE(r.r_pid, d.project_id) IS NULL
+            AND COALESCE(r.r_cid, d.company_id) IS NULL
+            AND COALESCE(r.r_did, d.date_id)    IS NULL
+            AND COALESCE(r.r_jid, d.job_id)     IS NULL
+            AND d.parent_document_id            IS NOT NULL
+           )
+      FROM resolved r
+      JOIN document d ON d.document_id = r.parent_id
+     WHERE r.needs_resolve AND r.depth < 20
+  ),
+
+  -- Pick the deepest resolution per candidate.
+  final_resolved AS (
+    SELECT DISTINCT ON (candidate_id) candidate_id, is_note,
+           r_pid, r_cid, r_did, r_jid, current_owner_id, lastmodified_date
+      FROM resolved
+     ORDER BY candidate_id, depth DESC
+  )
+
+  SELECT fr.candidate_id, COALESCE(fr.is_note, 0::int2) <> 0::int2
+    FROM final_resolved fr
+   WHERE
+     -- Owner.
+     fr.current_owner_id = ANY(p_auth_ids)
+     -- Project accessible.
+     OR fr.r_pid IN (SELECT ap.id FROM accessible_projects(p_auth_ids) ap)
+     -- Contact accessible (no project).
+     OR (fr.r_pid IS NULL AND fr.r_cid IS NOT NULL
+         AND company_id_has_access(fr.r_cid, p_auth_ids))
+     -- Event accessible (no project).
+     OR (fr.r_pid IS NULL AND fr.r_did IS NOT NULL
+         AND EXISTS (SELECT 1 FROM date_x dx WHERE dx.date_id = fr.r_did
+                               AND date_has_read_access(dx, p_auth_ids)))
+     -- Task accessible (no project, no event).
+     OR (fr.r_pid IS NULL AND fr.r_did IS NULL AND fr.r_jid IS NOT NULL
+         AND EXISTS (SELECT 1 FROM job j WHERE j.job_id = fr.r_jid
+                              AND job_has_read_access(j, p_auth_ids)))
+   ORDER BY fr.lastmodified_date DESC NULLS LAST LIMIT p_limit
+$$;
 
 -- Bump versions
 -- 54  - things we changed in 2015
 -- 55  - things changed end of 2024
 -- 56+ - things changed in 2025
+-- 60  - things changed in 2026
 UPDATE table_version SET table_version = 55 WHERE table_name = '_model';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'address';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'company';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'company';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'company_value';
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'company_category';
 UPDATE table_version SET table_version = 55 
  WHERE table_name = 'company_assignment';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'date';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'date';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'date_info';
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'date_company_assignment';
 UPDATE table_version SET table_version = 56
  WHERE table_name = 'appointment_resource';
-UPDATE table_version SET table_version = 56 WHERE table_name = 'job';
+UPDATE table_version SET table_version = 57 WHERE table_name = 'job';
 UPDATE table_version SET table_version = 57 WHERE table_name = 'job_history';
 UPDATE table_version SET table_version = 57 WHERE table_name = 'project';
 UPDATE table_version SET table_version = 56 WHERE table_name = 'project_info';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'project_company_assignment';
-UPDATE table_version SET table_version = 57 WHERE table_name = 'document';
+UPDATE table_version SET table_version = 58 WHERE table_name = 'document';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_version';
 UPDATE table_version SET table_version = 55
  WHERE table_name = 'document_editing';
+INSERT INTO table_version (table_name, table_version) VALUES ('object_acl', 60);
+
+-- In the build schema since 2026-10. At the end, after every column
+-- they index exists. IF NOT EXISTS: some databases got them by hand.
+CREATE INDEX IF NOT EXISTS date_apt_type_start_idx
+  ON date_x (apt_type, start_date);
+CREATE INDEX IF NOT EXISTS date_apt_type_end_idx
+  ON date_x (apt_type, end_date);
+-- For recent_accessible_documents(), which walks the newest documents.
+CREATE INDEX IF NOT EXISTS idx_document_recent
+  ON document (lastmodified_date DESC NULLS LAST)
+  WHERE db_status <> 'archived';
+CREATE INDEX IF NOT EXISTS idx_document_recent_notes
+  ON document (lastmodified_date DESC NULLS LAST)
+  WHERE is_note = 1 AND db_status <> 'archived';
+CREATE INDEX IF NOT EXISTS is_new_idx ON job(is_new);
